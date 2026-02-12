@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WARF | Ultimate WhatsApp Gateway</title>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Outfit', sans-serif;
+            overflow-x: hidden;
+        }
+
+        .hero-gradient {
+            background:
+                radial-gradient(circle at 0% 0%, oklch(0.7 0.2 150 / 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 0%, oklch(0.7 0.2 250 / 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 100% 100%, oklch(0.7 0.2 320 / 0.15) 0%, transparent 50%),
+                radial-gradient(circle at 0% 100%, oklch(0.7 0.2 40 / 0.15) 0%, transparent 50%);
+        }
+
+        .glass-card {
+            background: oklch(1 0 0 / 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid oklch(1 0 0 / 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: oklch(1 0 0 / 0.06);
+            border-color: var(--p);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -20px oklch(var(--p) / 0.3);
+        }
+
+        [data-theme="light"] .glass-card {
+            background: oklch(0.1 0 0 / 0.03);
+            border-color: oklch(0.1 0 0 / 0.08);
+        }
+
+        .floating {
+            animation: floating 3s ease-in-out infinite;
+        }
+
+        @keyframes floating {
+            0% {
+                transform: translateY(0px);
+            }
+
+            50% {
+                transform: translateY(-15px);
+            }
+
+            100% {
+                transform: translateY(0px);
+            }
+        }
+
+        .text-gradient {
+            background: linear-gradient(135deg, var(--p), var(--s));
+            -webkit-background-clip: text;
+            background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+    </style>
+</head>
+
+<body class="bg-base-100 text-base-content selection:bg-primary/30">
+    <!-- Navbar -->
+    <div class="navbar bg-base-100/50 backdrop-blur-md fixed top-0 z-50 px-4 lg:px-20 py-4 transition-all duration-300">
+        <div class="flex-1">
+            <a class="text-3xl font-black tracking-tighter italic text-primary">WARF</a>
+        </div>
+        <div class="hidden md:flex gap-8 mr-10">
+            <a href="#features" class="hover:text-primary transition-colors font-medium">Features</a>
+            <a href="#pricing" class="hover:text-primary transition-colors font-medium">Pricing</a>
+        </div>
+        <div class="flex items-center gap-5 items-center">
+            <button id="theme-toggle" class="btn btn-ghost btn-circle btn-sm text-lg">
+                <i class="ri-moon-line" id="theme-icon"></i>
+            </button>
+            <a href="/login" class="btn btn-outline btn-primary btn-sm rounded-full px-6">Login</a>
+            <a href="/register" class="btn btn-primary btn-sm rounded-full px-8 shadow-lg shadow-primary/20">Get
+                Started</a>
+        </div>
+    </div>
+
+    <!-- Hero Section -->
+    <div class="hero min-h-screen hero-gradient relative overflow-hidden top-17">
+        <!-- Background Elements -->
+        <div class="absolute top-1/4 -left-20 w-80 h-80 bg-primary/10 rounded-full blur-[100px] floating"></div>
+        <div class="absolute bottom-1/4 -right-20 w-80 h-80 bg-secondary/10 rounded-full blur-[100px] floating"
+            style="animation-delay: -1.5s"></div>
+
+        <div class="hero-content text-center z-10">
+            <div class="max-w-4xl">
+                <div
+                    class="inline-flex items-center gap-2 bg-primary/10 border border-primary/20 px-4 py-2 rounded-full mb-8 backdrop-blur-sm">
+                    <span class="relative flex h-2 w-2">
+                        <span
+                            class="animate-ping absolute inline-flex h-full w-full rounded-full bg-primary opacity-75"></span>
+                        <span class="relative inline-flex rounded-full h-2 w-2 bg-primary"></span>
+                    </span>
+                    <span class="text-xs font-bold tracking-widest uppercase text-primary">Next Gen WhatsApp API
+                        Gateway</span>
+                </div>
+
+                <h1 class="text-6xl lg:text-8xl font-black text-base-content mb-8 tracking-tighter leading-tight">
+                    Connect Your Business to <span class="text-primary">WhatsApp</span>
+                </h1>
+
+                <p class="text-xl text-base-content/60 mb-12 leading-relaxed max-w-2xl mx-auto">
+                    The most reliable, multi-device WhatsApp API for developers. Integrate in minutes,
+                    scale to millions of messages with ease.
+                </p>
+
+                <div class="flex flex-col sm:flex-row gap-5 justify-center mt-4">
+                    <a href="/register"
+                        class="btn btn-primary btn-lg rounded-2xl px-12 h-16 group shadow-xl shadow-primary/20">
+                        Start Building Now
+                        <i class="ri-arrow-right-line group-hover:translate-x-1 transition-transform"></i>
+                    </a>
+                    <a href="#features"
+                        class="btn btn-outline btn-ghost btn-lg rounded-2xl px-12 h-16 border-base-content/10">
+                        Explore Features
+                    </a>
+                </div>
+
+                <!-- Dashboard Preview -->
+                <div class="mt-20 relative px-4 lg:px-0 opacity-80 hover:opacity-100 transition-opacity duration-500">
+                    <div class="bg-base-300 rounded-3xl p-1 shadow-2xl overflow-hidden border border-base-content/10">
+                        <div class="bg-base-200 h-8 flex items-center px-4 gap-2">
+                            <div class="w-3 h-3 rounded-full bg-error/20"></div>
+                            <div class="w-3 h-3 rounded-full bg-warning/20"></div>
+                            <div class="w-3 h-3 rounded-full bg-success/20"></div>
+                        </div>
+                        <img src="images/image.png" alt="Dashboard Preview"
+                            class="w-full rounded-b-2xl grayscale hover:grayscale-0 transition-all duration-700">
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Features Section -->
+    <div id="features" class="py-32 px-4 lg:px-20 relative">
+        <div class="text-center mb-20">
+            <h2 class="text-4xl lg:text-5xl font-black mb-6 tracking-tight">Everything you need to <span
+                    class="text-primary">Scale</span></h2>
+            <p class="text-base-content/60 max-w-2xl mx-auto">Powerful features designed for high-performance
+                communication and seamless developer experience.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <!-- Multi-Device -->
+            <div class="glass-card p-10 rounded-3xl">
+                <div
+                    class="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center text-primary text-4xl mb-8">
+                    <i class="ri-smartphone-line"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Multi-Device Connectivity</h3>
+                <p class="text-base-content/60 leading-relaxed">Stay connected 24/7. Our advanced architecture keeps
+                    your sessions alive even when your phone is offline, supporting multiple accounts.</p>
+            </div>
+
+            <!-- Campaigns -->
+            <div class="glass-card p-10 rounded-3xl">
+                <div
+                    class="w-16 h-16 bg-success/10 rounded-2xl flex items-center justify-center text-success text-4xl mb-8">
+                    <i class="ri-megaphone-line"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Bulk Campaigns</h3>
+                <p class="text-base-content/60 leading-relaxed">Reach your audience at scale. Broadcast messages to
+                    thousands of contacts with intelligent delay and rotation to prevent bans.</p>
+            </div>
+
+            <!-- Auto-Replies -->
+            <div class="glass-card p-10 rounded-3xl">
+                <div
+                    class="w-16 h-16 bg-warning/10 rounded-2xl flex items-center justify-center text-warning text-4xl mb-8">
+                    <i class="ri-chat-check-line"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Intelligent Auto-Replies</h3>
+                <p class="text-base-content/60 leading-relaxed">Boost your efficiency with precision automation. Define
+                    keyword-based triggers and custom response rules to interact with customers instantly 24/7.</p>
+            </div>
+
+            <!-- Scheduled Messages -->
+            <div class="glass-card p-10 rounded-3xl">
+                <div class="w-16 h-16 bg-info/10 rounded-2xl flex items-center justify-center text-info text-4xl mb-8">
+                    <i class="ri-calendar-schedule-line"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Scheduled Messaging</h3>
+                <p class="text-base-content/60 leading-relaxed">Plan ahead and automate your communication. Schedule
+                    messages for a specific date and time for perfect timing.</p>
+            </div>
+
+            <!-- Contact Management -->
+            <div class="glass-card p-10 rounded-3xl">
+                <div
+                    class="w-16 h-16 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary text-4xl mb-8">
+                    <i class="ri-contacts-book-2-line"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Contact Book Management</h3>
+                <p class="text-base-content/60 leading-relaxed">Sync and organize your WhatsApp contacts. Create custom
+                    contact groups and books for targeted outreach.</p>
+            </div>
+
+            <!-- REST API & Webhooks -->
+            <div class="glass-card p-10 rounded-3xl">
+                <div
+                    class="w-16 h-16 bg-accent/10 rounded-2xl flex items-center justify-center text-accent text-4xl mb-8">
+                    <i class="ri-webhook-line"></i>
+                </div>
+                <h3 class="text-2xl font-bold mb-4">Powerful REST API</h3>
+                <p class="text-base-content/60 leading-relaxed">Easy integration with any tech stack. Receive real-time
+                    events through Webhooks and secure your access with API Keys.</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Stats Section -->
+    <div class="py-24 bg-primary text-primary-content">
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-16 max-w-6xl mx-auto px-4 text-center">
+            <div>
+                <p class="text-6xl font-black mb-2 tracking-tighter" id="stat-messages">
+                    <%= stats.messages>= 1000 ? (stats.messages / 1000).toFixed(1) + 'k+' : stats.messages %>
+                </p>
+                <p class="uppercase tracking-[0.2em] text-xs font-bold opacity-70">Messages Delivered</p>
+            </div>
+            <div>
+                <p class="text-6xl font-black mb-2 tracking-tighter" id="stat-users">
+                    <%= stats.users.toLocaleString() %>+
+                </p>
+                <p class="uppercase tracking-[0.2em] text-xs font-bold opacity-70">Active Businesses</p>
+            </div>
+            <div>
+                <p class="text-6xl font-black mb-2 tracking-tighter" id="stat-devices">
+                    <%= stats.devices.toLocaleString() %>+
+                </p>
+                <p class="uppercase tracking-[0.2em] text-xs font-bold opacity-70">Connected Nodes</p>
+            </div>
+        </div>
+    </div>
+
+    <!-- Pricing Section -->
+    <div id="pricing" class="py-32 px-4 lg:px-20 bg-base-200/50">
+        <div class="text-center mb-20">
+            <h2 class="text-4xl lg:text-5xl font-black mb-6 tracking-tight">Flexible <span
+                    class="text-primary">Pricing</span></h2>
+            <p class="text-base-content/60 max-w-2xl mx-auto">Scale your communications with costs that make sense.</p>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto">
+            <% packages.forEach(pkg=> { %>
+                <div class="glass-card flex flex-col rounded-[2.5rem] overflow-hidden group">
+                    <div class="p-10">
+                        <div class="flex justify-between items-start mb-6">
+                            <h3 class="text-2xl font-bold group-hover:text-primary transition-colors">
+                                <%= pkg.name %>
+                            </h3>
+                            <% if(pkg.price> 10000) { %>
+                                <span class="badge badge-primary rounded-full font-bold">POPULAR</span>
+                                <% } %>
+                        </div>
+                        <div class="flex items-baseline gap-1">
+                            <span class="text-5xl font-black">
+                                <%= pkg.price==0 ? 'Free' : (pkg.currency || 'IDR' ) + ' ' + (pkg.price /
+                                    1000).toFixed(0) + 'k' %>
+                            </span>
+                            <% if(pkg.price> 0) { %>
+                                <span class="text-base-content/50 font-medium">/<%= (pkg.period || 'Mo' ).toLowerCase()
+                                        %></span>
+                                <% } %>
+                        </div>
+                    </div>
+                    <div class="p-10 flex-1 space-y-6">
+                        <ul class="space-y-4">
+                            <li class="flex items-center gap-4">
+                                <div
+                                    class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
+                                    <i class="ri-check-line text-sm"></i>
+                                </div>
+                                <span class="font-medium text-base-content/80">
+                                    <%= pkg.limit_device %> Active Session
+                                </span>
+                            </li>
+                            <li class="flex items-center gap-4">
+                                <div
+                                    class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
+                                    <i class="ri-check-line text-sm"></i>
+                                </div>
+                                <span class="font-medium text-base-content/80">
+                                    <%= pkg.limit_message %> Monthly Messages
+                                </span>
+                            </li>
+                            <% (pkg.features || []).forEach(feature=> { %>
+                                <li class="flex items-center gap-4">
+                                    <div
+                                        class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
+                                        <i class="ri-check-line text-sm"></i>
+                                    </div>
+                                    <span class="font-medium text-base-content/80">
+                                        <%= feature %>
+                                    </span>
+                                </li>
+                                <% }) %>
+                        </ul>
+                    </div>
+                    <div class="p-10 pt-0">
+                        <% if(pkg.price==0) { %>
+                            <a href="/register"
+                                class="btn btn-outline btn-block rounded-2xl h-14 border-base-content/10 hover:bg-base-content hover:text-base-100">Get
+                                Started</a>
+                            <% } else { %>
+                                <a href="https://wa.me/62895392168277?text=Halo%20Admin,%20saya%20tertarik%20dengan%20paket%20<%= pkg.name %>%20WARF."
+                                    class="btn btn-primary btn-block rounded-2xl h-14 shadow-lg shadow-primary/20">
+                                    Choose
+                                </a>
+                                <% } %>
+                    </div>
+                </div>
+                <% }) %>
+
+        </div>
+    </div>
+
+    <!-- Footer -->
+    <footer
+        class="footer p-12 bg-base-100 text-base-content/60 px-4 lg:px-20 border-t border-base-content/5 grid grid-cols-1 lg:grid-cols-4 md:grid-cols-2 gap-5">
+        <aside>
+            <h2 class="text-3xl font-bold text-base-content italic tracking-tighter mb-4">WARF</h2>
+            <p class="max-w-xs leading-relaxed">Ultimate WhatsApp Gateway Service. Scale your communication today with
+                our reliable and secure API.</p>
+            <div class="flex gap-4 mt-6">
+                <a class="text-2xl hover:text-primary transition-colors cursor-pointer"><i
+                        class="ri-facebook-fill"></i></a>
+                <a class="text-2xl hover:text-primary transition-colors cursor-pointer"><i
+                        class="ri-twitter-x-line"></i></a>
+                <a class="text-2xl hover:text-primary transition-colors cursor-pointer"><i
+                        class="ri-instagram-line"></i></a>
+            </div>
+        </aside>
+        <nav>
+            <h6 class="footer-title text-base-content opacity-100">Product</h6>
+            <a href="#features" class="link link-hover">Features</a>
+            <a href="/pricing" class="link link-hover">Pricing</a>
+        </nav>
+        <nav>
+            <h6 class="footer-title text-base-content opacity-100">Company</h6>
+            <a href="/about" class="link link-hover">About us</a>
+            <a href="/contact" class="link link-hover">Contact</a>
+            <a href="/privacy" class="link link-hover">Privacy Policy</a>
+        </nav>
+        <nav>
+            <h6 class="footer-title text-base-content opacity-100">Legal</h6>
+            <a href="/tos" class="link link-hover">Terms of Service</a>
+            <a href="/cookies" class="link link-hover">Cookie Policy</a>
+        </nav>
+    </footer>
+
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script>
+        // Theme initialization
+        const themeToggle = document.getElementById('theme-toggle');
+        const themeIcon = document.getElementById('theme-icon');
+
+        const updateTheme = (theme) => {
+            document.documentElement.setAttribute('data-theme', theme);
+            localStorage.setItem('theme', theme);
+            themeIcon.className = theme === 'dark' ? 'ri-sun-line' : 'ri-moon-line';
+        };
+
+        const currentTheme = localStorage.getItem('theme') || 'dark';
+        updateTheme(currentTheme);
+
+        themeToggle.addEventListener('click', () => {
+            const newTheme = document.documentElement.getAttribute('data-theme') === 'dark' ? 'light' : 'dark';
+            updateTheme(newTheme);
+        });
+
+        // Get DaisyUI theme colors dynamically
+        const getThemeColors = () => {
+            const theme = document.documentElement.getAttribute('data-theme') || 'dark';
+
+            return {
+                primary: 'oklch(var(--p))',
+                success: 'oklch(var(--su))',
+                warning: 'oklch(var(--wa))',
+                error: 'oklch(var(--er))',
+                info: 'oklch(var(--in))',
+                background: theme === 'dark' ? '#1f2937' : '#ffffff',
+                text: theme === 'dark' ? '#f3f4f6' : '#1f2937'
+            };
+        };
+
+        // DaisyUI-themed Toast Configuration
+        const Toast = Swal.mixin({
+            toast: true,
+            position: 'top-end',
+            showConfirmButton: false,
+            timer: 3000,
+            timerProgressBar: true,
+            background: getThemeColors().background,
+            color: getThemeColors().text,
+            didOpen: (toast) => {
+                toast.addEventListener('mouseenter', Swal.stopTimer);
+                toast.addEventListener('mouseleave', Swal.resumeTimer);
+            },
+            customClass: {
+                popup: 'rounded-2xl shadow-xl border border-base-content/10'
+            }
+        });
+
+        // Global toast helper functions with DaisyUI theming
+        window.showToast = {
+            success: (message, title = 'Success') => {
+                return Toast.fire({
+                    icon: 'success',
+                    title: title,
+                    text: message,
+                    iconColor: getThemeColors().success
+                });
+            },
+            error: (message, title = 'Error') => {
+                return Toast.fire({
+                    icon: 'error',
+                    title: title,
+                    text: message,
+                    iconColor: getThemeColors().error
+                });
+            },
+            warning: (message, title = 'Warning') => {
+                return Toast.fire({
+                    icon: 'warning',
+                    title: title,
+                    text: message,
+                    iconColor: getThemeColors().warning
+                });
+            },
+            info: (message, title = 'Info') => {
+                return Toast.fire({
+                    icon: 'info',
+                    title: title,
+                    text: message,
+                    iconColor: getThemeColors().info
+                });
+            },
+            loading: (message = 'Loading...', title = 'Please wait') => {
+                return Swal.fire({
+                    title: title,
+                    text: message,
+                    allowOutsideClick: false,
+                    showConfirmButton: false,
+                    background: getThemeColors().background,
+                    color: getThemeColors().text,
+                    didOpen: () => {
+                        Swal.showLoading();
+                    },
+                    customClass: {
+                        popup: 'rounded-2xl shadow-xl border border-base-content/10'
+                    }
+                });
+            },
+            close: () => {
+                Swal.close();
+            }
+        };
+
+        // Global confirm dialog helper with DaisyUI theming
+        window.showConfirm = async (title, text, confirmText = 'Yes', cancelText = 'Cancel') => {
+            const colors = getThemeColors();
+            return await Swal.fire({
+                title: title,
+                text: text,
+                icon: 'warning',
+                showCancelButton: true,
+                confirmButtonColor: colors.primary,
+                cancelButtonColor: colors.error,
+                confirmButtonText: confirmText,
+                cancelButtonText: cancelText,
+                background: colors.background,
+                color: colors.text,
+                iconColor: colors.warning,
+                customClass: {
+                    popup: 'rounded-2xl shadow-xl border border-base-content/10',
+                    confirmButton: 'btn btn-primary rounded-xl',
+                    cancelButton: 'btn btn-error rounded-xl'
+                },
+                buttonsStyling: false
+            });
+        };
+
+        // Real-time stats update
+        async function updateStats() {
+            try {
+                const response = await axios.get('/api/public/stats');
+                if (response.data.success) {
+                    const stats = response.data.stats;
+
+                    // Update Messages
+                    const msgEl = document.getElementById('stat-messages');
+                    if (msgEl) {
+                        msgEl.innerText = stats.messages >= 1000
+                            ? (stats.messages / 1000).toFixed(1) + 'k+'
+                            : stats.messages;
+                    }
+
+                    // Update Users
+                    const userEl = document.getElementById('stat-users');
+                    if (userEl) userEl.innerText = stats.users.toLocaleString() + '+';
+
+                    // Update Devices
+                    const deviceEl = document.getElementById('stat-devices');
+                    if (deviceEl) deviceEl.innerText = stats.devices.toLocaleString() + '+';
+                }
+            } catch (error) {
+                console.error('Failed to update stats:', error);
+            }
+        }
+
+        // Poll every 30 seconds
+        setInterval(updateStats, 30000);
+    </script>
+</body>
+
+</html>

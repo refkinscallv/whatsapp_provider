@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="light">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %>
+    </title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5.0.0-beta.8/daisyui.css" rel="stylesheet" type="text/css" />
+</head>
+
+<body class="bg-base-100 text-base-content min-h-screen flex items-center justify-center p-4">
+    <div class="max-w-lg w-full text-center space-y-6">
+        <h1 class="text-6xl font-bold text-error">
+            <%= status %>
+        </h1>
+        <h2 class="text-2xl font-bold">
+            <%= title %>
+        </h2>
+        <p class="text-base-content/60">
+            <%= message %>
+        </p>
+
+        <% if (error && error.stack) { %>
+            <div class="collapse collapse-arrow bg-base-200 rounded-xl">
+                <input type="checkbox" />
+                <div class="collapse-title font-medium text-xs">
+                    View Stack Trace
+                </div>
+                <div class="collapse-content">
+                    <pre
+                        class="text-[10px] text-left overflow-x-auto p-4 bg-black/10 rounded"><code><%= error.stack %></code></pre>
+                </div>
+            </div>
+            <% } %>
+
+                <a href="/" class="btn btn-primary rounded-xl">Go Home</a>
+    </div>
+</body>
+
+</html>

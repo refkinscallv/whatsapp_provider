@@ -1,0 +1,302 @@
+<div class="space-y-8 max-w-5xl mx-auto py-10 px-4">
+    <div class="flex flex-col gap-2">
+        <h1 class="text-4xl font-bold text-base-content tracking-tighter">API Documentation</h1>
+        <p class="text-base-content/60">Integrate WARF Gateway into your applications with our robust REST API.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar Navigation -->
+        <div class="lg:col-span-1">
+            <div class="sticky top-24 space-y-4">
+                <p class="text-[10px] uppercase tracking-widest text-primary font-bold">Getting Started</p>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#authentication"
+                            class="text-base-content/60 hover:text-base-content transition-colors">Authentication</a>
+                    </li>
+                    <li><a href="#base-url" class="text-base-content/60 hover:text-base-content transition-colors">Base
+                            URL</a></li>
+                </ul>
+
+                <p class="text-[10px] uppercase tracking-widest text-primary font-bold mt-8">Devices</p>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#list-devices"
+                            class="text-base-content/60 hover:text-base-content transition-colors">List Devices</a></li>
+                    <li><a href="#device-status"
+                            class="text-base-content/60 hover:text-base-content transition-colors">Check Status</a></li>
+                </ul>
+
+                <p class="text-[10px] uppercase tracking-widest text-primary font-bold mt-8">Messages</p>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#send-text" class="text-base-content/60 hover:text-base-content transition-colors">Send
+                            Text</a></li>
+                    <li><a href="#send-media"
+                            class="text-base-content/60 hover:text-base-content transition-colors">Send Media</a></li>
+                    <li><a href="#send-bulk" class="text-base-content/60 hover:text-base-content transition-colors">Send
+                            Bulk</a></li>
+                </ul>
+
+                <p class="text-[10px] uppercase tracking-widest text-primary font-bold mt-8">Campaigns</p>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#list-campaigns"
+                            class="text-base-content/60 hover:text-base-content transition-colors">List Campaigns</a>
+                    </li>
+                </ul>
+
+                <p class="text-[10px] uppercase tracking-widest text-primary font-bold mt-8">Webhooks</p>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#webhooks-overview"
+                            class="text-base-content/60 hover:text-base-content transition-colors">Overview</a></li>
+                    <li><a href="#webhook-events"
+                            class="text-base-content/60 hover:text-base-content transition-colors">Event Types</a></li>
+                </ul>
+
+                <p class="text-[10px] uppercase tracking-widest text-primary font-bold mt-8">Integration</p>
+                <ul class="space-y-2 text-sm">
+                    <li><a href="#integration-examples"
+                            class="text-base-content/60 hover:text-base-content transition-colors">Code Examples</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+
+        <!-- Main Content -->
+        <div class="lg:col-span-3 space-y-12 pb-20">
+            <!-- Authentication Section -->
+            <section id="authentication" class="space-y-4">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">Authentication</h2>
+                <p class="text-base-content/60 leading-relaxed">
+                    All API requests require an API Key. You can generate multiple API Keys in the
+                    <a href="/keys" class="text-primary hover:underline">API Keys</a> page.
+                    Include the key in your headers as <code>X-API-Key: YOUR_API_KEY</code>.
+                </p>
+                <div class="mockup-code border border-base-content/5">
+                    <pre><code>X-API-Key: YOUR_API_KEY</code></pre>
+                </div>
+            </section>
+
+            <!-- Base URL Section -->
+            <section id="base-url" class="space-y-4">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">Base URL</h2>
+                <p class="text-base-content/60">All API endpoints are relative to:</p>
+                <div class="mockup-code border border-base-content/5">
+                    <pre><code><%= config.app.url %>/api/v1</code></pre>
+                </div>
+            </section>
+
+            <!-- Devices Section -->
+            <section id="list-devices" class="space-y-4">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">List Devices</h2>
+                <div class="badge badge-info badge-sm font-bold">GET</div>
+                <div class="mockup-code border border-base-content/5 py-0 px-4">
+                    <pre><code>/devices</code></pre>
+                </div>
+                <p class="text-sm text-base-content/60">Returns a list of all devices associated with your account.</p>
+            </section>
+
+            <!-- Device Status Section -->
+            <section id="device-status" class="space-y-4">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">Check Device Status
+                </h2>
+                <div class="badge badge-info badge-sm font-bold">GET</div>
+                <div class="mockup-code border border-base-content/5 py-0 px-4">
+                    <pre><code>/devices/:token</code></pre>
+                </div>
+                <p class="text-sm text-base-content/60">Returns detailed information about a specific device, including
+                    connection state and profile data.</p>
+            </section>
+
+            <!-- Send Text Section -->
+            <section id="send-text" class="space-y-4">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">Send Text Message
+                </h2>
+                <div class="badge badge-success badge-sm font-bold">POST</div>
+                <div class="mockup-code border border-base-content/5 py-0 px-4">
+                    <pre><code>/messages/send</code></pre>
+                </div>
+                <h4 class="font-bold text-sm text-base-content/70">Request Body:</h4>
+                <div class="mockup-code border border-base-content/5">
+                    <pre><code>{
+  "device_token": "YOUR_DEVICE_TOKEN",
+  "to": "628123456789",
+  "message": "Hello from WARF API!",
+  "use_queue": true
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- Send Media Section -->
+            <section id="send-media" class="space-y-4">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">Send Media Message
+                </h2>
+                <div class="badge badge-success badge-sm font-bold">POST</div>
+                <div class="mockup-code border border-base-content/5 py-0 px-4">
+                    <pre><code>/messages/media</code></pre>
+                </div>
+                <h4 class="font-bold text-sm text-base-content/70">Request Body:</h4>
+                <div class="mockup-code border border-base-content/5">
+                    <pre><code>{
+  "device_token": "YOUR_DEVICE_TOKEN",
+  "to": "628123456789",
+  "message": "Check this image",
+  "media_url": "https://example.com/image.jpg"
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- Send Bulk Section -->
+            <section id="send-bulk" class="space-y-4">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">Send Bulk Messages
+                </h2>
+                <div class="badge badge-success badge-sm font-bold">POST</div>
+                <div class="mockup-code border border-base-content/5 py-0 px-4">
+                    <pre><code>/messages/bulk</code></pre>
+                </div>
+                <h4 class="font-bold text-sm text-base-content/70">Request Body:</h4>
+                <div class="mockup-code border border-base-content/5">
+                    <pre><code>{
+  "device_token": "YOUR_DEVICE_TOKEN",
+  "recipients": [
+    { "to": "628123456789", "message": "Bulk Message 1" },
+    { "to": "628123456780", "message": "Bulk Message 2" }
+  ]
+}</code></pre>
+                </div>
+            </section>
+
+            <!-- Campaigns Section -->
+            <section id="list-campaigns" class="space-y-4">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">Campaigns</h2>
+                <div class="alert alert-warning glass rounded-2xl">
+                    <i class="ri-alert-line text-xl"></i>
+                    <p class="text-xs">Campaign management via API is currently available through dashboard session
+                        only. Public v1 support coming soon.</p>
+                </div>
+            </section>
+
+            <!-- Webhooks Section -->
+            <section id="webhooks-overview" class="space-y-4">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">Webhooks Overview
+                </h2>
+                <p class="text-base-content/60 leading-relaxed">
+                    Webhooks allow your application to receive real-time notifications about events happening in the
+                    gateway.
+                    Instead of polling our API, we'll push data to your server as soon as an event occurs.
+                </p>
+                <div class="alert alert-info glass rounded-2xl">
+                    <i class="ri-information-line text-xl"></i>
+                    <div>
+                        <h3 class="font-bold">Why use Webhooks?</h3>
+                        <p class="text-xs">Perfect for handling incoming messages, monitoring device connection status,
+                            and processing QR codes in your own backend.</p>
+                    </div>
+                </div>
+            </section>
+
+            <section id="webhook-events" class="space-y-6">
+                <h3 class="text-xl font-bold text-base-content">Common Event Types</h3>
+
+                <div class="space-y-4">
+                    <h4 class="font-bold text-sm text-primary uppercase tracking-widest">1. Incoming Message</h4>
+                    <p class="text-sm text-base-content/60">Sent whenever a device receives a new message.</p>
+                    <div class="mockup-code border border-base-content/5">
+                        <pre><code>{
+  "event": "message",
+  "device": "DEVICE_TOKEN",
+  "data": {
+    "from": "628123456789@s.whatsapp.net",
+    "body": "Hello from user!",
+    "type": "chat",
+    "timestamp": 1700000000
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h4 class="font-bold text-sm text-primary uppercase tracking-widest">2. Device Status (QR Code)</h4>
+                    <p class="text-sm text-base-content/60">Sent when a device needs to be scanned.</p>
+                    <div class="mockup-code border border-base-content/5">
+                        <pre><code>{
+  "event": "qr",
+  "device": "DEVICE_TOKEN",
+  "data": {
+    "qr": "2@123abc456def..."
+  }
+}</code></pre>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h4 class="font-bold text-sm text-primary uppercase tracking-widest">3. Authenticated / Ready</h4>
+                    <p class="text-sm text-base-content/60">Sent when a device successfully connects to WhatsApp.</p>
+                    <div class="mockup-code border border-base-content/5">
+                        <pre><code>{
+  "event": "ready",
+  "device": "DEVICE_TOKEN",
+  "message": "Device is ready"
+}</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Integration Examples Section -->
+            <section id="integration-examples" class="space-y-8">
+                <h2 class="text-2xl font-bold text-base-content border-b border-base-content/5 pb-2">Integration
+                    Examples</h2>
+
+                <div class="space-y-4">
+                    <h4 class="font-bold text-sm text-primary uppercase tracking-widest">JavaScript (Native Fetch)</h4>
+                    <div class="mockup-code border border-base-content/5">
+                        <pre><code>const sendMessage = async () => {
+  const response = await fetch('<%= config.app.url %>/api/v1/messages/send', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'X-API-Key': 'YOUR_API_KEY'
+    },
+    body: JSON.stringify({
+      device_token: 'YOUR_DEVICE_TOKEN',
+      to: '628123456789',
+      message: 'Hello from JavaScript!'
+    })
+  });
+  
+  const data = await response.json();
+  console.log(data);
+};</code></pre>
+                    </div>
+                </div>
+
+                <div class="space-y-4">
+                    <h4 class="font-bold text-sm text-primary uppercase tracking-widest">Node.js (Axios)</h4>
+                    <div class="mockup-code border border-base-content/5">
+                        <pre><code>const axios = require('axios');
+
+axios.post('<%= config.app.url %>/api/v1/messages/send', {
+  device_token: 'YOUR_DEVICE_TOKEN',
+  to: '628123456789',
+  message: 'Hello from Node.js!'
+}, {
+  headers: { 'X-API-Key': 'YOUR_API_KEY' }
+})
+.then(res => console.log(res.data))
+.catch(err => console.error(err));</code></pre>
+                    </div>
+                </div>
+            </section>
+
+            <!-- Rate Limits Section -->
+            <section class="p-8 glass rounded-3xl border border-warning/20 bg-warning/5">
+                <div class="flex items-center gap-4 mb-4">
+                    <i class="ri-error-warning-line text-3xl text-warning"></i>
+                    <h3 class="text-lg font-bold text-base-content">Usage Limits</h3>
+                </div>
+                <p class="text-base-content/60 text-sm">
+                    Usage limits depend on your current subscription plan.
+                    You can check your remaining quota on the <a href="/dashboard"
+                        class="text-warning font-bold">Dashboard</a>.
+                </p>
+            </section>
+        </div>
+    </div>
+</div>

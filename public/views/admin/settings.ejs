@@ -1,0 +1,149 @@
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">Admin Settings</h1>
+            <p class="text-base-content/60">Configure global application behavior and system modes.</p>
+        </div>
+        <a href="/admin" class="btn btn-ghost btn-sm rounded-lg"><i class="ri-arrow-left-line"></i> Back to
+            Dashboard</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+        <!-- System Mode Section -->
+        <div class="md:col-span-2 space-y-6">
+            <div class="card glass shadow-sm overflow-hidden border border-base-content/5">
+                <div class="card-body p-8">
+                    <div class="flex items-center gap-4 mb-8">
+                        <div class="w-12 h-12 rounded-2xl bg-primary/10 flex items-center justify-center text-primary">
+                            <i class="ri-settings-5-line text-2xl"></i>
+                        </div>
+                        <div>
+                            <h2 class="text-xl font-bold">System Configuration</h2>
+                            <p class="text-sm opacity-60">Control the fundamental operating mode of the application.</p>
+                        </div>
+                    </div>
+
+                    <form id="adminSettingsForm" class="space-y-6">
+                        <div class="form-control">
+                            <label class="label">
+                                <span
+                                    class="label-text font-bold uppercase text-[10px] tracking-widest opacity-60">Application
+                                    Mode</span>
+                            </label>
+                            <select name="app_mode" class="select select-bordered w-full rounded-2xl h-14">
+                                <option value="SAAS" <%=settings.app_mode==='SAAS' ? 'selected' : '' %>>SAAS
+                                    (Subscriptions & Quotas)</option>
+                                <option value="NO_SUBSCRIPTION" <%=settings.app_mode==='NO_SUBSCRIPTION' ? 'selected'
+                                    : '' %>>NO_SUBSCRIPTION (Free Usage for Registered Users)</option>
+                                <option value="DASHBOARD" <%=settings.app_mode==='DASHBOARD' ? 'selected' : '' %>
+                                    >DASHBOARD (Multi-user without subscription logic)</option>
+                            </select>
+                            <label class="label">
+                                <span class="label-text-alt opacity-50">Select how the system handles user limits and
+                                    billing.</span>
+                            </label>
+                        </div>
+
+                        <div class="form-control">
+                            <label class="label cursor-pointer justify-start gap-4">
+                                <input type="checkbox" name="allow_registration"
+                                    class="checkbox checkbox-primary rounded-lg" value="true"
+                                    <%=settings.allow_registration==='true' ? 'checked' : '' %>>
+                                <span class="label-text font-medium">Allow New User Registration</span>
+                            </label>
+                            <span class="text-[10px] opacity-40 ml-10">When disabled, only admins can create new
+                                accounts.</span>
+                        </div>
+
+                        <div class="pt-6 border-t border-base-content/5 flex justify-end">
+                            <button type="submit" class="btn btn-primary px-10 rounded-xl" id="btn-save-settings">
+                                <i class="ri-save-line"></i> Save Settings
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Information Box -->
+            <div
+                class="alert alert-info shadow-sm rounded-2xl border border-info/20 bg-info/5 flex items-start gap-4 p-6">
+                <i class="ri-information-line text-2xl mt-1"></i>
+                <div class="text-sm">
+                    <h3 class="font-bold mb-1">About App Modes</h3>
+                    <ul class="list-disc list-inside space-y-1 opacity-80">
+                        <li><strong>SAAS:</strong> Full subscription logic, packages, and usage limits enforced.</li>
+                        <li><strong>NO_SUBSCRIPTION:</strong> Users can register and use features without paying, but
+                            limits might still apply.</li>
+                        <li><strong>DASHBOARD:</strong> Simplified multi-user mode typical for internal dashboards.</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar / Secondary Settings -->
+        <div class="space-y-6">
+            <div class="card glass border border-base-content/5 p-6 rounded-3xl">
+                <h3 class="font-bold mb-4 flex items-center gap-2">
+                    <i class="ri-shield-check-line text-success"></i> System Status
+                </h3>
+                <div class="space-y-4 text-xs font-medium">
+                    <div class="flex justify-between items-center py-2 border-b border-base-content/5">
+                        <span class="opacity-60">Node Version</span>
+                        <span>
+                            <%= process.version %>
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-base-content/5">
+                        <span class="opacity-60">Platform</span>
+                        <span class="capitalize">
+                            <%= process.platform %>
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center py-2 border-b border-base-content/5">
+                        <span class="opacity-60">App Version</span>
+                        <span>v1.0.5</span>
+                    </div>
+                    <div class="flex justify-between items-center py-2">
+                        <span class="opacity-60">Uptime</span>
+                        <span>
+                            <%= Math.floor(process.uptime() / 3600) %>h <%= Math.floor((process.uptime() % 3600) / 60)
+                                    %>m
+                        </span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    $('#adminSettingsForm').on('submit', async function (e) {
+        e.preventDefault();
+
+        const btn = $('#btn-save-settings');
+        const originalHtml = btn.html();
+
+        try {
+            btn.prop('disabled', true).html('<span class="loading loading-spinner"></span> Saving...');
+
+            // Get form data as object
+            const formData = new FormData(this);
+            const data = {};
+
+            // Manual handling for checkboxes to ensure false values are sent if needed, 
+            // though our backend logic with req.body might need specific keys.
+            data.app_mode = formData.get('app_mode');
+            data.allow_registration = formData.get('allow_registration') === 'true' ? 'true' : 'false';
+
+            const res = await axios.post('/api/admin/settings', data);
+
+            if (res.data.success) {
+                showToast.success('Global settings updated successfully');
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to update settings');
+        } finally {
+            btn.prop('disabled', false).html(originalHtml);
+        }
+    });
+</script>

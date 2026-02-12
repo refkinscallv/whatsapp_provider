@@ -1,0 +1,44 @@
+<!DOCTYPE html>
+<html>
+
+<head>
+    <meta charset="utf-8">
+    <title>Mailer Test - <%= appName %>
+    </title>
+    <style>
+        body {
+            font-family: sans-serif;
+            line-height: 1.6;
+            color: #333;
+            padding: 20px;
+        }
+
+        .container {
+            max-width: 600px;
+            margin: 0 auto;
+            border: 1px solid #ddd;
+            padding: 20px;
+            border-radius: 5px;
+        }
+
+        .status {
+            color: #25d366;
+            font-weight: bold;
+        }
+    </style>
+</head>
+
+<body>
+    <div class="container">
+        <h2>Mailer Configuration Test</h2>
+        <p>This is a test email from <strong>
+                <%= appName %>
+            </strong>.</p>
+        <p class="status">Configuration Status: SUCCESS</p>
+        <p>Sent at: <%= timestamp %>
+        </p>
+        <p>Your mailer credentials for <strong>mail.wanine.com</strong> are working correctly.</p>
+    </div>
+</body>
+
+</html>

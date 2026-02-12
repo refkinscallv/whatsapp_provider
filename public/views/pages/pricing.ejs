@@ -1,0 +1,150 @@
+<% if (!isDashboard) { %>
+    <style>
+        .glass-card {
+            background: oklch(1 0 0 / 0.03);
+            backdrop-filter: blur(12px);
+            border: 1px solid oklch(1 0 0 / 0.08);
+            transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+
+        .glass-card:hover {
+            background: oklch(1 0 0 / 0.06);
+            border-color: var(--p);
+            transform: translateY(-8px);
+            box-shadow: 0 20px 40px -20px oklch(var(--p) / 0.3);
+        }
+
+        [data-theme="light"] .glass-card {
+            background: oklch(0.1 0 0 / 0.03);
+            border-color: oklch(0.1 0 0 / 0.08);
+        }
+    </style>
+    <% } else { %>
+        <style>
+            .glass-card {
+                background: oklch(var(--bc) / 0.03);
+                backdrop-filter: blur(12px);
+                border: 1px solid oklch(var(--bc) / 0.08);
+                transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+            }
+
+            .glass-card:hover {
+                background: oklch(var(--bc) / 0.05);
+                border-color: var(--p);
+                transform: translateY(-5px);
+            }
+        </style>
+        <% } %>
+
+            <div class="<%= isDashboard ? '' : 'hero min-h-screen bg-base-100 pt-20 pb-20' %>">
+                <div class="<%= isDashboard ? '' : 'hero-content text-center flex-col w-full' %>">
+                    <% if (!isDashboard) { %>
+                        <div class="flex justify-start w-full max-w-7xl mb-8">
+                            <a href="/dashboard"
+                                class="btn btn-ghost btn-sm rounded-full gap-2 text-base-content/60 hover:text-primary transition-all">
+                                <i class="ri-arrow-left-line"></i>
+                                <span class="uppercase text-[10px] font-bold tracking-widest">Back to Dashboard</span>
+                            </a>
+                        </div>
+                        <% } %>
+
+                            <div class="text-center mb-16">
+                                <h1 class="text-4xl lg:text-5xl font-black mb-6 tracking-tight">Flexible <span
+                                        class="text-primary">Pricing Plans</span></h1>
+                                <p class="text-base-content/60 max-w-2xl mx-auto">Choose the perfect plan to scale your
+                                    WhatsApp communications without any hidden costs.</p>
+                            </div>
+
+                            <div class="grid grid-cols-1 md:grid-cols-3 gap-8 max-w-7xl mx-auto w-full">
+                                <% packages.forEach(pkg=> { %>
+                                    <div class="glass-card flex flex-col rounded-[2.5rem] overflow-hidden group">
+                                        <div class="p-10">
+                                            <div class="flex justify-between items-start mb-6">
+                                                <h3
+                                                    class="text-2xl font-bold group-hover:text-primary transition-colors">
+                                                    <%= pkg.name %>
+                                                </h3>
+                                                <% if(pkg.price> 10000) { %>
+                                                    <span
+                                                        class="badge badge-primary rounded-full font-bold">POPULAR</span>
+                                                    <% } %>
+                                            </div>
+                                            <div class="flex items-baseline gap-1">
+                                                <span class="text-5xl font-black">
+                                                    <%= pkg.price==0 ? 'Free' : (pkg.currency || 'IDR' ) + ' ' +
+                                                        (pkg.price / 1000).toFixed(0) + 'k' %>
+                                                </span>
+                                                <% if(pkg.price> 0) { %>
+                                                    <span class="text-base-content/50 font-medium">/<%= (pkg.period
+                                                            || 'Mo' ).toLowerCase() %></span>
+                                                    <% } %>
+                                            </div>
+                                        </div>
+                                        <div class="p-10 flex-1 space-y-6">
+                                            <ul class="space-y-4">
+                                                <li class="flex items-center gap-4">
+                                                    <div
+                                                        class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
+                                                        <i class="ri-check-line text-sm"></i>
+                                                    </div>
+                                                    <span class="font-medium text-base-content/80">
+                                                        <%= pkg.limit_device %> Active Session
+                                                    </span>
+                                                </li>
+                                                <li class="flex items-center gap-4">
+                                                    <div
+                                                        class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
+                                                        <i class="ri-check-line text-sm"></i>
+                                                    </div>
+                                                    <span class="font-medium text-base-content/80">
+                                                        <%= pkg.limit_message %> Monthly Messages
+                                                    </span>
+                                                </li>
+                                                <% (pkg.features || []).forEach(feature=> { %>
+                                                    <li class="flex items-center gap-4">
+                                                        <div
+                                                            class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
+                                                            <i class="ri-check-line text-sm"></i>
+                                                        </div>
+                                                        <span class="font-medium text-base-content/80">
+                                                            <%= feature %>
+                                                        </span>
+                                                    </li>
+                                                    <% }) %>
+                                            </ul>
+                                        </div>
+                                        <div class="p-10 pt-0">
+                                            <% if(pkg.price==0) { %>
+                                                <button
+                                                    class="btn btn-outline btn-block rounded-2xl h-14 border-base-content/10"
+                                                    disabled>Current Plan</button>
+                                                <% } else { %>
+                                                    <a href="https://wa.me/62895392168277?text=Halo%20Admin,%20saya%20tertarik%20dengan%20paket%20<%= pkg.name %>%20WARF."
+                                                        class="btn btn-primary btn-block rounded-2xl h-14 shadow-lg shadow-primary/20">
+                                                        <%= isDashboard ? 'Upgrade Now' : 'Get Started' %>
+                                                    </a>
+                                                    <% } %>
+                                        </div>
+                                    </div>
+                                    <% }) %>
+                            </div>
+
+                            <div class="mt-20 p-10 glass-card rounded-[2.5rem] max-w-4xl mx-auto w-full text-left">
+                                <h3 class="text-2xl font-bold text-base-content mb-8">Frequently Asked Questions</h3>
+                                <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                                    <div>
+                                        <h4 class="font-bold text-lg mb-3">How do I pay?</h4>
+                                        <p class="text-base-content/60 leading-relaxed">We support manual bank transfers
+                                            and local payment gateways. Contact our support team after choosing a plan
+                                            for payment instructions.</p>
+                                    </div>
+                                    <div>
+                                        <h4 class="font-bold text-lg mb-3">Can I cancel anytime?</h4>
+                                        <p class="text-base-content/60 leading-relaxed">Yes, you can cancel your
+                                            subscription at any time. Your plan will remain active until the end of the
+                                            current billing cycle.</p>
+                                    </div>
+                                </div>
+                            </div>
+                </div>
+            </div>

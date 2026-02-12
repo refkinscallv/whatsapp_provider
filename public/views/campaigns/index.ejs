@@ -1,0 +1,787 @@
+<div class="flex flex-col gap-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">Broadcast Campaigns</h1>
+            <p class="text-base-content/60">Schedule and monitor bulk messaging campaigns.</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="DataTableHelper.openFilterModal('filter_modal_campaigns', 'campaigns-table')"
+                class="btn btn-ghost glass btn-sm rounded-lg"><i class="ri-filter-3-line"></i> Filter</button>
+            <button onclick="openCampaignModal()" class="btn btn-primary btn-sm rounded-lg"><i
+                    class="ri-rocket-2-line"></i>
+                Create Campaign</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card glass hover:border-primary/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Active
+                            Campaigns</p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-active">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <i class="ri-rocket-2-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-success/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Total Sent
+                            (30d)</p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-sent">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-success/10 rounded-2xl flex items-center justify-center text-success group-hover:scale-110 transition-transform">
+                        <i class="ri-send-plane-fill text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-error/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Total Failed
+                            (30d)</p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-failed">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-error/10 rounded-2xl flex items-center justify-center text-error group-hover:scale-110 transition-transform">
+                        <i class="ri-error-warning-fill text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Campaigns List -->
+    <div class="card glass">
+        <div class="card-body">
+            <h3 class="font-bold text-lg mb-4 text-base-content">Campaign List</h3>
+            <div class="overflow-x-auto">
+                <table id="campaigns-table" class="table table-zebra w-full">
+                    <thead>
+                        <tr
+                            class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                            <th>Campaign Name</th>
+                            <th>Device</th>
+                            <th class="text-center">Creator</th>
+                            <th>Progress</th>
+                            <th>Status</th>
+                            <th>Created</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data loaded via server-side DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal for Campaigns -->
+<dialog id="filter_modal_campaigns" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl max-w-md p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/5">
+            <h3 class="font-bold text-xl text-base-content flex items-center gap-2">
+                <i class="ri-filter-3-line text-primary"></i> Filter Campaigns
+            </h3>
+        </div>
+
+        <form id="filter_form_campaigns" class="p-6 space-y-6">
+            <!-- Source Device Filter -->
+            <%- include('../layouts/partials/device_selector', { id: 'filter-device-token-camp' , name: 'device_token' ,
+                label: 'Device' , showAllOption: true, extraClass: 'bg-base-200/50' }) %>
+
+                <!-- Status Filter -->
+                <div class="form-control">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Status</label>
+                    <select name="status" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All Statuses</option>
+                        <option value="running">Running</option>
+                        <option value="completed">Completed</option>
+                        <option value="paused">Paused</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+
+                <!-- Has Media Filter -->
+                <div class="form-control">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Attachment</label>
+                    <select name="has_media" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All</option>
+                        <option value="yes">Has Media</option>
+                        <option value="no">No Media</option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">From
+                            Date</label>
+                        <input type="date" name="created_from"
+                            class="input input-bordered w-full rounded-2xl bg-base-200/50">
+                    </div>
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">To
+                            Date</label>
+                        <input type="date" name="created_to"
+                            class="input input-bordered w-full rounded-2xl bg-base-200/50">
+                    </div>
+                </div>
+        </form>
+
+        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+            <button type="button"
+                onclick="DataTableHelper.resetFilters('filter_form_campaigns', 'campaigns-table', 'filter_modal_campaigns')"
+                class="btn btn-ghost rounded-xl">
+                <i class="ri-restart-line"></i> Reset
+            </button>
+            <button type="button" onclick="DataTableHelper.applyFilters('campaigns-table', 'filter_modal_campaigns')"
+                class="btn btn-primary rounded-xl px-8">
+                <i class="ri-check-line"></i> Apply Filter
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+
+<!-- Modal -->
+<dialog id="modal_campaign" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 max-w-2xl">
+        <h3 class="font-bold text-lg mb-6 text-base-content">New Broadcast Campaign</h3>
+
+        <form id="campaignForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <%- include('../layouts/partials/device_selector', { id: 'campDevice' , label: 'Select Device' ,
+                    required: true }) %>
+                    <div class="form-control">
+                        <label
+                            class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Campaign
+                            Name</label>
+                        <input type="text" id="campName"
+                            class="input input-bordered w-full text-base-content rounded-2xl"
+                            placeholder="e.g. Feb Promo" required />
+                    </div>
+            </div>
+
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Target
+                    Type</label>
+                <div class="flex gap-2">
+                    <input type="radio" name="targetType" value="book" class="btn btn-sm btn-outline rounded-lg flex-1"
+                        aria-label="Contact Book" checked onchange="toggleTargetType('book')" />
+                    <input type="radio" name="targetType" value="manual"
+                        class="btn btn-sm btn-outline rounded-lg flex-1" aria-label="Manual / Select"
+                        onchange="toggleTargetType('manual')" />
+                </div>
+            </div>
+
+            <div id="target-book-container" class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Select Target
+                    Book</label>
+                <select id="campBook" class="select select-bordered w-full rounded-2xl"></select>
+            </div>
+
+            <div id="target-manual-container" class="form-control hidden">
+                <label class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="block uppercase text-[11px] font-semibold tracking-widest opacity-60">Recipient
+                            Numbers</span>
+                        <button type="button" onclick="openContactModal('#campReceivers')"
+                            class="btn btn-ghost btn-xs text-primary gap-1">
+                            <i class="ri-contacts-book-line"></i> Select
+                        </button>
+                    </div>
+                </label>
+                <textarea id="campReceivers"
+                    class="textarea textarea-bordered w-full h-24 rounded-2xl font-mono text-sm"
+                    placeholder="62812...\n62856..."></textarea>
+            </div>
+
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Message
+                    Template / Content</label>
+                <select id="campTemplate" class="select select-bordered w-full rounded-2xl">
+                    <option value="">Manual Entry (type below)</option>
+                </select>
+                <textarea id="campMessage" class="textarea textarea-bordered w-full h-32 rounded-2xl mt-4"
+                    placeholder="Message content..."></textarea>
+            </div>
+
+            <div class="form-control">
+                <label
+                    class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60 text-primary">Attachment
+                    (Image)</label>
+                <div class="flex flex-col gap-4">
+                    <input type="file" id="campFile"
+                        class="file-input file-input-bordered file-input-primary w-full rounded-2xl" accept="image/*"
+                        onchange="previewImage(this, 'campPreview')" />
+                    <div id="campPreview" class="hidden">
+                        <div class="relative w-full max-w-xs rounded-2xl overflow-hidden shadow-lg group">
+                            <img src="" class="w-full h-auto object-contain" />
+                            <button type="button" onclick="removePreview('campFile', 'campPreview')"
+                                class="absolute top-2 right-2 btn btn-circle btn-xs btn-error opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i class="ri-close-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Min Delay
+                        (sec)</label>
+                    <input type="number" id="campMinDelay"
+                        class="input input-bordered w-full text-base-content rounded-2xl" value="2" />
+                </div>
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Max Delay
+                        (sec)</label>
+                    <input type="number" id="campMaxDelay"
+                        class="input input-bordered w-full text-base-content rounded-2xl" value="5" />
+                </div>
+            </div>
+
+            <div class="modal-action">
+                <form method="dialog"><button class="btn btn-ghost">Cancel</button></form>
+                <button type="submit" class="btn btn-primary rounded-xl px-10">Launch Campaign</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<!-- Campaign Detail Modal -->
+<dialog id="modal_campaign_detail" class="modal">
+    <div
+        class="modal-box w-11/12 max-w-4xl bg-base-100 rounded-3xl border border-base-content/5 shadow-2xl p-0 overflow-hidden">
+        <div class="p-6 flex justify-between items-center">
+            <div class="flex items-center gap-4">
+                <div class="p-3 bg-white/20 rounded-2xl">
+                    <i class="ri-broadcast-line text-2xl"></i>
+                </div>
+                <div>
+                    <h3 class="font-bold text-xl mb-0.5" id="detailTitle">Campaign Detail</h3>
+                    <p class="text-xs opacity-80" id="detailToken"></p>
+                </div>
+            </div>
+            <form method="dialog">
+                <button class="btn btn-sm btn-circle btn-ghost"><i class="ri-close-line"></i></button>
+            </form>
+        </div>
+
+        <div class="p-8">
+            <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                <!-- Left Column: Info & Message -->
+                <div class="lg:col-span-2 space-y-6">
+                    <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                        <label class="block mb-3 uppercase text-[11px] font-bold tracking-widest opacity-60">Message
+                            Content</label>
+                        <div id="detailMessage"
+                            class="whitespace-pre-wrap text-sm leading-relaxed p-4 bg-base-100 rounded-2xl border border-base-content/5 min-h-[100px]">
+                        </div>
+
+                        <div id="detailMedia" class="mt-4 hidden">
+                            <label
+                                class="block mb-2 uppercase text-[10px] font-bold tracking-widest opacity-40">Attached
+                                Media</label>
+                            <img id="detailMediaImg" src=""
+                                class="max-h-[200px] rounded-2xl border border-base-content/10 cursor-pointer hover:opacity-90 transition-opacity"
+                                onclick="window.open(this.src, '_blank')" />
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-2 gap-6">
+                        <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                            <label
+                                class="block mb-2 uppercase text-[11px] font-bold tracking-widest opacity-60">Schedule</label>
+                            <div class="flex items-center gap-3">
+                                <i class="ri-calendar-event-line text-primary"></i>
+                                <span id="detailSchedule" class="font-semibold">-</span>
+                            </div>
+                        </div>
+                        <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                            <label
+                                class="block mb-2 uppercase text-[11px] font-bold tracking-widest opacity-60">Delays</label>
+                            <div class="flex items-center gap-3">
+                                <i class="ri-hourglass-2-line text-primary"></i>
+                                <span id="detailDelay" class="font-semibold">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Right Column: Stats & Actions -->
+                <div class="space-y-6">
+                    <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                        <label
+                            class="block mb-4 uppercase text-[11px] font-bold tracking-widest opacity-60">Results</label>
+                        <div class="space-y-4">
+                            <div class="flex justify-between items-center">
+                                <span class="text-sm opacity-70">Total Recipients</span>
+                                <span id="detailTotal" class="font-bold">-</span>
+                            </div>
+                            <div class="flex justify-between items-center text-success">
+                                <span class="text-sm">Sent Successfully</span>
+                                <span id="detailSent" class="font-bold">-</span>
+                            </div>
+                            <div class="flex justify-between items-center text-error">
+                                <span class="text-sm">Failed</span>
+                                <span id="detailFailed" class="font-bold">-</span>
+                            </div>
+                        </div>
+
+                        <div class="mt-6">
+                            <progress id="detailProgress" class="progress progress-primary w-full h-3" value="0"
+                                max="100"></progress>
+                            <div class="flex justify-between mt-2">
+                                <span class="text-[10px] font-bold opacity-40 uppercase tracking-wider">Progress</span>
+                                <span id="detailPercent" class="text-[10px] font-bold text-primary">0%</span>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                        <label class="block mb-3 uppercase text-[11px] font-bold tracking-widest opacity-60">Device &
+                            Status</label>
+                        <div class="space-y-3">
+                            <div
+                                class="flex items-center gap-3 bg-base-100 p-3 rounded-2xl border border-base-content/5">
+                                <div
+                                    class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
+                                    <i class="ri-smartphone-line"></i>
+                                </div>
+                                <div class="flex flex-col">
+                                    <span class="text-xs font-bold" id="detailDevice">-</span>
+                                    <span class="text-[9px] opacity-50 uppercase tracking-tighter"
+                                        id="detailDeviceToken">-</span>
+                                </div>
+                            </div>
+                            <div class="flex items-center justify-center p-2">
+                                <span id="detailStatus"
+                                    class="badge badge-lg py-4 px-6 uppercase text-xs font-black tracking-widest font-bold">-</span>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="bg-base-200/50 p-6 flex justify-end gap-3 px-8">
+            <form method="dialog">
+                <button class="btn btn-ghost rounded-2xl border-base-content/10 px-8">Close</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    async function initCampaigns() {
+        loadCampaigns();
+        loadStats();
+        loadFormData();
+        setupRealtimeUpdates();
+    }
+
+    async function loadStats() {
+        try {
+            const res = await axios.get('/api/campaigns/stats');
+            if (res.data.success) {
+                const s = res.data.stats;
+                document.getElementById('stat-active').innerText = s.active || 0;
+                document.getElementById('stat-sent').innerText = s.sent_30d || 0;
+                document.getElementById('stat-failed').innerText = s.failed_30d || 0;
+            }
+        } catch (err) {
+            console.error('Failed to load campaign stats:', err);
+        }
+    }
+
+    let campaignDataTable = null;
+
+    async function loadCampaigns() {
+        if (campaignDataTable) {
+            campaignDataTable.ajax.reload(null, false);
+            return;
+        }
+
+        // Initialize server-side DataTable
+        const columns = [
+            {
+                data: 'name',
+                render: (data, type, row) => `
+                    <div class="flex items-center gap-3">
+                        ${row.media_url ? `
+                            <div class="avatar">
+                                <div class="w-10 h-10 rounded-lg">
+                                    <img src="${row.media_url}" class="object-cover" onclick="window.open('${row.media_url}', '_blank')" />
+                                </div>
+                            </div>
+                        ` : ''}
+                        <div class="flex flex-col">
+                            <span class="font-bold text-base-content">${data}</span>
+                            <span class="text-[10px] text-base-content/40">${row.token.substring(0, 16)}...</span>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                data: 'device_token',
+                render: (data, type, row) => `
+                    <div class="flex items-center gap-2">
+                        <span class="text-xs text-base-content/80 font-semibold">${row.device ? row.device.name : (data ? data.substring(0, 8) + '...' : '-')}</span>
+                    </div>
+                `
+            },
+            {
+                data: 'user.name',
+                className: 'text-center',
+                render: (data) => `<div class="badge badge-ghost badge-sm font-semibold opacity-70">${data || '-'}</div>`
+            },
+            {
+                data: 'sent_count',
+                className: 'min-w-[200px]',
+                render: (data, type, row) => `
+                    <div class="flex flex-col gap-1">
+                        <div class="flex items-center gap-2">
+                            <progress class="progress progress-primary w-full h-2" value="${data + row.failed_count}" max="${row.total_recipients}"></progress>
+                            <span class="text-[10px] font-mono whitespace-nowrap text-base-content/60 font-bold campaign-progress-text">${data}/${row.total_recipients}</span>
+                        </div>
+                        ${row.failed_count > 0 ? `<span class="text-[9px] text-error/60"><i class="ri-error-warning-line"></i> ${row.failed_count} failed</span>` : ''}
+                    </div>
+                `
+            },
+            {
+                data: 'status',
+                render: (data) => `<span class="badge ${getStatusBadge(data)} badge-sm uppercase text-[10px] font-bold campaign-status-badge">${data}</span>`
+            },
+            {
+                data: 'createdAt',
+                render: (data) => `
+                    <div class="flex flex-col text-xs text-base-content/60">
+                        <span>${new Date(data).toLocaleDateString()}</span>
+                        <span class="text-[10px] opacity-50">${new Date(data).toLocaleTimeString()}</span>
+                    </div>
+                `
+            },
+            {
+                data: 'token',
+                className: 'text-center',
+                orderable: false,
+                render: (data) => `
+                    <div class="flex items-center gap-1">
+                        <button onclick="showCampaignDetail('${data}')" class="btn btn-ghost btn-xs text-primary hover:bg-primary/10">
+                            <i class="ri-eye-line"></i>
+                        </button>
+                        <button onclick="deleteCampaign('${data}')" class="btn btn-ghost btn-xs text-error hover:bg-error/10">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+                `
+            }
+        ];
+
+        campaignDataTable = DataTableHelper.init('campaigns-table', '/api/datatable/campaigns', columns, {
+            order: [[5, 'desc']],
+            pageLength: 10,
+            filterFormId: 'filter_form_campaigns',
+            createdRow: (row, data) => {
+                $(row).attr('data-campaign-token', data.token);
+            }
+        });
+    }
+
+    function setupRealtimeUpdates() {
+        if (typeof io === 'undefined') {
+            console.warn('Socket.IO not available');
+            return;
+        }
+
+        // Get user token from page context
+        const uToken = '<%= userToken %>';
+
+        const socket = io({
+            query: {
+                userToken: uToken
+            }
+        });
+
+        socket.on('connect', () => {
+            // Socket connected
+        });
+
+        socket.on('campaign:update', (data) => {
+            // Update specific row
+            updateCampaignRow(data);
+            // Update stats
+            loadStats();
+        });
+
+        socket.on('disconnect', () => {
+            // Socket disconnected
+        });
+    }
+
+    function updateCampaignRow(data) {
+        if (!campaignDataTable) {
+            // If DataTable not initialized, do full reload
+            loadCampaigns();
+            return;
+        }
+
+        // Find row by data attribute
+        const row = document.querySelector(`tr[data-campaign-token="${data.token}"]`);
+        if (!row) {
+            console.warn('Campaign row not found:', data.token);
+            return;
+        }
+
+        // Update progress bar and text
+        const progressBar = row.querySelector('progress');
+        const progressText = row.querySelector('.campaign-progress-text');
+        const statusBadge = row.querySelector('.campaign-status-badge');
+
+        if (progressBar && progressText) {
+            const currentProgress = data.sent_count + data.failed_count;
+            progressBar.value = currentProgress;
+            progressBar.max = data.total_recipients;
+            progressText.textContent = `${data.sent_count}/${data.total_recipients}`;
+
+            // Add smooth animation
+            progressBar.classList.add('transition-all', 'duration-300');
+        }
+
+        // Update status badge
+        if (statusBadge) {
+            statusBadge.className = `badge ${getStatusBadge(data.status)} badge-sm uppercase text-[10px] font-bold campaign-status-badge`;
+            statusBadge.textContent = data.status.toUpperCase();
+        }
+
+        // Update failed count if exists
+        const progressContainer = row.querySelector('td:nth-child(3) > div');
+        if (progressContainer && data.failed_count > 0) {
+            let failedSpan = progressContainer.querySelector('.text-error\\/60');
+            if (!failedSpan) {
+                failedSpan = document.createElement('span');
+                failedSpan.className = 'text-[9px] text-error/60';
+                progressContainer.appendChild(failedSpan);
+            }
+            failedSpan.innerHTML = `<i class="ri-error-warning-line"></i> ${data.failed_count} failed`;
+        }
+    }
+
+    function getStatusBadge(status) {
+        if (status === 'completed') return 'badge-success';
+        if (status === 'running') return 'badge-warning';
+        if (status === 'paused') return 'badge-ghost';
+        if (status === 'failed' || status === 'cancelled') return 'badge-error';
+        return 'badge-primary';
+    }
+
+    async function showCampaignDetail(token) {
+        try {
+            const response = await fetch(`/api/campaigns/${token}`);
+            const result = await response.json();
+
+            if (!result.success) {
+                showToast.error(result.message || 'Failed to load campaign detail');
+                return;
+            }
+
+            const campaign = result.campaign;
+
+            // Fill modal data
+            document.getElementById('detailTitle').textContent = campaign.name;
+            document.getElementById('detailToken').textContent = campaign.token;
+            document.getElementById('detailMessage').textContent = campaign.message;
+
+            if (campaign.media_url) {
+                document.getElementById('detailMedia').classList.remove('hidden');
+                document.getElementById('detailMediaImg').src = campaign.media_url;
+            } else {
+                document.getElementById('detailMedia').classList.add('hidden');
+            }
+
+            document.getElementById('detailSchedule').textContent = campaign.scheduled_at ?
+                new Date(campaign.scheduled_at).toLocaleString() : 'As soon as possible';
+
+            // Extract delays from metadata if available
+            const minDelay = campaign.metadata?.min_delay || '-';
+            const maxDelay = campaign.metadata?.max_delay || '-';
+            document.getElementById('detailDelay').textContent = `${minDelay}s - ${maxDelay}s`;
+
+            document.getElementById('detailTotal').textContent = campaign.total_recipients;
+            document.getElementById('detailSent').textContent = campaign.sent_count;
+            document.getElementById('detailFailed').textContent = campaign.failed_count;
+
+            const progress = campaign.sent_count + campaign.failed_count;
+            const percent = Math.round((progress / campaign.total_recipients) * 100) || 0;
+
+            document.getElementById('detailProgress').value = progress;
+            document.getElementById('detailProgress').max = campaign.total_recipients;
+            document.getElementById('detailPercent').textContent = `${percent}%`;
+
+            document.getElementById('detailDevice').textContent = campaign.device?.name || 'Unknown Device';
+            document.getElementById('detailDeviceToken').textContent = campaign.device_token;
+
+            const statusBadge = document.getElementById('detailStatus');
+            statusBadge.className = `badge badge-lg py-4 px-6 uppercase text-xs font-black tracking-widest ${getStatusBadge(campaign.status)}`;
+            statusBadge.textContent = campaign.status;
+
+            modal_campaign_detail.showModal();
+        } catch (err) {
+            console.error('Error loading campaign detail:', err);
+            showToast.error('An unexpected error occurred');
+        }
+    }
+
+    let templatesData = {};
+
+    async function loadFormData() {
+        try {
+            const [booksRes, tempsRes] = await Promise.all([
+                axios.get('/api/contacts/books'),
+                axios.get('/api/templates')
+            ]);
+
+            const books = booksRes.data.books || [];
+            const templates = tempsRes.data.templates || [];
+
+            const bookSelect = document.getElementById('campBook');
+            bookSelect.innerHTML = '<option value="" disabled selected>Select target book...</option>' +
+                books.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+
+            const tempSelect = document.getElementById('campTemplate');
+            // Store templates for lookup to avoid btoa/Unicode issues
+            templatesData = {};
+            templates.forEach(t => {
+                templatesData[t.token] = t.content;
+            });
+
+            tempSelect.innerHTML = '<option value="">Manual Entry (type below)</option>' +
+                templates.map(t => `<option value="${t.token}">${t.name}</option>`).join('');
+
+            tempSelect.onchange = (e) => {
+                if (e.target.value) {
+                    const content = templatesData[e.target.value] || '';
+                    document.getElementById('campMessage').value = content;
+                }
+            };
+        } catch (err) {
+            console.error('Failed to load form data:', err);
+            showToast.error('Failed to load templates or books');
+        }
+    }
+
+    function openCampaignModal() {
+        loadFormData(); // Refresh data to ensure latest templates and books are visible
+        document.getElementById('modal_campaign').showModal();
+    }
+
+    function previewImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        const img = preview.querySelector('img');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                img.src = e.target.result;
+                preview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removePreview(inputId, previewId) {
+        document.getElementById(inputId).value = '';
+        document.getElementById(previewId).classList.add('hidden');
+    }
+
+    function toggleTargetType(type) {
+        if (type === 'book') {
+            $('#target-book-container').removeClass('hidden');
+            $('#target-manual-container').addClass('hidden');
+        } else {
+            $('#target-book-container').addClass('hidden');
+            $('#target-manual-container').removeClass('hidden');
+        }
+    }
+
+    document.getElementById('campaignForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const targetType = $('input[name="targetType"]:checked').val();
+        const formData = new FormData();
+        formData.append('device_token', document.getElementById('campDevice').value);
+        formData.append('name', document.getElementById('campName').value);
+        formData.append('message', document.getElementById('campMessage').value);
+        formData.append('min_delay', document.getElementById('campMinDelay').value);
+        formData.append('max_delay', document.getElementById('campMaxDelay').value);
+
+        if (targetType === 'book') {
+            formData.append('book_id', document.getElementById('campBook').value);
+        } else {
+            formData.append('receivers', document.getElementById('campReceivers').value);
+        }
+
+        const fileInput = document.getElementById('campFile');
+        if (fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+        }
+
+        try {
+            const res = await axios.post('/api/campaigns', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            if (res.data.success) {
+                document.getElementById('modal_campaign').close();
+                showToast.success('Your campaign has been added to queue.', 'Launched!');
+                loadCampaigns();
+                e.target.reset();
+                document.getElementById('campPreview').classList.add('hidden');
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to start campaign', 'Error');
+        }
+    });
+
+    async function deleteCampaign(token) {
+        const result = await showConfirm(
+            'Delete Campaign?',
+            'This will permanently delete this campaign record.',
+            'Yes, delete it!',
+            'Cancel'
+        );
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await axios.delete(`/api/campaigns/${token}`);
+            showToast.success('Campaign has been deleted.', 'Deleted!');
+            loadCampaigns();
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to delete', 'Error');
+        }
+    }
+
+    document.addEventListener('DOMContentLoaded', initCampaigns);
+</script>
+
+<%- include('../layouts/partials/contact_modal') %>

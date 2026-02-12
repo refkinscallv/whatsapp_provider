@@ -1,0 +1,666 @@
+<div class="flex flex-col gap-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">Scheduled Messages</h1>
+            <p class="text-base-content/60">Schedule individual messages for future delivery.</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="DataTableHelper.openFilterModal('filter_modal_scheduled', 'scheduled-table')"
+                class="btn btn-ghost glass btn-sm rounded-lg"><i class="ri-filter-3-line"></i> Filter</button>
+            <button onclick="openScheduleModal()" class="btn btn-primary btn-sm rounded-lg"><i class="ri-time-line"></i>
+                Schedule Message</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="card glass hover:border-primary/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Total
+                            Scheduled</p>
+                        <h2 class="text-3xl font-black mt-1 text-base-content" id="stat-total">0</h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <i class="ri-calendar-todo-line text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-warning/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Pending</p>
+                        <h2 class="text-3xl font-black mt-1 text-base-content" id="stat-pending">0</h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center text-warning group-hover:scale-110 transition-transform">
+                        <i class="ri-time-line text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-success/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Sent</p>
+                        <h2 class="text-3xl font-black mt-1 text-base-content" id="stat-sent">0</h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center text-success group-hover:scale-110 transition-transform">
+                        <i class="ri-check-double-line text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-error/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Failed</p>
+                        <h2 class="text-3xl font-black mt-1 text-base-content" id="stat-failed">0</h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-error/10 rounded-xl flex items-center justify-center text-error group-hover:scale-110 transition-transform">
+                        <i class="ri-error-warning-line text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Scheduled Messages List -->
+    <div class="card glass">
+        <div class="card-body">
+            <h3 class="font-bold text-lg mb-4 text-base-content">Scheduled List</h3>
+            <div class="overflow-x-auto">
+                <table id="scheduled-table" class="table w-full">
+                    <thead>
+                        <tr
+                            class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                            <th>Recipient</th>
+                            <th>Message</th>
+                            <th>Device</th>
+                            <th>Next Run</th>
+                            <th>Last Run</th>
+                            <th>Repeat</th>
+                            <th>Status</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data loaded via server-side DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal for Scheduled Messages -->
+<dialog id="filter_modal_scheduled" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl max-w-md p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/5">
+            <h3 class="font-bold text-xl text-base-content flex items-center gap-2">
+                <i class="ri-filter-3-line text-primary"></i> Filter Scheduled
+            </h3>
+        </div>
+
+        <form id="filter_form_scheduled" class="p-6 space-y-6">
+            <!-- Source Device Filter -->
+            <%- include('../layouts/partials/device_selector', { id: 'filter-device-token-sched' , name: 'device_token'
+                , label: 'Device' , showAllOption: true, extraClass: 'bg-base-200/50' }) %>
+
+                <!-- Status Filter -->
+                <div class="form-control">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Status</label>
+                    <select name="status" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All Statuses</option>
+                        <option value="pending">Pending</option>
+                        <option value="sent">Sent</option>
+                        <option value="failed">Failed</option>
+                        <option value="cancelled">Cancelled</option>
+                    </select>
+                </div>
+
+                <!-- Has Media Filter -->
+                <div class="form-control">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Attachment</label>
+                    <select name="has_media" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All</option>
+                        <option value="yes">Has Media</option>
+                        <option value="no">No Media</option>
+                    </select>
+                </div>
+
+                <!-- Repeat Filter -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label
+                            class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Repeat</label>
+                        <select name="is_recurring" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                            <option value="">All</option>
+                            <option value="yes">Recurring</option>
+                            <option value="no">One-time</option>
+                        </select>
+                    </div>
+                    <div class="form-control">
+                        <label
+                            class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Type</label>
+                        <select name="recurrence_type" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                            <option value="">All Type</option>
+                            <option value="hourly">Hourly</option>
+                            <option value="daily">Daily</option>
+                            <option value="weekly">Weekly</option>
+                            <option value="monthly">Monthly</option>
+                            <option value="yearly">Yearly</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">From
+                            Date</label>
+                        <input type="date" name="scheduled_from"
+                            class="input input-bordered w-full rounded-2xl bg-base-200/50">
+                    </div>
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">To
+                            Date</label>
+                        <input type="date" name="scheduled_to"
+                            class="input input-bordered w-full rounded-2xl bg-base-200/50">
+                    </div>
+                </div>
+        </form>
+
+        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+            <button type="button"
+                onclick="DataTableHelper.resetFilters('filter_form_scheduled', 'scheduled-table', 'filter_modal_scheduled')"
+                class="btn btn-ghost rounded-xl">
+                <i class="ri-restart-line"></i> Reset
+            </button>
+            <button type="button" onclick="DataTableHelper.applyFilters('scheduled-table', 'filter_modal_scheduled')"
+                class="btn btn-primary rounded-xl px-8">
+                <i class="ri-check-line"></i> Apply Filter
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+
+<!-- Modal -->
+<dialog id="modal_schedule" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 max-w-2xl">
+        <h3 class="font-bold text-lg mb-6 text-base-content">Schedule New Message</h3>
+
+        <form id="scheduleForm" class="space-y-6">
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Target
+                    Type</label>
+                <div class="flex gap-2">
+                    <input type="radio" name="target_type" value="single"
+                        class="btn btn-sm btn-outline rounded-lg flex-1" aria-label="Single Recipient" checked
+                        onchange="toggleTargetType('single')" />
+                    <input type="radio" name="target_type" value="book" class="btn btn-sm btn-outline rounded-lg flex-1"
+                        aria-label="Contact Book" onchange="toggleTargetType('book')" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <%- include('../layouts/partials/device_selector', { id: 'schedDevice' , label: 'Select Device' ,
+                    required: true }) %>
+
+                    <div class="form-control" id="target-book-container" style="display: none;">
+                        <label
+                            class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60 text-primary">Target
+                            Contact Book</label>
+                        <select id="schedBook" class="select select-bordered w-full rounded-2xl">
+                            <option value="" disabled selected>Select a book...</option>
+                        </select>
+                    </div>
+            </div>
+
+            <div class="form-control" id="target-manual-container">
+                <label class="flex justify-between items-center mb-2">
+                    <div class="flex items-center gap-2">
+                        <span class="block uppercase text-[11px] font-semibold tracking-widest opacity-60">Recipient(s)
+                            Phone</span>
+                        <button type="button" onclick="openContactModal('#schedTo')"
+                            class="btn btn-ghost btn-xs text-primary gap-1">
+                            <i class="ri-contacts-book-line"></i> Select
+                        </button>
+                    </div>
+                </label>
+                <textarea id="schedTo" class="textarea textarea-bordered w-full h-20 rounded-2xl"
+                    placeholder="e.g. 628123456789, 628987654321 (one per line or comma-separated)"></textarea>
+            </div>
+
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Message
+                    Template / Content</label>
+                <select id="schedTemplate" class="select select-bordered w-full rounded-2xl">
+                    <option value="">Manual Entry (type below)</option>
+                </select>
+                <textarea id="schedMessage" class="textarea textarea-bordered w-full h-32 rounded-2xl mt-4"
+                    placeholder="Message content..." required></textarea>
+            </div>
+
+            <div class="form-control">
+                <label
+                    class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60 text-primary">Attachment
+                    (Image)</label>
+                <div class="flex flex-col gap-4">
+                    <input type="file" id="schedFile"
+                        class="file-input file-input-bordered file-input-primary w-full rounded-2xl" accept="image/*"
+                        onchange="previewImage(this, 'schedPreview')" />
+                    <div id="schedPreview" class="hidden">
+                        <div class="relative w-full max-w-xs rounded-2xl overflow-hidden shadow-lg group">
+                            <img src="" class="w-full h-auto object-contain" />
+                            <button type="button" onclick="removePreview('schedFile', 'schedPreview')"
+                                class="absolute top-2 right-2 btn btn-circle btn-xs btn-error opacity-0 group-hover:opacity-100 transition-opacity">
+                                <i class="ri-close-line"></i>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Repeat
+                        Message</label>
+                    <select id="schedRecurrence" class="select select-bordered w-full rounded-2xl"
+                        onchange="toggleRecurrenceEnd(this.value)">
+                        <option value="">No Repeat</option>
+                        <option value="hourly">Hourly</option>
+                        <option value="daily">Daily</option>
+                        <option value="weekly">Weekly</option>
+                        <option value="monthly">Monthly</option>
+                        <option value="yearly">Yearly</option>
+                    </select>
+                </div>
+                <div class="form-control" id="recurrence-end-container" style="display: none;">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Repeat
+                        Until (Optional)</label>
+                    <input type="datetime-local" id="schedRecurrenceEnd"
+                        class="input input-bordered w-full text-base-content rounded-2xl" />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Schedule
+                        Date & Time</label>
+                    <input type="datetime-local" id="schedDateTime"
+                        class="input input-bordered w-full text-base-content rounded-2xl" required />
+                </div>
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Min Delay
+                        (sec)</label>
+                    <input type="number" id="schedMinDelay"
+                        class="input input-bordered w-full text-base-content rounded-2xl" value="2" />
+                </div>
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Max Delay
+                        (sec)</label>
+                    <input type="number" id="schedMaxDelay"
+                        class="input input-bordered w-full text-base-content rounded-2xl" value="5" />
+                </div>
+            </div>
+
+            <div class="modal-action">
+                <form method="dialog"><button class="btn btn-ghost">Cancel</button></form>
+                <button type="submit" class="btn btn-primary rounded-xl px-10">Schedule Message</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<script>
+    async function initScheduledMessages() {
+        loadScheduledMessages();
+        loadStats();
+        loadFormData();
+
+        // Set minimum datetime to now
+        const now = new Date();
+        now.setMinutes(now.getMinutes() - now.getTimezoneOffset());
+        document.getElementById('schedDateTime').min = now.toISOString().slice(0, 16);
+    }
+
+    let scheduledDataTable = null;
+
+    async function loadScheduledMessages() {
+        if (scheduledDataTable) {
+            scheduledDataTable.ajax.reload(null, false);
+            return;
+        }
+
+        // Initialize server-side DataTable
+        const columns = [
+            {
+                data: 'to',
+                render: (data, type, row) => `
+                    <div class="flex items-center gap-3">
+                        ${row.media_url ? `
+                            <div class="avatar">
+                                <div class="w-8 h-8 rounded-lg">
+                                    <img src="${row.media_url}" class="object-cover" onclick="window.open('${row.media_url}', '_blank')" />
+                                </div>
+                            </div>
+                        ` : ''}
+                        <span class="font-bold text-base-content text-xs">${data}</span>
+                    </div>
+                `
+            },
+            {
+                data: 'message',
+                className: 'max-w-xs truncate text-[10px] text-base-content/60'
+            },
+            {
+                data: 'device_token',
+                render: (data, type, row) => `
+                    <div class="flex flex-col text-xs text-base-content/60">
+                        <span class="text-xs text-base-content/80">${row.device ? row.device.name : data.substring(0, 8) + '...'}</span>
+                    </div>
+                `
+            },
+            {
+                data: 'scheduled_at',
+                render: (data, type, row) => `
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-base-content/40 uppercase font-black tracking-tighter">Next Run</span>
+                        <span class="text-xs text-primary font-bold">${new Date(data).toLocaleString()}</span>
+                    </div>
+                `
+            },
+            {
+                data: 'sent_at',
+                render: (data) => data ? `
+                    <div class="flex flex-col">
+                        <span class="text-[10px] text-base-content/40 uppercase font-black tracking-tighter">Last Run</span>
+                        <span class="text-xs text-base-content/60 font-semibold">${new Date(data).toLocaleString()}</span>
+                    </div>
+                ` : `<span class="opacity-20 text-[10px]">—</span>`
+            },
+            {
+                data: 'is_recurring',
+                className: 'text-center',
+                render: (data, type, row) => {
+                    if (!data) return `<span class="opacity-20 text-[10px]">One-time</span>`;
+                    return `
+                        <div class="flex flex-col items-center gap-1">
+                            <span class="badge badge-primary badge-outline badge-xs font-bold uppercase tracking-tighter py-2 px-3">
+                                <i class="ri-refresh-line mr-1"></i> ${row.recurrence_type}
+                            </span>
+                            ${row.recurrence_count > 0 ? `<span class="text-[9px] opacity-40 italic">Count: ${row.recurrence_count}</span>` : ''}
+                        </div>
+                    `;
+                }
+            },
+            {
+                data: 'status',
+                render: (data, type, row) => {
+                    if (row.is_recurring && data === 'pending') {
+                        return `<span class="badge badge-info badge-sm uppercase text-[10px] gap-1"><i class="ri-refresh-line animate-spin-slow"></i> Recurring</span>`;
+                    }
+                    return `<span class="badge ${getStatusBadge(data)} badge-sm uppercase text-[10px] sched-status-badge">${data}</span>`;
+                }
+            },
+            {
+                data: 'token',
+                className: 'text-right',
+                orderable: false,
+                render: (data, type, row) => `
+                    <div class="flex gap-1 justify-end">
+                        <button onclick="window.location.href='/history?scheduled_msg_token=${data}'" class="btn btn-ghost btn-xs text-info" title="Series History"><i class="ri-history-line"></i></button>
+                        ${row.status === 'pending' ? `<button onclick="cancelScheduled('${data}')" class="btn btn-ghost btn-xs text-warning" title="Cancel"><i class="ri-close-circle-line"></i></button>` : ''}
+                        <button onclick="deleteScheduled('${data}')" class="btn btn-ghost btn-xs text-error" title="Delete"><i class="ri-delete-bin-line"></i></button>
+                    </div>
+                `
+            }
+        ];
+
+        scheduledDataTable = DataTableHelper.init('scheduled-table', '/api/datatable/scheduled-messages', columns, {
+            order: [[3, 'asc']],
+            pageLength: 10,
+            filterFormId: 'filter_form_scheduled',
+            createdRow: (row, data) => {
+                $(row).attr('data-scheduled-token', data.token);
+            }
+        });
+
+        setupRealtimeUpdates();
+    }
+
+    function setupRealtimeUpdates() {
+        if (typeof io === 'undefined') return;
+
+        const socket = io({
+            query: { userToken: '<%= userToken %>' }
+        });
+
+        socket.on('scheduled:update', (data) => {
+            const { token, status } = data;
+            const row = $(`tr[data-scheduled-token="${token}"]`);
+            if (row.length) {
+                // Update status badge
+                const badge = row.find('.sched-status-badge');
+                if (badge.length) {
+                    badge.text(status);
+                    badge.attr('class', `badge ${getStatusBadge(status)} badge-sm uppercase text-[10px] sched-status-badge`);
+                }
+
+                // If no longer pending, remove cancel button if exists
+                if (status !== 'pending') {
+                    row.find('button[onclick*="cancelScheduled"]').fadeOut(300, function () { $(this).remove(); });
+                }
+            } else {
+                // Not in view or structure shifted, reload table safely
+                if (scheduledDataTable) scheduledDataTable.ajax.reload(null, false);
+            }
+            loadStats();
+        });
+    }
+
+    async function loadStats() {
+        try {
+            const res = await axios.get('/api/scheduled-messages/stats');
+            if (res.data.success) {
+                const stats = res.data.stats;
+                document.getElementById('stat-total').innerText = stats.total || 0;
+                document.getElementById('stat-pending').innerText = stats.pending || 0;
+                document.getElementById('stat-sent').innerText = stats.sent || 0;
+                document.getElementById('stat-failed').innerText = stats.failed || 0;
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    function getStatusBadge(status) {
+        if (status === 'sent') return 'badge-success';
+        if (status === 'pending') return 'badge-warning';
+        if (status === 'failed') return 'badge-error';
+        if (status === 'cancelled') return 'badge-ghost';
+        return 'badge-primary';
+    }
+
+
+
+    function toggleRecurrenceEnd(val) {
+        const container = document.getElementById('recurrence-end-container');
+        if (val) {
+            container.style.display = 'block';
+        } else {
+            container.style.display = 'none';
+        }
+    }
+
+    let templatesData = {};
+
+    async function loadFormData() {
+        try {
+            const [tempsRes, booksRes] = await Promise.all([
+                axios.get('/api/templates'),
+                axios.get('/api/contacts/books')
+            ]);
+
+            const templates = tempsRes.data.success ? tempsRes.data.templates : [];
+            const books = booksRes.data.success ? booksRes.data.books : [];
+
+            const tempSelect = document.getElementById('schedTemplate');
+            // Store templates for lookup to avoid btoa/Unicode issues
+            templatesData = {};
+            templates.forEach(t => {
+                templatesData[t.token] = t.content;
+            });
+
+            tempSelect.innerHTML = '<option value="">Manual Entry (type below)</option>' +
+                templates.map(t => `<option value="${t.token}">${t.name}</option>`).join('');
+
+            const bookSelect = document.getElementById('schedBook');
+            bookSelect.innerHTML = '<option value="" disabled selected>Select a book...</option>' +
+                books.map(b => `<option value="${b.id}">${b.name}</option>`).join('');
+
+            tempSelect.onchange = (e) => {
+                if (e.target.value) {
+                    const content = templatesData[e.target.value] || '';
+                    document.getElementById('schedMessage').value = content;
+                }
+            };
+        } catch (err) { console.error('Failed to load form data:', err); }
+    }
+
+    function previewImage(input, previewId) {
+        const preview = document.getElementById(previewId);
+        const img = preview.querySelector('img');
+        if (input.files && input.files[0]) {
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                img.src = e.target.result;
+                preview.classList.remove('hidden');
+            };
+            reader.readAsDataURL(input.files[0]);
+        }
+    }
+
+    function removePreview(inputId, previewId) {
+        document.getElementById(inputId).value = '';
+        document.getElementById(previewId).classList.add('hidden');
+    }
+
+    function openScheduleModal() {
+        document.getElementById('modal_schedule').showModal();
+    }
+
+    document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const formData = new FormData();
+        const targetType = document.querySelector('input[name="target_type"]:checked').value;
+        formData.append('target_type', targetType);
+        formData.append('device_token', document.getElementById('schedDevice').value);
+        formData.append('book_id', document.getElementById('schedBook').value);
+        formData.append('to', document.getElementById('schedTo').value);
+        formData.append('message', document.getElementById('schedMessage').value);
+        formData.append('scheduled_at', document.getElementById('schedDateTime').value);
+        formData.append('min_delay', document.getElementById('schedMinDelay').value);
+        formData.append('max_delay', document.getElementById('schedMaxDelay').value);
+
+        const repeatType = document.getElementById('schedRecurrence').value;
+        if (repeatType) {
+            formData.append('is_recurring', 'true');
+            formData.append('recurrence_type', repeatType);
+            const repeatEnd = document.getElementById('schedRecurrenceEnd').value;
+            if (repeatEnd) formData.append('recurrence_end', repeatEnd);
+        }
+
+        if (targetType === 'book' && !document.getElementById('schedBook').value) {
+            showToast.error('Please select a contact book', 'Error');
+            return;
+        }
+
+        const fileInput = document.getElementById('schedFile');
+        if (fileInput.files.length > 0) {
+            formData.append('file', fileInput.files[0]);
+        }
+
+        try {
+            const res = await axios.post('/api/scheduled-messages', formData, {
+                headers: { 'Content-Type': 'multipart/form-data' }
+            });
+            if (res.data.success) {
+                document.getElementById('modal_schedule').close();
+                showToast.success(res.data.message || 'Your message has been scheduled.', 'Scheduled!');
+                loadScheduledMessages();
+                loadStats();
+                e.target.reset();
+                toggleTargetType('single'); // Reset UI
+                document.getElementById('schedPreview').classList.add('hidden');
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to schedule message', 'Error');
+        }
+    });
+
+    function toggleTargetType(type) {
+        if (type === 'single') {
+            document.getElementById('target-manual-container').style.display = 'block';
+            document.getElementById('target-book-container').style.display = 'none';
+            document.getElementById('schedTo').required = true;
+            document.getElementById('schedBook').required = false;
+        } else {
+            document.getElementById('target-manual-container').style.display = 'none';
+            document.getElementById('target-book-container').style.display = 'block';
+            document.getElementById('schedTo').required = false;
+            document.getElementById('schedBook').required = true;
+        }
+    }
+
+    async function cancelScheduled(token) {
+        const result = await showConfirm(
+            'Cancel this scheduled message?',
+            'The message will not be sent.',
+            'Yes, cancel it',
+            'No'
+        );
+        if (!result.isConfirmed) return;
+        try {
+            await axios.put(`/api/scheduled-messages/${token}/cancel`);
+            showToast.success('Scheduled message cancelled', 'Cancelled');
+            loadScheduledMessages();
+            loadStats();
+        } catch (err) { showToast.error('Failed to cancel', 'Error'); }
+    }
+
+    async function deleteScheduled(token) {
+        const result = await showConfirm(
+            'Permanently delete this scheduled message?',
+            'This action cannot be undone.',
+            'Yes, delete',
+            'Cancel'
+        );
+        if (!result.isConfirmed) return;
+        try {
+            await axios.delete(`/api/scheduled-messages/${token}`);
+            loadScheduledMessages();
+            loadStats();
+            showToast.success('Scheduled message deleted', 'Deleted');
+        } catch (err) { showToast.error('Failed to delete', 'Error'); }
+    }
+
+    document.addEventListener('DOMContentLoaded', initScheduledMessages);
+</script>
+
+<%- include('../layouts/partials/contact_modal') %>

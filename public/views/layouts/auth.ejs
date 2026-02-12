@@ -1,0 +1,183 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %> | <%= config.app.name %>
+    </title>
+
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+
+    <%- style %>
+
+        <style>
+            body {
+                font-family: 'Outfit', sans-serif;
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+
+            .dashboard-bg {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: -1;
+                background: radial-gradient(circle at top right, oklch(var(--p) / 0.05), transparent 400px),
+                    radial-gradient(circle at bottom left, oklch(var(--s) / 0.05), transparent 400px);
+            }
+
+            .glass {
+                background: oklch(1 0 0 / 0.03);
+                backdrop-filter: blur(12px);
+                border: 1px solid oklch(1 0 0 / 0.08);
+            }
+
+            [data-theme="light"] .glass {
+                background: oklch(0.1 0 0 / 0.03);
+                border-color: oklch(0.1 0 0 / 0.08);
+            }
+        </style>
+</head>
+
+<body class="bg-base-100 flex items-center justify-center min-h-screen p-4 antialiased">
+    <div class="dashboard-bg"></div>
+    <%- body %>
+
+        <!-- JS Dependencies -->
+        <script src="https://code.jquery.com/jquery-4.0.0.min.js"
+            integrity="sha256-OaVG6prZf4v69dPg6PhVattBXkcOWQB62pdZ3ORyrao=" crossorigin="anonymous"></script>
+        <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+        <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+        <script>
+            $(document).ready(function () {
+                // Theme initialization
+                const theme = localStorage.getItem('theme') || 'dark';
+                $('html').attr('data-theme', theme);
+
+                // Get DaisyUI theme colors dynamically
+                window.getThemeColors = () => {
+                    const isDark = $('html').attr('data-theme') === 'dark';
+
+                    return {
+                        primary: 'oklch(var(--p))',
+                        success: 'oklch(var(--su))',
+                        warning: 'oklch(var(--wa))',
+                        error: 'oklch(var(--er))',
+                        info: 'oklch(var(--in))',
+                        background: isDark ? '#1d232a' : '#ffffff',
+                        text: isDark ? '#a6adbb' : '#1f2937'
+                    };
+                };
+
+                // DaisyUI-themed Toast Configuration
+                const Toast = Swal.mixin({
+                    toast: true,
+                    position: 'top-end',
+                    showConfirmButton: false,
+                    timer: 3000,
+                    timerProgressBar: true,
+                    background: getThemeColors().background,
+                    color: getThemeColors().text,
+                    didOpen: (toast) => {
+                        toast.addEventListener('mouseenter', Swal.stopTimer);
+                        toast.addEventListener('mouseleave', Swal.resumeTimer);
+                    },
+                    customClass: {
+                        popup: 'rounded-2xl shadow-xl border border-base-content/10'
+                    }
+                });
+
+                // Global toast helper functions with DaisyUI theming
+                window.showToast = {
+                    success: (message, title = 'Success') => {
+                        return Toast.fire({
+                            icon: 'success',
+                            title: title,
+                            text: message,
+                            iconColor: getThemeColors().success
+                        });
+                    },
+                    error: (message, title = 'Error') => {
+                        return Toast.fire({
+                            icon: 'error',
+                            title: title,
+                            text: message,
+                            iconColor: getThemeColors().error
+                        });
+                    },
+                    warning: (message, title = 'Warning') => {
+                        return Toast.fire({
+                            icon: 'warning',
+                            title: title,
+                            text: message,
+                            iconColor: getThemeColors().warning
+                        });
+                    },
+                    info: (message, title = 'Info') => {
+                        return Toast.fire({
+                            icon: 'info',
+                            title: title,
+                            text: message,
+                            iconColor: getThemeColors().info
+                        });
+                    },
+                    loading: (message = 'Loading...', title = 'Please wait') => {
+                        return Swal.fire({
+                            title: title,
+                            text: message,
+                            allowOutsideClick: false,
+                            showConfirmButton: false,
+                            background: getThemeColors().background,
+                            color: getThemeColors().text,
+                            didOpen: () => {
+                                Swal.showLoading();
+                            },
+                            customClass: {
+                                popup: 'rounded-2xl shadow-xl border border-base-content/10'
+                            }
+                        });
+                    },
+                    close: () => {
+                        Swal.close();
+                    }
+                };
+
+                // Global confirm dialog helper with DaisyUI theming
+                window.showConfirm = async (title, text, confirmText = 'Yes', cancelText = 'Cancel') => {
+                    const colors = getThemeColors();
+                    return await Swal.fire({
+                        title: title,
+                        text: text,
+                        icon: 'warning',
+                        showCancelButton: true,
+                        confirmButtonColor: colors.primary,
+                        cancelButtonColor: colors.error,
+                        confirmButtonText: confirmText,
+                        cancelButtonText: cancelText,
+                        background: colors.background,
+                        color: colors.text,
+                        iconColor: colors.warning,
+                        customClass: {
+                            popup: 'rounded-2xl shadow-xl border border-base-content/10',
+                            confirmButton: 'btn btn-primary rounded-xl',
+                            cancelButton: 'btn btn-error rounded-xl'
+                        },
+                        buttonsStyling: false
+                    });
+                };
+            });
+        </script>
+        <%- script %>
+</body>
+
+</html>

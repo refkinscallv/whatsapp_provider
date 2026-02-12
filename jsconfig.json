@@ -1,0 +1,10 @@
+{
+    "compilerOptions": {
+        "paths": {
+            "@app/*": ["./app/*"],
+            "@core/*": ["./core/*"],
+            "@public/*": ["./public/*"]
+        }
+    },
+    "exclude": ["node_modules", "dist"]
+}

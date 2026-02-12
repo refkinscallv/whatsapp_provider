@@ -1,0 +1,80 @@
+<div class="card w-full max-w-md bg-base-100 shadow-2xl backdrop-blur-xl">
+    <div class="card-body p-8">
+        <div class="text-center mb-10">
+            <h1 class="text-4xl font-bold text-base-content italic tracking-tighter">
+                <%= config.app.name %>
+            </h1>
+            <p class="text-sm text-base-content/60 mt-2">Sign in to your dashboard</p>
+        </div>
+
+        <form id="loginForm" class="space-y-6">
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Email or
+                    WhatsApp</label>
+                <div class="relative group">
+                    <i
+                        class="ri-user-smile-line absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40 z-10 pointer-events-none transition-colors group-focus-within:text-primary"></i>
+                    <input type="text" id="identifier" placeholder="email@example.com"
+                        class="input input-bordered w-full pl-12 focus:border-primary transition-all rounded-2xl relative z-0 text-base-content"
+                        required />
+                </div>
+            </div>
+
+            <div class="form-control">
+                <label
+                    class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Password</label>
+                <div class="relative group">
+                    <i
+                        class="ri-lock-2-line absolute left-4 top-1/2 -translate-y-1/2 text-base-content/40 z-10 pointer-events-none transition-colors group-focus-within:text-primary"></i>
+                    <input type="password" id="password" placeholder="••••••••"
+                        class="input input-bordered w-full pl-12 focus:border-primary transition-all rounded-2xl relative z-0 text-base-content"
+                        required />
+                </div>
+                <label class="label justify-end">
+                    <a href="/forgot-password" class="label-text-alt link link-primary text-xs">Forgot password?</a>
+                </label>
+            </div>
+
+            <button type="submit" id="btnSubmit"
+                class="btn btn-primary w-full h-12 shadow-lg shadow-primary/20 rounded-xl">
+                <span>Sign In</span>
+                <i class="ri-arrow-right-line ml-2"></i>
+            </button>
+        </form>
+
+        <div class="divider text-xs text-base-content/40 uppercase">Or continue with</div>
+
+        <p class="text-center text-sm text-base-content/60">
+            Don't have an account? <a href="/register" class="text-primary font-bold hover:underline">Register</a>
+        </p>
+    </div>
+</div>
+
+<script>
+    $('#loginForm').on('submit', async function (e) {
+        e.preventDefault();
+        const btn = $('#btnSubmit');
+        const identifier = $('#identifier').val();
+        const password = $('#password').val();
+
+        btn.prop('disabled', true);
+        btn.html('<span class="loading loading-spinner"></span> Signing in...');
+
+        try {
+            const res = await axios.post('/api/auth/login', { identifier, password });
+
+            if (res.data.success) {
+                Cookies.set('token', res.data.token, { expires: 7 });
+                showToast.success('Login successful. Redirecting...', 'Welcome Back!');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 1500);
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Something went wrong', 'Login Failed');
+        } finally {
+            btn.prop('disabled', false);
+            btn.html('<span>Sign In</span><i class="ri-arrow-right-line ml-2"></i>');
+        }
+    });
+</script>

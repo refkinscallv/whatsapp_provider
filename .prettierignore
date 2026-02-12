@@ -1,0 +1,17 @@
+node_modules/
+coverage/
+logs/
+tests/
+.eslintrc.json
+.gitignore
+.prettierignore
+.prettierrc
+API.md
+CHANGELOG.md
+CONTRIBUTING.md
+jest.config.js
+jsconfig.json
+nodemon.json
+package.json
+package-lock.json
+README.md

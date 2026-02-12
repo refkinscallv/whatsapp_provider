@@ -1,0 +1,608 @@
+<div class="flex flex-col gap-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">Device Management</h1>
+            <p class="text-base-content/60">Connect and manage your WhatsApp sessions.</p>
+        </div>
+        <div>
+            <button onclick="openCreateModal()" class="btn btn-primary rounded-xl"><i class="ri-add-line"></i> Add New
+                Device</button>
+        </div>
+    </div>
+
+    <!-- Device Grid -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="device-grid">
+        <!-- Skeleton Loading -->
+        <div class="card glass animate-pulse">
+            <div class="card-body h-64"></div>
+        </div>
+        <div class="card glass animate-pulse">
+            <div class="card-body h-64"></div>
+        </div>
+        <div class="card glass animate-pulse">
+            <div class="card-body h-64"></div>
+        </div>
+    </div>
+</div>
+
+<!-- Create Modal -->
+<dialog id="modal_create" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/5">
+            <h3 class="font-bold text-xl text-base-content">Connect New Device</h3>
+        </div>
+        <div class="p-6">
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Device Name
+                    (e.g.
+                    Marketing Phone)</label>
+                <input type="text" id="deviceName" class="input input-bordered w-full rounded-2xl"
+                    placeholder="Enter name..." />
+            </div>
+        </div>
+        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+            <form method="dialog"><button class="btn btn-ghost rounded-xl">Cancel</button></form>
+            <button onclick="createDevice()" class="btn btn-primary rounded-xl px-8">Create Device</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- QR Modal -->
+<dialog id="modal_qr" class="modal">
+    <div
+        class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden text-center max-w-lg">
+        <div class="p-6 border-b border-base-content/5">
+            <h3 class="font-bold text-xl text-base-content">Scan QR Code</h3>
+            <p class="text-xs text-base-content/60 mt-1">Open WhatsApp on your phone and scan the code below.</p>
+        </div>
+
+        <div class="p-6">
+            <div id="qr-container"
+                class="bg-white p-4 rounded-2xl inline-block mx-auto mb-6 shadow-xl border-4 border-primary/20">
+                <div id="qr-placeholder"
+                    class="w-64 h-64 flex flex-col items-center justify-center text-slate-800 gap-4">
+                    <span class="loading loading-spinner loading-lg text-primary"></span>
+                    <p class="text-xs font-bold uppercase tracking-widest text-slate-400">Requesting QR...</p>
+                </div>
+                <img id="qr-img" class="hidden w-64 h-64" style="image-rendering: pixelated;" />
+            </div>
+
+            <div id="qr-status"
+                class="text-xs font-mono mb-6 py-2 px-4 bg-base-200 rounded-full inline-block text-warning transition-all">
+                Waiting for connection...</div>
+
+            <!-- Troubleshooting Guide -->
+            <div class="collapse collapse-arrow bg-base-200/50 rounded-xl mb-6 text-left border border-base-content/5">
+                <input type="checkbox" />
+                <div class="collapse-title text-xs font-bold flex items-center gap-2">
+                    <i class="ri-question-line text-primary"></i> Can't scan? Read these tips
+                </div>
+                <div class="collapse-content text-xs space-y-3 opacity-80">
+                    <div class="flex gap-2">
+                        <span class="badge badge-xs badge-primary">1</span>
+                        <p>Wipe your camera lens and increase phone brightness.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="badge badge-xs badge-primary">2</span>
+                        <p>If QR is stuck, use the <b>Force Reset</b> button below.</p>
+                    </div>
+                    <div class="flex gap-2">
+                        <span class="badge badge-xs badge-primary">3</span>
+                        <p>Ensure your internet connection is stable.</p>
+                    </div>
+                </div>
+            </div>
+
+            <button onclick="forceResetSession()"
+                class="btn btn-error btn-outline btn-xs rounded-lg opacity-60 hover:opacity-100 w-full">
+                <i class="ri-refresh-line"></i> Force Reset Connection
+            </button>
+        </div>
+
+        <div class="modal-action p-6 border-t border-base-content/5 mt-0 justify-center">
+            <form method="dialog"><button class="btn btn-ghost w-full btn-sm rounded-xl">Close & Background
+                    Connect</button>
+            </form>
+        </div>
+    </div>
+</dialog>
+
+<!-- Invite Modal -->
+<dialog id="modal_invite" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/5">
+            <h3 class="font-bold text-xl text-base-content">Share Device Access</h3>
+            <p class="text-xs text-base-content/60 mt-1">Invite another member to manage this device.</p>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <p class="text-base-content/60 text-sm">Member must be registered with their Email or WhatsApp number.</p>
+
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Invitee
+                    Identifier
+                    (Email or WhatsApp)</label>
+                <input type="text" id="inviteIdentifier" class="input input-bordered w-full rounded-2xl"
+                    placeholder="example@mail.com or +62..." />
+            </div>
+        </div>
+
+        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+            <form method="dialog"><button class="btn btn-ghost rounded-xl">Cancel</button></form>
+            <button onclick="sendInvite()" class="btn btn-primary rounded-xl px-10">Send Invite</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Manage Users Modal -->
+<dialog id="modal_manage_users" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden max-w-2xl">
+        <div class="p-6 border-b border-base-content/5 flex justify-between items-center">
+            <h3 class="font-bold text-xl text-base-content">Manage Device Users</h3>
+            <form method="dialog"><button class="btn btn-ghost btn-sm btn-circle">✕</button></form>
+        </div>
+
+        <div class="p-6 overflow-x-auto">
+            <table id="device-users-table" class="table table-zebra w-full text-xs">
+                <thead>
+                    <tr
+                        class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                        <th class="rounded-l-xl">User</th>
+                        <th>Phone / Email</th>
+                        <th>Role</th>
+                        <th class="rounded-r-xl text-right">Action</th>
+                    </tr>
+                </thead>
+                <tbody id="device-users-list">
+                    <!-- Loaded dynamically via DataTable -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+    const currentUserToken = '<%= userToken %>';
+    let activeDeviceToken = null;
+    let qrSocket = null;
+
+    function openInviteModal(token) {
+        activeDeviceToken = token;
+        $('#modal_invite')[0].showModal();
+    }
+
+    function openManageUsersModal(token) {
+        activeDeviceToken = token;
+        $('#modal_manage_users')[0].showModal();
+        loadDeviceUsers(token);
+    }
+
+    let deviceUsersDataTable = null;
+
+    function loadDeviceUsers(token) {
+        if (deviceUsersDataTable) {
+            deviceUsersDataTable.destroy();
+        }
+
+        const columns = [
+            {
+                data: 'user.name',
+                render: function (data, type, row) {
+                    const name = row.user.name || 'Unknown';
+                    const initials = name.charAt(0).toUpperCase();
+                    return `
+                        <div class="flex items-center gap-3">
+                            <div class="avatar avatar-placeholder">
+                                <div class="bg-neutral text-neutral-content w-10 rounded-full">
+                                    <span class="text-1xl">${initials}</span>
+                                </div>
+                            </div>
+                            <div class="font-bold whitespace-nowrap">${name}</div>
+                        </div>
+                    `;
+                }
+            },
+            {
+                data: 'user.whatsapp',
+                render: function (data, type, row) {
+                    return `<span class="font-mono text-[10px] opacity-70">${row.user.whatsapp || row.user.email}</span>`;
+                }
+            },
+            {
+                data: 'is_host',
+                render: function (data, type, row) {
+                    const isHost = row.is_host;
+                    return `
+                        <span class="badge ${isHost ? 'badge-primary' : 'badge-ghost'} badge-xs font-bold uppercase tracking-wider scale-90">
+                            ${isHost ? 'Host' : 'Member'}
+                        </span>
+                    `;
+                }
+            },
+            {
+                data: null,
+                orderable: false,
+                className: 'text-right',
+                render: function (data, type, row) {
+                    const isHost = row.is_host;
+                    const isSelf = row.user.token === currentUserToken;
+
+                    if (!isHost && !isSelf) {
+                        return `
+                            <button onclick="revokeUserAccess('${token}', '${row.user.token}')" class="btn btn-ghost btn-xs text-error p-0">
+                                <i class="ri-user-unfollow-line text-lg" title="Revoke Access"></i>
+                            </button>
+                        `;
+                    }
+                    return '<span class="text-[10px] opacity-20">-</span>';
+                }
+            }
+        ];
+
+        deviceUsersDataTable = DataTableHelper.init('device-users-table', '/api/datatable/device-users', columns, {
+            ajax: {
+                url: '/api/datatable/device-users',
+                type: 'POST',
+                data: function (d) {
+                    d.device_token = token;
+                    return d;
+                }
+            },
+            pageLength: 5, // Smaller page length for modal
+            lengthMenu: [5, 10, 25],
+            order: [[0, 'asc']]
+        });
+    }
+
+    async function revokeUserAccess(deviceToken, userToken) {
+        const confirm = await showConfirm(
+            'Revoke Access?',
+            'This user will no longer be able to manage this device.',
+            'Revoke',
+            'Cancel'
+        );
+
+        if (confirm.isConfirmed) {
+            try {
+                const res = await axios.delete(`/api/devices/${deviceToken}/users/${userToken}`);
+                if (res.data.success) {
+                    showToast.success('Access revoked successfully', 'Revoked!');
+                    loadDeviceUsers(deviceToken);
+                    loadDevices(); // Refresh grid too since avatarts might change
+                }
+            } catch (err) {
+                showToast.error(err.response?.data?.message || 'Error revoking access', 'Failed');
+            }
+        }
+    }
+
+    async function sendInvite() {
+        const identifier = $('#inviteIdentifier').val();
+        if (!identifier) return;
+
+        try {
+            const res = await axios.post(`/api/devices/${activeDeviceToken}/invite`, { identifier });
+            if (res.data.success) {
+                $('#modal_invite')[0].close();
+                $('#inviteIdentifier').val('');
+                showToast.success('User invited successfully!', 'Invited!');
+                await loadDevices();
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Error sending invite', 'Failed');
+        }
+    }
+
+    async function loadDevices() {
+        try {
+            const res = await axios.get('/api/devices');
+            const grid = $('#device-grid');
+
+            console.log(res)
+
+            if (res.data.success) {
+                const devices = res.data.devices;
+                if (devices.length === 0) {
+                    grid.html(`
+                        <div class="col-span-full py-20 text-center">
+                            <div class="w-20 h-20 bg-base-content/5 rounded-full flex items-center justify-center mx-auto mb-4 text-base-content/30">
+                                <i class="ri-smartphone-line text-4xl"></i>
+                            </div>
+                            <h3 class="text-xl font-bold text-base-content">No devices connected</h3>
+                            <p class="text-base-content/40 mb-6">Start by adding your first WhatsApp device.</p>
+                        </div>
+                    `);
+                } else {
+                    grid.html(devices.map(dev => `
+                        <div class="card glass hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+                            <div class="card-body">
+                                <div class="flex justify-between items-start mb-4">
+                                    <div class="flex gap-3 items-center">
+                                        <div class="w-12 h-12 ${getStatusBg(dev.status)} rounded-xl flex items-center justify-center text-white text-xl">
+                                            <i class="ri-whatsapp-line"></i>
+                                        </div>
+                                        <div>
+                                            <h3 class="font-bold text-lg">${dev.name}</h3>
+                                            <div class="flex items-center gap-1.5">
+                                                <div class="w-2 h-2 rounded-full ${getStatusDot(dev.status)}"></div>
+                                                <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500">${dev.status}</span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                    <div class="dropdown dropdown-end">
+                                        <div tabindex="0" role="button" class="btn btn-ghost btn-xs rounded-lg"><i class="ri-more-2-fill text-xl"></i></div>
+                                         <ul tabindex="0" class="dropdown-content z-[20] menu p-2 shadow-2xl bg-base-100 border border-base-content/5 rounded-xl w-44">
+                                             ${dev.users?.find(u => u.token === currentUserToken)?.UserDevice?.is_host
+                            ? `<li><a onclick="openManageUsersModal('${dev.token}')" class="text-primary font-bold"><i class="ri-team-line"></i> Manage Users</a></li>
+                               <li><a onclick="openInviteModal('${dev.token}')" class="text-primary"><i class="ri-user-add-line"></i> Invite User</a></li>
+                               <li><a onclick="reconnect('${dev.token}')"><i class="ri-refresh-line"></i> Reconnect</a></li>
+                               <li><a onclick="syncContacts('${dev.token}')"><i class="ri-refresh-line text-success"></i> Sync Contacts</a></li>
+                               <li><a onclick="logoutDevice('${dev.token}')" class="text-warning"><i class="ri-logout-box-r-line"></i> Logout</a></li>
+                               <li><a onclick="deleteDevice('${dev.token}')" class="text-error font-bold text-xs"><i class="ri-delete-bin-line"></i> DELETE DEVICE</a></li>`
+                            : `<li><a class="opacity-30 pointer-events-none italic text-[10px]">Restricted to Host</a></li>`
+                        }
+                                        </ul>
+                                    </div>
+                                </div>
+
+                                 <div class="space-y-3 mt-4">
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-slate-500">Ownership:</span>
+                                        <span class="badge ${dev.users?.find(u => u.token === currentUserToken)?.UserDevice?.is_host ? 'badge-primary' : 'badge-ghost'} badge-xs uppercase font-bold tracking-tighter">
+                                            ${dev.users?.find(u => u.token === currentUserToken)?.UserDevice?.is_host ? 'Host' : 'Member'}
+                                        </span>
+                                    </div>
+                                    <div class="flex flex-col gap-2 mt-4">
+                                        <span class="text-base-content/60 text-[10px] uppercase font-bold tracking-widest">Shared with:</span>
+                                        <div class="avatar-group -space-x-5 rtl:space-x-reverse">
+                                            ${dev.users?.slice(0, 4).map(u => `
+                                                <div class="avatar avatar-placeholder" title="${u.name} ${u.UserDevice.is_host ? '(Host)' : ''}">
+                                                    <div class="bg-neutral text-neutral-content w-14 rounded-full">
+                                                        <span class="text-2xl">${u.name.charAt(0).toUpperCase()}</span>
+                                                    </div>
+                                                </div>
+                                            `).join('')}
+                                            ${dev.users?.length > 4 ? `
+                                                <div class="avatar avatar-placeholder" title="${u.name} ${u.UserDevice.is_host ? '(Host)' : ''}">
+                                                    <div class="bg-neutral text-neutral-content w-14 rounded-full">
+                                                        <span class="text-2xl">+${dev.users.length - 4}</span>
+                                                    </div>
+                                                </div>
+                                            ` : ''}
+                                        </div>
+                                    </div>
+                                    <div class="divider my-1 opacity-5"></div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-base-content/60">Phone:</span>
+                                        <span class="text-base-content font-mono font-bold">${dev.data?.wid || '-'}</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-base-content/60">Platform:</span>
+                                        <span class="text-base-content font-bold capitalize">${dev.data?.platform || '-'}</span>
+                                    </div>
+                                    <div class="flex justify-between text-xs">
+                                        <span class="text-base-content/60">Battery:</span>
+                                        <div class="flex items-center gap-1">
+                                            <span class="text-base-content font-bold">${dev.data?.battery !== undefined ? dev.data.battery + '%' : '-'}</span>
+                                            ${dev.data?.plugged ? '<i class="ri-flashlight-fill text-success text-[10px]"></i>' : ''}
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div class="card-actions mt-6">
+                                    ${dev.status === 'ready'
+                            ? `<a href="/messaging?device=${dev.token}" class="btn btn-primary btn-sm btn-block rounded-xl">Open Messenger</a>`
+                            : `<button onclick="showQR('${dev.token}')" class="btn btn-primary btn-sm btn-block rounded-xl">Connect / Sync</button>`
+                        }
+                                </div>
+                            </div>
+                        </div>
+                    `).join(''));
+                }
+            }
+        } catch (err) {
+            console.error('Failed to load devices', err);
+        }
+    }
+
+    function getStatusBg(status) {
+        if (status === 'ready') return 'bg-success';
+        if (status === 'qr' || status === 'authenticated') return 'bg-warning';
+        return 'bg-slate-700';
+    }
+
+    function getStatusDot(status) {
+        if (status === 'ready') return 'bg-success shadow-[0_0_8px_rgba(34,197,94,0.5)]';
+        if (status === 'qr' || status === 'authenticated') return 'bg-warning shadow-[0_0_8px_rgba(234,179,8,0.5)]';
+        return 'bg-slate-500';
+    }
+
+    function openCreateModal() {
+        $('#modal_create')[0].showModal();
+    }
+
+    async function syncContacts(token) {
+        showToast.loading('We are fetching contacts from your WhatsApp device. This might take a moment.', 'Syncing Contacts...');
+
+        try {
+            const res = await axios.post('/api/contacts/sync', { device_token: token });
+            if (res.data.success) {
+                showToast.success(res.data.message || `${res.data.total} contacts synchronized.`, 'Sync Complete!');
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Error syncing contacts', 'Sync Failed');
+        }
+    }
+
+    async function createDevice() {
+        const name = $('#deviceName').val();
+        if (!name) return;
+
+        try {
+            const res = await axios.post('/api/devices', { name });
+            if (res.data.success) {
+                $('#modal_create')[0].close();
+                $('#deviceName').val('');
+                await loadDevices();
+                showQR(res.data.device.token);
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to create device', 'Error');
+        }
+    }
+
+    async function showQR(token) {
+        activeDeviceToken = token;
+        $('#modal_qr')[0].showModal();
+        $('#qr-placeholder').removeClass('hidden');
+        $('#qr-img').addClass('hidden');
+        $('#qr-status').text('Initiating secure session...').attr('class', 'text-xs font-mono mb-6 py-2 px-4 bg-base-200 rounded-full inline-block text-warning');
+
+        try {
+            // Fetch cached QR if any
+            const qrRes = await axios.get(`/api/devices/${token}/qr`);
+            if (qrRes.data.success && qrRes.data.qr) {
+                renderQR(qrRes.data.qr);
+                $('#qr-status').text('Reusing pending QR. Wait for refresh if needed.');
+            }
+
+            // Always trigger init to be safe
+            await axios.post(`/api/devices/${token}/initialize`);
+            initSocket(token);
+        } catch (err) {
+            $('#qr-status').text('Session start failed. Click reset if stuck.');
+        }
+    }
+
+    async function forceResetSession() {
+        if (!activeDeviceToken) return;
+
+        const btn = event.currentTarget;
+        const originalHtml = btn.innerHTML;
+
+        try {
+            btn.innerHTML = '<span class="loading loading-spinner loading-xs"></span> Resetting...';
+            btn.disabled = true;
+
+            // 1. Full logout/purge on server
+            await axios.post(`/api/devices/${activeDeviceToken}/logout`);
+
+            // 2. Small delay for server cleanup
+            await new Promise(r => setTimeout(r, 1000));
+
+            // 3. Re-initiate
+            $('#qr-img').addClass('hidden');
+            $('#qr-placeholder').removeClass('hidden');
+            $('#qr-status').text('Purged. Starting fresh session...').attr('class', 'text-xs font-mono mb-6 py-2 px-4 bg-base-200 rounded-full inline-block text-info');
+
+            await axios.post(`/api/devices/${activeDeviceToken}/initialize`);
+            initSocket(activeDeviceToken);
+
+            showToast.success('Stuck connection has been cleaned. Please wait for the new QR.', 'Session Purged');
+        } catch (err) {
+            showToast.error('Could not purge session.', 'Reset Failed');
+        } finally {
+            btn.innerHTML = originalHtml;
+            btn.disabled = false;
+        }
+    }
+
+    async function renderQR(qrText) {
+        try {
+            const qrDataUrl = await QRCode.toDataURL(qrText, {
+                width: 512, // High res
+                margin: 2,
+                color: { dark: '#000000', light: '#ffffff' }
+            });
+            $('#qr-placeholder').addClass('hidden');
+            $('#qr-img').attr('src', qrDataUrl).removeClass('hidden');
+        } catch (err) {
+            console.error('[QR] Render Error:', err);
+            $('#qr-status').text('Failed to display QR. Try Force Reset.');
+        }
+    }
+
+    function initSocket(token) {
+        if (qrSocket) qrSocket.disconnect();
+
+        qrSocket = io({
+            query: { clientId: token }
+        });
+
+        qrSocket.on('whatsapp:qr', async (data) => {
+            if (data.clientId === token) {
+                renderQR(data.qr);
+                $('#qr-status').text('New QR Ready! Scan with WhatsApp.').attr('class', 'text-xs font-mono mb-6 py-2 px-4 bg-base-200 rounded-full inline-block text-success font-bold');
+            }
+        });
+
+        qrSocket.on('whatsapp:ready', (data) => {
+            if (data.clientId === token) {
+                $('#qr-status').attr('class', 'text-xs font-mono mb-4 text-success').text('Connected! Closing...');
+                setTimeout(() => {
+                    $('#modal_qr')[0].close();
+                    loadDevices();
+                }, 1500);
+            }
+        });
+
+        qrSocket.on('whatsapp:loading_screen', (data) => {
+            if (data.clientId === token) {
+                $('#qr-status').text(`Syncing: ${data.percent}% - ${data.message}`);
+            }
+        });
+
+        qrSocket.on('whatsapp:disconnected', (data) => {
+            if (data.clientId === token) {
+                $('#qr-status').attr('class', 'text-xs font-mono mb-4 text-error').text('Disconnected.');
+                loadDevices();
+            }
+        });
+    }
+
+    async function reconnect(token) {
+        showQR(token);
+    }
+
+    async function logoutDevice(token) {
+        const result = await showConfirm(
+            'Logout device?',
+            'You will need to scan QR code again to reconnect.',
+            'Logout',
+            'Cancel'
+        );
+
+        if (result.isConfirmed) {
+            try {
+                await axios.post(`/api/devices/${token}/logout`);
+                loadDevices();
+            } catch (err) {
+                showToast.error('Failed to logout', 'Error');
+            }
+        }
+    }
+
+    async function deleteDevice(token) {
+        const result = await showConfirm(
+            'Confirm deletion?',
+            'THIS ACTION IS PERMANENT. All history for this device will be deleted.',
+            'Delete Forever',
+            'Cancel'
+        );
+
+        if (result.isConfirmed) {
+            try {
+                await axios.delete(`/api/devices/${token}`);
+                loadDevices();
+            } catch (err) {
+                showToast.error('Failed to delete device', 'Error');
+            }
+        }
+    }
+
+    $(document).ready(loadDevices);
+</script>

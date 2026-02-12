@@ -1,0 +1,453 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="dark">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>
+        <%= title %> | <%= config.app.name %>
+    </title>
+
+    <!-- CSS Dependencies -->
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5" rel="stylesheet" type="text/css" />
+    <link href="https://cdn.jsdelivr.net/npm/daisyui@5/themes.css" rel="stylesheet" type="text/css" />
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
+    <link href="https://cdn.jsdelivr.net/npm/remixicon@4.9.0/fonts/remixicon.css" rel="stylesheet" />
+    <link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap" rel="stylesheet">
+    <link
+        href="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.3.7/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/datatables.min.css"
+        rel="stylesheet" integrity="sha384-8MkqxZ7SptGSLxfK7hls0KcK9vWdhyxmybI/d+wUELT5KSpbZ42jr3YhVxGlSVme"
+        crossorigin="anonymous">
+
+    <%- style %>
+
+        <style>
+            body {
+                font-family: 'Outfit', sans-serif;
+                min-height: 100vh;
+                overflow-x: hidden;
+            }
+
+            .dashboard-bg {
+                position: fixed;
+                top: 0;
+                left: 0;
+                width: 100%;
+                height: 100%;
+                z-index: -1;
+                background: radial-gradient(circle at top right, oklch(var(--p) / 0.05), transparent 400px),
+                    radial-gradient(circle at bottom left, oklch(var(--s) / 0.05), transparent 400px);
+            }
+
+            .glass {
+                background: oklch(1 0 0 / 0.03);
+                backdrop-filter: blur(12px);
+                border: 1px solid oklch(1 0 0 / 0.08);
+            }
+
+            [data-theme="light"] .glass {
+                background: oklch(0.1 0 0 / 0.03);
+                border-color: oklch(0.1 0 0 / 0.08);
+            }
+
+            .sidebar-item {
+                @apply flex items-center gap-3 px-4 py-3 rounded-2xl transition-all duration-300 border border-transparent;
+            }
+
+            .sidebar-item:hover {
+                background: oklch(var(--bc) / 0.05);
+                @apply translate-x-1;
+            }
+
+            .sidebar-active {
+                background: oklch(var(--p) / 0.1) !important;
+                color: var(--p) !important;
+                border-color: oklch(var(--p) / 0.2) !important;
+                font-weight: 700;
+            }
+
+            .menu-title {
+                @apply px-4 mt-8 mb-2 opacity-40 font-black text-[10px] tracking-[0.2em] uppercase;
+            }
+
+            /* Custom scrollbar */
+            ::-webkit-scrollbar {
+                width: 5px;
+            }
+
+            ::-webkit-scrollbar-track {
+                background: transparent;
+            }
+
+            ::-webkit-scrollbar-thumb {
+                background: oklch(var(--bc) / 0.1);
+                border-radius: 10px;
+            }
+
+            /* SweetAlert2 z-index fix - ensure it appears above EVERYTHING */
+            .swal2-container {
+                z-index: 2147483647 !important;
+            }
+
+            .swal2-popup {
+                z-index: 2147483647 !important;
+            }
+
+            /* Ensure SweetAlert2 backdrop is above modals */
+            .swal2-backdrop-show {
+                z-index: 2147483646 !important;
+            }
+        </style>
+</head>
+
+<body class="bg-base-100 text-base-content antialiased">
+    <div class="dashboard-bg"></div>
+    <div class="drawer lg:drawer-open">
+        <input id="main-drawer" type="checkbox" class="drawer-toggle" />
+
+        <div class="drawer-content flex flex-col min-h-screen">
+            <!-- Navbar -->
+            <div class="navbar glass sticky top-0 z-30 lg:hidden">
+                <div class="flex-none">
+                    <label for="main-drawer" class="btn btn-square btn-ghost drawer-button">
+                        <i class="ri-menu-line text-xl"></i>
+                    </label>
+                </div>
+                <div class="flex-1">
+                    <a class="btn btn-ghost text-xl font-bold italic tracking-tighter">
+                        <%= config.app.name %>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Page Content -->
+            <main class="p-4 lg:p-8 flex-1">
+                <%- body %>
+            </main>
+
+            <!-- Footer -->
+            <footer class="footer footer-center p-4 text-base-content/60 text-xs">
+                <aside>
+                    <p>© <%= new Date().getFullYear() %>
+                            <%= config.app.name %> Gateway. Built with ❤️.</p>
+                </aside>
+            </footer>
+        </div>
+
+        <!-- Sidebar -->
+        <div class="drawer-side z-40">
+            <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
+            <ul class="menu p-4 w-72 min-h-screen bg-base-200 border-r border-base-content/5 text-base-content/70">
+                <div class="mb-10 px-4">
+                    <h1 class="text-3xl font-bold text-base-content italic tracking-tighter">
+                        <%= config.app.name %>
+                    </h1>
+                    <p class="text-[10px] uppercase tracking-widest text-primary font-bold">WhatsApp Gateway</p>
+                </div>
+
+                <li>
+                    <p class="menu-title mt-4 text-xs uppercase tracking-widest">Main Menu</p>
+                </li>
+                <li><a href="/dashboard" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-dashboard-fill text-lg"></i> Dashboard</a></li>
+                <li><a href="/devices" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-smartphone-fill text-lg"></i> Device Manager</a></li>
+
+                <li>
+                    <p class="menu-title mt-4 text-xs uppercase tracking-widest">Messaging</p>
+                </li>
+                <li><a href="/messaging" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-message-3-fill text-lg"></i> Send Message</a></li>
+                <li><a href="/campaigns" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-broadcast-fill text-lg"></i> Campaigns</a></li>
+                <li><a href="/scheduled-messages" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-time-line text-lg"></i> Scheduled Messages</a></li>
+                <li><a href="/history" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-history-fill text-lg"></i> Message History</a></li>
+
+                <li>
+                    <p class="menu-title mt-4 text-xs uppercase tracking-widest">Tools</p>
+                </li>
+                <li><a href="/contacts" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-contacts-book-2-fill text-lg"></i> Contacts & Groups</a></li>
+                <li><a href="/templates" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-layout-grid-fill text-lg"></i> Message Templates</a></li>
+                <li><a href="/auto-replies" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-robot-fill text-lg"></i> Auto Reply</a></li>
+                <li><a href="/tools/number-checker" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-user-search-fill text-lg"></i> Number Checker</a></li>
+
+                <div class="mt-auto">
+                    <li>
+                        <p class="menu-title text-xs uppercase tracking-widest px-4">System & Appearance</p>
+                    </li>
+                    <% if (req.user && req.user.role==='SUPER_ADMIN' ) { %>
+                        <li><a href="/admin/users" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                                    class="ri-group-fill text-lg"></i> User Management</a></li>
+                        <li><a href="/admin/settings"
+                                class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                                    class="ri-settings-5-fill text-lg"></i> Admin Settings</a></li>
+                        <li><a href="/admin"
+                                class="sidebar-item py-3 rounded-xl transition-all duration-300 text-warning font-bold"><i
+                                    class="ri-vip-crown-fill text-lg"></i> System Dashboard</a></li>
+                        <% } %>
+
+                            <% if (isSubscriptionEnabled) { %>
+                                <li><a href="/billing"
+                                        class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                                            class="ri-bank-card-fill text-lg"></i> Billing & Plans</a></li>
+                                <% } %>
+                                    <li><a href="/api-docs"
+                                            class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                                                class="ri-book-read-fill text-lg"></i> API Documentation</a></li>
+                                    <li><a href="/settings"
+                                            class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                                                class="ri-settings-3-fill text-lg"></i> Settings</a></li>
+
+                                    <div class="px-4 py-4 mt-4">
+                                        <div
+                                            class="bg-base-300/50 rounded-2xl p-4 flex items-center justify-between border border-base-content/5">
+                                            <i class="ri-sun-fill text-warning"></i>
+                                            <input type="checkbox" id="theme-toggle"
+                                                class="toggle toggle-primary theme-controller" />
+                                            <i class="ri-moon-fill text-primary"></i>
+                                        </div>
+                                    </div>
+
+                                    <li class="mt-4 px-4">
+                                        <button onclick="logout()"
+                                            class="btn btn-error btn-outline w-full rounded-2xl h-12">
+                                            <i class="ri-logout-box-r-line"></i> Logout
+                                        </button>
+                                    </li>
+                </div>
+            </ul>
+        </div>
+    </div>
+
+    <!-- JS Dependencies -->
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"
+        integrity="sha256-/JqT3SQfawRcv/BIHPThkBvs0OEvtFFmqPF/lYI/Cxo=" crossorigin="anonymous"></script>
+    <script src="https://cdn.jsdelivr.net/npm/dayjs@1/dayjs.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/axios/dist/axios.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/js-cookie@3.0.5/dist/js.cookie.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/sweetalert2@11"></script>
+    <script src="https://cdn.jsdelivr.net/npm/qrcode/build/qrcode.min.js"></script>
+    <script src="/socket.io/socket.io.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/pdfmake.min.js"
+        integrity="sha384-VFQrHzqBh5qiJIU0uGU5CIW3+OWpdGGJM9LBnGbuIH2mkICcFZ7lPd/AAtI7SNf7"
+        crossorigin="anonymous"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdfmake/0.2.7/vfs_fonts.js"
+        integrity="sha384-/RlQG9uf0M2vcTw3CX7fbqgbj/h8wKxw7C3zu9/GxcBPRKOEcESxaxufwRXqzq6n"
+        crossorigin="anonymous"></script>
+    <script
+        src="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.3.7/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/datatables.min.js"
+        integrity="sha384-IeynwLcdsZcWmY/Y9/A0yAgemsxpCxjRxnMS9i8JldQ6a85NFJm9yxbglUYsSvZz"
+        crossorigin="anonymous"></script>
+    <script src="/js/daisyui-utils.js"></script>
+    <script src="/js/datatable-helper.js"></script>
+
+    <script>
+        // Set Axios defaults
+        axios.defaults.headers.common['Authorization'] = 'Bearer ' + Cookies.get('token');
+
+        async function logout() {
+            try {
+                await axios.post('/api/auth/logout');
+                Cookies.remove('token');
+                window.location.href = '/login';
+            } catch (err) {
+                Cookies.remove('token');
+                window.location.href = '/login';
+            }
+        }
+
+        $(document).ready(() => {
+            // Highlight active menu
+            $('.sidebar-item').each(function () {
+                if ($(this).attr('href') === window.location.pathname) {
+                    $(this).addClass('sidebar-active');
+                }
+            });
+
+            // Get DaisyUI theme colors dynamically
+            window.getThemeColors = () => {
+                const isDark = $('html').attr('data-theme') === 'dark';
+
+                return {
+                    primary: 'oklch(var(--p))',
+                    success: 'oklch(var(--su))',
+                    warning: 'oklch(var(--wa))',
+                    error: 'oklch(var(--er))',
+                    info: 'oklch(var(--in))',
+                    // Use CSS variables directly for background/color if Swal supports it, 
+                    // otherwise fall back to theme-aware defaults
+                    background: isDark ? '#1d232a' : '#ffffff',
+                    text: isDark ? '#a6adbb' : '#1f2937'
+                };
+            };
+
+            // Global SweetAlert2 Configuration & Toast Helpers
+            // Aggressively ensure SweetAlert is always on top
+            const ensureSwalOnTop = () => {
+                const observer = new MutationObserver((mutations) => {
+                    mutations.forEach((mutation) => {
+                        mutation.addedNodes.forEach((node) => {
+                            if (node.classList && node.classList.contains('swal2-container')) {
+                                // 1. Determine target (open modal or body)
+                                const openModal = document.querySelector('dialog.modal[open]');
+                                const target = openModal || document.body;
+
+                                // 2. Move to LAST position in target for highest natural stacking
+                                if (node.parentNode !== target || node !== target.lastChild) {
+                                    target.appendChild(node);
+                                }
+
+                                // 3. Force maximum possible z-index
+                                node.style.zIndex = '2147483647';
+                                const popup = node.querySelector('.swal2-popup');
+                                if (popup) popup.style.zIndex = '2147483647';
+                            }
+                        });
+                    });
+                });
+
+                observer.observe(document.body, { childList: true, subtree: true });
+            };
+
+            ensureSwalOnTop();
+
+            // DaisyUI-themed Toast Configuration
+            const Toast = Swal.mixin({
+                toast: true,
+                position: 'top-end',
+                showConfirmButton: false,
+                timer: 3000,
+                timerProgressBar: true,
+                background: getThemeColors().background,
+                color: getThemeColors().text,
+                didOpen: (toast) => {
+                    toast.addEventListener('mouseenter', Swal.stopTimer);
+                    toast.addEventListener('mouseleave', Swal.resumeTimer);
+                },
+                customClass: {
+                    popup: 'rounded-2xl shadow-xl border border-base-content/10'
+                }
+            });
+
+            // Global toast helper functions with DaisyUI theming
+            window.showToast = {
+                success: (message, title = 'Success') => {
+                    return Toast.fire({
+                        icon: 'success',
+                        title: title,
+                        text: message,
+                        iconColor: getThemeColors().success
+                    });
+                },
+                error: (message, title = 'Error') => {
+                    return Toast.fire({
+                        icon: 'error',
+                        title: title,
+                        text: message,
+                        iconColor: getThemeColors().error
+                    });
+                },
+                warning: (message, title = 'Warning') => {
+                    return Toast.fire({
+                        icon: 'warning',
+                        title: title,
+                        text: message,
+                        iconColor: getThemeColors().warning
+                    });
+                },
+                info: (message, title = 'Info') => {
+                    return Toast.fire({
+                        icon: 'info',
+                        title: title,
+                        text: message,
+                        iconColor: getThemeColors().info
+                    });
+                },
+                loading: (message = 'Loading...', title = 'Please wait') => {
+                    return Swal.fire({
+                        title: title,
+                        text: message,
+                        allowOutsideClick: false,
+                        showConfirmButton: false,
+                        background: getThemeColors().background,
+                        color: getThemeColors().text,
+                        didOpen: () => {
+                            Swal.showLoading();
+                        },
+                        customClass: {
+                            popup: 'rounded-2xl shadow-xl border border-base-content/10'
+                        }
+                    });
+                },
+                close: () => {
+                    Swal.close();
+                }
+            };
+
+            // Global confirm dialog helper with DaisyUI theming
+            window.showConfirm = async (title, text, confirmText = 'Yes', cancelText = 'Cancel') => {
+                const colors = getThemeColors();
+                return await Swal.fire({
+                    title: title,
+                    text: text,
+                    icon: 'warning',
+                    showCancelButton: true,
+                    confirmButtonColor: colors.primary,
+                    cancelButtonColor: colors.error,
+                    confirmButtonText: confirmText,
+                    cancelButtonText: cancelText,
+                    background: colors.background,
+                    color: colors.text,
+                    iconColor: colors.warning,
+                    customClass: {
+                        popup: 'rounded-2xl shadow-xl border border-base-content/10',
+                        confirmButton: 'btn btn-primary rounded-xl',
+                        cancelButton: 'btn btn-error rounded-xl'
+                    },
+                    buttonsStyling: false
+                });
+            };
+
+            // Theme Switcher Logic
+            const theme = localStorage.getItem('theme') || 'dark';
+            $('html').attr('data-theme', theme);
+            $('#theme-toggle').prop('checked', theme === 'dark');
+
+            $('#theme-toggle').on('change', function () {
+                const isDark = $(this).is(':checked');
+                const newTheme = isDark ? 'dark' : 'light';
+                $('html').attr('data-theme', newTheme);
+                localStorage.setItem('theme', newTheme);
+            });
+
+            // Global Error Handling for Frontend
+            window.onerror = function (message, url, line, col, error) {
+                axios.post('/api/logs/client', {
+                    error: message,
+                    url: url,
+                    line: line,
+                    col: col,
+                    stack: error ? error.stack : ''
+                }).catch(() => { }); // Fail silently to avoid infinite loops
+                return false;
+            };
+
+            window.onunhandledrejection = function (event) {
+                axios.post('/api/logs/client', {
+                    error: 'Unhandled Promise Rejection',
+                    url: window.location.href,
+                    stack: event.reason ? (event.reason.stack || event.reason) : ''
+                }).catch(() => { });
+            };
+        });
+    </script>
+    <%- script %>
+</body>
+
+</html>

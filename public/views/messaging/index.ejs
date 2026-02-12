@@ -1,0 +1,453 @@
+<div class="flex flex-col gap-8 h-full">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">Unified Messenger</h1>
+            <p class="text-base-content/60">Send single, bulk, or media messages through your connected devices.</p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- New Message Form -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="card glass">
+                <div class="card-body">
+                    <h3 class="font-bold text-lg mb-4 text-base-content">Compose Message</h3>
+
+                    <form id="messageForm" class="space-y-6">
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <!-- Device Selection -->
+                            <%- include('../layouts/partials/device_selector', { id: 'deviceSelect' ,
+                                label: 'Select Device' , required: true }) %>
+
+                                <!-- Message Type -->
+                                <div class="form-control">
+                                    <label
+                                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Message
+                                        Type</label>
+                                    <div class="flex gap-2">
+                                        <input type="radio" name="msgType" value="single"
+                                            class="btn btn-sm btn-outline rounded-lg flex-1" aria-label="Single"
+                                            checked />
+                                        <input type="radio" name="msgType" value="bulk"
+                                            class="btn btn-sm btn-outline rounded-lg flex-1" aria-label="Bulk" />
+                                    </div>
+                                </div>
+                        </div>
+
+                        <!-- Recipient(s) -->
+                        <div class="form-control">
+                            <label class="flex justify-between items-center mb-2">
+                                <div class="flex items-center gap-2">
+                                    <span class="block uppercase text-[11px] font-semibold tracking-widest opacity-60"
+                                        id="recipient-label">Recipient Number</span>
+                                    <button type="button" onclick="openContactModal('#recipients')"
+                                        class="btn btn-ghost btn-xs text-primary gap-1">
+                                        <i class="ri-contacts-book-line"></i> Select from Contacts
+                                    </button>
+                                </div>
+                                <span class="text-[10px] opacity-40 italic" id="recipient-hint">Include country code,
+                                    e.g. 62812...</span>
+                            </label>
+                            <textarea id="recipients" placeholder="62812345678"
+                                class="textarea textarea-bordered w-full h-24 rounded-2xl font-mono text-sm text-base-content"
+                                required></textarea>
+                            <div id="bulk-info" class="hidden mt-2 text-[10px] text-base-content/40">
+                                <i class="ri-information-line"></i> One number per line for bulk messaging.
+                            </div>
+                        </div>
+
+                        <!-- Message Body -->
+                        <div class="form-control">
+                            <label
+                                class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Message
+                                Content</label>
+                            <textarea id="messageBody" placeholder="Type your message here..."
+                                class="textarea textarea-bordered w-full h-32 rounded-2xl text-base-content"
+                                required></textarea>
+                            <div class="flex justify-between mt-2">
+                                <button type="button" onclick="openTemplateModal()"
+                                    class="btn btn-ghost btn-xs text-primary"><i class="ri-layout-grid-line"></i> Use
+                                    Template</button>
+                                <span class="text-[10px] text-base-content/40">Variables like {name} are supported for
+                                    bulk.</span>
+                            </div>
+                        </div>
+
+                        <!-- Media Attachment (Optional) -->
+                        <div class="form-control">
+                            <label
+                                class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Attachment
+                                (Optional)</label>
+                            <input type="file" id="mediaFile"
+                                class="file-input file-input-bordered file-input-primary w-full rounded-2xl" />
+                            <p class="text-[10px] text-base-content/40 mt-1">Images, PDFs, or Videos supported.</p>
+                        </div>
+
+                        <% if (showQueueToggle) { %>
+                            <div class="form-control bg-base-200/50 p-4 rounded-2xl border border-base-content/5">
+                                <label class="label cursor-pointer justify-start gap-4">
+                                    <input type="checkbox" id="useQueue" class="checkbox checkbox-primary" checked />
+                                    <span class="flex flex-col">
+                                        <span class="text-xs font-semibold text-base-content">Use Priority Queue
+                                            (Recommended)</span>
+                                        <span class="text-[10px] text-base-content/50">Uncheck to send directly. Direct
+                                            sending is faster but increases risk of account ban.</span>
+                                    </span>
+                                </label>
+                            </div>
+                            <% } else { %>
+                                <input type="hidden" id="useQueue" value="true" />
+                                <% } %>
+
+                                    <div class="card-actions justify-end mt-4">
+                                        <button type="submit" id="btnSend"
+                                            class="btn btn-primary px-10 rounded-xl shadow-lg shadow-primary/20">
+                                            <i class="ri-send-plane-2-fill"></i> Send Message
+                                        </button>
+                                    </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <!-- Sidebar / Recent -->
+        <div class="space-y-6">
+            <div class="card glass">
+                <div class="card-body">
+                    <h3 class="font-bold text-lg mb-4 text-base-content">Quick Tips</h3>
+                    <ul class="space-y-4">
+                        <li class="flex gap-3 items-center text-xs text-base-content/60">
+                            <i class="ri-check-double-line text-success text-lg shrink-0"></i>
+                            <p>Always include country code (e.g. 62 for Indonesia) without '+' or spaces.</p>
+                        </li>
+                        <li class="flex gap-3 items-center text-xs text-base-content/60">
+                            <i class="ri-timer-line text-warning text-lg shrink-0"></i>
+                            <p>Bulk messages are processed via queue to prevent number ban.</p>
+                        </li>
+                        <li class="flex gap-3 items-center text-xs text-base-content/60">
+                            <i class="ri-image-line text-primary text-lg shrink-0"></i>
+                            <p>Sending media to many recipients? Upload once, WARF handles the rest.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+
+            <!-- Queue Stats -->
+            <div class="card glass hover:border-primary/30 transition-all duration-300 group">
+                <div class="card-body p-6">
+                    <div class="flex items-center gap-4">
+                        <div
+                            class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                            <i class="ri-stack-line text-2xl"></i>
+                        </div>
+                        <div class="flex-1">
+                            <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Queue
+                                Status</p>
+                            <div class="flex gap-4 mt-2">
+                                <div>
+                                    <h4 class="text-2xl font-black text-base-content" id="queue-count">0</h4>
+                                    <p class="text-[9px] uppercase font-bold opacity-40">Pending</p>
+                                </div>
+                                <div class="border-l border-base-content/10 pl-4">
+                                    <h4 class="text-2xl font-black text-success" id="queue-completed">0</h4>
+                                    <p class="text-[9px] uppercase font-bold opacity-40">Sent</p>
+                                </div>
+                                <div class="border-l border-base-content/10 pl-4">
+                                    <h4 class="text-2xl font-black text-error" id="queue-failed">0</h4>
+                                    <p class="text-[9px] uppercase font-bold opacity-40">Failed</p>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Template Modal -->
+<dialog id="modal_templates" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 max-w-2xl">
+        <h3 class="font-bold text-lg mb-6 text-base-content">Select Template</h3>
+        <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="template-list">
+            <p class="text-slate-500 text-center col-span-2 py-10">Loading templates...</p>
+        </div>
+        <div class="modal-action">
+            <form method="dialog"><button class="btn btn-ghost">Cancel</button></form>
+        </div>
+    </div>
+</dialog>
+
+
+<script>
+    /**
+     * GLOBAL STATE & CONFIGURATION
+     */
+    const userToken = '<%= userToken %>';
+
+    /**
+     * UTILITIES
+     */
+    // Simple debounce function (if lodash is not available)
+    const _ = {
+        debounce: (func, wait) => {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func.apply(this, args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    };
+
+    /**
+     * INITIALIZATION
+     */
+    async function initMessaging() {
+        await Promise.all([
+            loadQueueStats(),
+            loadContactBook()
+        ]);
+
+        initSocket();
+
+        // Handle message type switch (Single vs Bulk)
+        $('input[name="msgType"]').on('change', function () {
+            const isBulk = $(this).val() === 'bulk';
+            $('#recipient-label').text(isBulk ? 'Recipient Numbers' : 'Recipient Number');
+            $('#recipient-hint').text(isBulk ? 'One number per line' : 'Include country code, e.g. 62812...');
+            $('#bulk-info').toggleClass('hidden', !isBulk);
+            $('#recipients').attr('placeholder', isBulk ? "62812...\n62856...\n62878..." : "62812345678");
+        });
+
+        // Initialize Form Handler
+        initFormHandler();
+    }
+
+    /**
+     * REAL-TIME UPDATES
+     */
+    function initSocket() {
+        if (typeof io === 'undefined') {
+            console.warn('Socket.IO not loaded');
+            return;
+        }
+
+        const socket = io({
+            query: { userToken }
+        });
+
+        socket.on('connect', () => {
+            // Connected to real-time updates
+        });
+
+        socket.on('queue:update', (data) => {
+            loadQueueStats();
+        });
+
+        socket.on('disconnect', () => {
+            // Disconnected from real-time updates
+        });
+    }
+
+    /**
+     * DATA LOADING FUNCTIONS
+     */
+    async function loadQueueStats() {
+
+        try {
+            const res = await axios.get('/api/messages/queue/stats');
+
+            if (res.data.success && res.data.stats) {
+                const s = res.data.stats;
+                const pending = (s.queued || 0) + (s.processing || 0);
+
+                $('#queue-count').text(pending);
+                $('#queue-completed').text(s.completed || 0);
+                $('#queue-failed').text(s.failed || 0);
+            }
+        } catch (err) {
+            console.error('Error loading queue stats:', err);
+        }
+    }
+
+    async function loadContactBook() {
+        const urlParams = new URLSearchParams(window.location.search);
+        const bookId = urlParams.get('book');
+        if (bookId) {
+            try {
+                // We need an API to get book members, for now let's assume getContacts with book_id
+                const res = await axios.get('/api/contacts', { params: { book_id: bookId } });
+                if (res.data.success && res.data.contacts.length > 0) {
+                    const numbers = res.data.contacts.map(c => c.whatsapp).join('\n');
+                    $('#recipients').val(numbers);
+                    $('input[name="msgType"][value="bulk"]').click();
+                }
+            } catch (err) {
+                console.error('Error loading contact book members:', err);
+            }
+        }
+    }
+
+    /**
+     * TEMPLATE MODULE
+     */
+    let templatesData = {};
+
+    async function openTemplateModal() {
+        $('#modal_templates')[0].showModal();
+        try {
+            const res = await axios.get('/api/templates');
+            const list = $('#template-list');
+            if (res.data.success) {
+                if (res.data.templates.length === 0) {
+                    list.html('<p class="text-base-content/30 text-center col-span-2 py-10">No templates found. <a href="/templates" class="text-primary link">Create one?</a></p>');
+                } else {
+                    // Store templates for lookup to avoid btoa/Unicode issues
+                    templatesData = {};
+                    res.data.templates.forEach(t => {
+                        templatesData[t.token] = t.content;
+                    });
+
+                    list.html(res.data.templates.map(t => {
+                        const content = t.content || '';
+                        return `
+                            <div class="card bg-base-200 hover:bg-base-300 cursor-pointer transition-colors border border-base-content/5" onclick="useTemplate('${t.token}')">
+                                <div class="card-body p-4">
+                                    <h4 class="font-bold text-base-content text-sm">${t.name || 'Unnamed Template'}</h4>
+                                    <p class="text-xs text-base-content/50 line-clamp-2 mt-1">${content}</p>
+                                </div>
+                            </div>
+                        `;
+                    }).join(''));
+                }
+            }
+        } catch (err) {
+            console.error('Error loading templates:', err);
+        }
+    }
+
+    function useTemplate(token) {
+        try {
+            const content = templatesData[token] || '';
+            $('#messageBody').val(content);
+            $('#modal_templates')[0].close();
+        } catch (e) {
+            console.error('Failed to use template:', e);
+        }
+    }
+
+
+    /**
+     * FORM HANDLER MODULE
+     */
+    function initFormHandler() {
+        $('#messageForm').on('submit', async function (e) {
+            e.preventDefault();
+            const btn = $('#btnSend');
+            const type = $('input[name="msgType"]:checked').val();
+            const device = $('#deviceSelect').val();
+            const recipientsRaw = $('#recipients').val();
+            const message = $('#messageBody').val();
+            const file = $('#mediaFile')[0].files[0];
+
+            if (!device) {
+                return showToast.error('Please select a device', 'Error');
+            }
+
+            // Split and clean recipients
+            const recipientsList = recipientsRaw.split('\n')
+                .map(r => r.trim().replace(/\D/g, ''))
+                .filter(r => r.length > 0);
+
+            if (recipientsList.length === 0) {
+                return showToast.error('Please enter at least one recipient number', 'Error');
+            }
+
+            btn.prop('disabled', true);
+            btn.html('<span class="loading loading-spinner"></span> Processing...');
+
+            try {
+                let res;
+                if (file) {
+                    // Media Submission - Backend expects one 'to' per media request
+                    // We loop if there are multiple recipients
+                    let successCount = 0;
+                    let lastError = null;
+
+                    for (const to of recipientsList) {
+                        const useQueue = $('#useQueue').is(':checked') || $('#useQueue').val() === 'true';
+                        const formData = new FormData();
+                        formData.append('device_token', device);
+                        formData.append('to', to);
+                        formData.append('message', message);
+                        formData.append('file', file);
+                        formData.append('use_queue', useQueue);
+
+                        try {
+                            const mediaRes = await axios.post('/api/messages/media', formData);
+                            if (mediaRes.data.success) successCount++;
+                        } catch (err) {
+                            console.error(`Failed to send media to ${to}:`, err);
+                            lastError = err.response?.data?.message || err.message;
+                        }
+                    }
+
+                    res = {
+                        data: {
+                            success: successCount > 0,
+                            message: successCount > 0
+                                ? `Processed ${successCount} media messages.`
+                                : `Failed to send media: ${lastError}`
+                        }
+                    };
+                } else if (type === 'bulk' || recipientsList.length > 1) {
+                    // Bulk Text Submission
+                    const recipientsArray = recipientsList.map(r => ({ to: r, message }));
+                    const useQueue = $('#useQueue').is(':checked') || $('#useQueue').val() === 'true';
+                    res = await axios.post('/api/messages/bulk', {
+                        device_token: device,
+                        recipients: recipientsArray,
+                        use_queue: useQueue
+                    });
+                } else {
+                    // Single Text Submission
+                    const useQueue = $('#useQueue').is(':checked') || $('#useQueue').val() === 'true';
+                    res = await axios.post('/api/messages/send', {
+                        device_token: device,
+                        to: recipientsList[0],
+                        message,
+                        use_queue: useQueue
+                    });
+                }
+
+                if (res.data.success) {
+                    showToast.success(res.data.message || 'Message(s) processed', 'Success!');
+
+                    // Reset fields if single message
+                    if (recipientsList.length === 1 && !file) {
+                        $('#recipients').val('');
+                        $('#messageBody').val('');
+                        $('#mediaFile').val('');
+                    }
+                    loadQueueStats();
+                }
+            } catch (err) {
+                console.error('Submission error:', err);
+                showToast.error(err.response?.data?.message || 'Check your device connection', 'Failed to send');
+            } finally {
+                btn.prop('disabled', false);
+                btn.html('<i class="ri-send-plane-2-fill"></i> Send Message');
+            }
+        });
+    }
+
+    // Initialize on document ready
+    $(document).ready(initMessaging);
+</script>
+
+<%- include('../layouts/partials/contact_modal') %>

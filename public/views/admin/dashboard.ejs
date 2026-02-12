@@ -1,0 +1,196 @@
+<div class="flex flex-col gap-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content flex items-center gap-3">
+                <i class="ri-vip-crown-fill text-warning"></i> System Dashboard
+            </h1>
+            <p class="text-base-content/60">Global overview of the WARF Gateway infrastructure.</p>
+        </div>
+        <div>
+            <button onclick="location.reload()" class="btn btn-ghost glass btn-sm rounded-lg"><i
+                    class="ri-refresh-line"></i> Reload Stats</button>
+        </div>
+    </div>
+
+    <!-- Global Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card glass shadow-sm">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-base-content/40 tracking-widest">Total Users</p>
+                        <h2 class="text-3xl font-bold mt-1 text-base-content">
+                            <%= stats.users.total %>
+                        </h2>
+                    </div>
+                    <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                        <i class="ri-group-line text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs">
+                    <span class="text-success font-bold">
+                        <%= stats.users.active %>
+                    </span> <span class="text-base-content/40">active accounts</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card glass shadow-sm">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-base-content/40 tracking-widest">Global Devices
+                        </p>
+                        <h2 class="text-3xl font-bold mt-1 text-base-content">
+                            <%= stats.devices.total %>
+                        </h2>
+                    </div>
+                    <div class="w-12 h-12 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
+                        <i class="ri-smartphone-line text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs">
+                    <span class="text-success font-bold">
+                        <%= stats.devices.ready %>
+                    </span> <span class="text-base-content/40">online nodes</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card glass shadow-sm">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-base-content/40 tracking-widest">Messages (24h)
+                        </p>
+                        <h2 class="text-3xl font-bold mt-1 text-base-content">
+                            <%= stats.messages.sent_24h %>
+                        </h2>
+                    </div>
+                    <div class="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center text-success">
+                        <i class="ri-chat-check-line text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs">
+                    <span class="text-error font-bold">
+                        <%= stats.messages.failed_24h %>
+                    </span> <span class="text-base-content/40">errors recorded</span>
+                </div>
+            </div>
+        </div>
+
+        <div class="card glass shadow-sm">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase font-bold text-base-content/40 tracking-widest">Active Campaigns
+                        </p>
+                        <h2 class="text-3xl font-bold mt-1 text-base-content">
+                            <%= stats.campaigns.active %>
+                        </h2>
+                    </div>
+                    <div class="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center text-warning">
+                        <i class="ri-broadcast-line text-2xl"></i>
+                    </div>
+                </div>
+                <div class="mt-4 text-xs">
+                    <span class="text-base-content/40">Broadcasting right now</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Quick Actions -->
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-6">
+        <div class="lg:col-span-2 card glass">
+            <div class="card-body">
+                <h3 class="font-bold text-lg mb-4">Quick Management</h3>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <a href="/admin/users"
+                        class="btn btn-outline gap-3 justify-start h-auto py-4 rounded-2xl border-base-content/10">
+                        <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                            <i class="ri-user-settings-line text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold">User Management</div>
+                            <div class="text-[10px] opacity-50">Manage accounts & subscriptions</div>
+                        </div>
+                    </a>
+                    <a href="/admin/packages"
+                        class="btn btn-outline gap-3 justify-start h-auto py-4 rounded-2xl border-base-content/10">
+                        <div
+                            class="w-10 h-10 bg-secondary/10 rounded-xl flex items-center justify-center text-secondary">
+                            <i class="ri-vip-diamond-line text-xl"></i>
+                        </div>
+                        <div class="text-left">
+                            <div class="font-bold">Package Pricing</div>
+                            <div class="text-[10px] opacity-50">Configure limits & prices</div>
+                        </div>
+                    </a>
+                </div>
+            </div>
+        </div>
+
+        <div class="card glass border-l-4 border-info">
+            <div class="card-body">
+                <h3 class="font-bold text-lg mb-4">System Status</h3>
+                <div class="space-y-4">
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-base-content/60">Node Environment</span>
+                        <span class="badge badge-primary badge-sm">
+                            <%= process.env.NODE_ENV %>
+                        </span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-base-content/60">Database</span>
+                        <span id="stat-db-badge" class="badge badge-success badge-sm">Connected</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-base-content/60">CPU Load</span>
+                        <span id="stat-cpu-load" class="font-mono text-xs text-base-content/60">0.00%</span>
+                    </div>
+                    <div class="flex justify-between items-center text-sm">
+                        <span class="text-base-content/60">RAM Usage</span>
+                        <span id="stat-ram-usage" class="font-mono text-xs text-base-content/60">0%</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script src="/socket.io/socket.io.js"></script>
+<script>
+    const socket = io({
+        query: { userToken: '<%= req.user.token %>' }
+    });
+
+    socket.on('system:status', (stats) => {
+        // Update DB Badge
+        const dbBadge = $('#stat-db-badge');
+        if (stats.db === 'connected') {
+            dbBadge.removeClass('badge-error').addClass('badge-success').text('Connected');
+        } else {
+            dbBadge.removeClass('badge-success').addClass('badge-error').text('Disconnected');
+        }
+
+        // Update CPU/RAM
+        $('#stat-cpu-load').text(stats.cpu.usage + '%');
+        $('#stat-ram-usage').text(stats.memory.usage + '%');
+
+        // Update Devices Ready count in card 2
+        // We can target by finding the card with "Global Devices" text
+        const deviceCard = $('.card:has(p:contains("Global Devices"))');
+        deviceCard.find('.text-success.font-bold').text(stats.whatsapp.ready);
+        deviceCard.find('h2').text(stats.whatsapp.total);
+    });
+
+    socket.on('whatsapp:crash', (data) => {
+        showToast.error(`WhatsApp Instance Crashed: ${data.clientId}\nReason: ${data.error}`);
+    });
+
+    socket.on('system:error', (err) => {
+        showToast.error(`System Error: ${err.message}`);
+    });
+</script>

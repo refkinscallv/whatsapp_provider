@@ -1,0 +1,6 @@
+{
+    "watch": ["app", "core", "public", "index.js"],
+    "ext": "js,json,ejs",
+    "ignore": ["node_modules", "logs", "coverage", "logs", "tests"],
+    "exec": "node index.js"
+}

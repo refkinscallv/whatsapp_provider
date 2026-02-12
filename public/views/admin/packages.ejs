@@ -1,0 +1,210 @@
+<div class="flex flex-col gap-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content flex items-center gap-3">
+                <i class="ri-vip-diamond-fill text-secondary"></i> Package Management
+            </h1>
+            <p class="text-base-content/60">Manage subscription plans, pricing, and resource limits.</p>
+        </div>
+        <div>
+            <button onclick="openPackageModal()" class="btn btn-primary rounded-xl"><i class="ri-add-line"></i> New
+                Package</button>
+        </div>
+    </div>
+
+    <!-- Packages List -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="package-grid">
+        <% packages.forEach(pkg=> { %>
+            <div class="card glass shadow-sm border border-base-content/5 group">
+                <div class="card-body p-6">
+                    <div class="flex justify-between items-start">
+                        <div>
+                            <h3 class="font-bold text-xl text-base-content">
+                                <%= pkg.name %>
+                            </h3>
+                            <p class="text-xs text-base-content/40 uppercase tracking-widest font-bold mt-1">
+                                <%= pkg.period %>
+                            </p>
+                        </div>
+                        <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
+                            <button onclick="editPackage('<%= JSON.stringify(pkg) %>')"
+                                class="btn btn-ghost btn-xs text-primary"><i class="ri-edit-line"></i></button>
+                            <button onclick="deletePackage('<%= pkg.id %>')" class="btn btn-ghost btn-xs text-error"><i
+                                    class="ri-delete-bin-line"></i></button>
+                        </div>
+                    </div>
+
+                    <div class="mt-6 space-y-3">
+                        <div class="flex justify-between text-sm">
+                            <span class="text-base-content/60">Price</span>
+                            <span class="font-bold text-success font-mono">Rp <%= pkg.price.toLocaleString() %></span>
+                        </div>
+                        <div class="flex justify-between text-sm border-t border-base-content/5 pt-3">
+                            <span class="text-base-content/60">Device Limit</span>
+                            <span class="font-bold">
+                                <%= pkg.limit_device===-1 ? '∞' : pkg.limit_device %>
+                            </span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-base-content/60">Message Limit</span>
+                            <span class="font-bold">
+                                <%= pkg.limit_message===-1 ? '∞' : pkg.limit_message %>
+                            </span>
+                        </div>
+                        <div class="flex justify-between text-sm">
+                            <span class="text-base-content/60">Status</span>
+                            <span
+                                class="badge <%= pkg.is_active ? 'badge-success' : 'badge-ghost' %> badge-xs uppercase px-2 font-bold">
+                                <%= pkg.is_active ? 'Active' : 'Hidden' %>
+                            </span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <% }) %>
+    </div>
+</div>
+
+<!-- Modal -->
+<dialog id="modal_package" class="modal text-base-content">
+    <div class="modal-box bg-base-100 border border-base-content/5 max-w-2xl">
+        <h3 class="font-bold text-lg mb-6" id="modal-title">New Subscription Package</h3>
+        <input type="hidden" id="pkgId" />
+
+        <form id="packageForm" class="space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Package
+                        Name</label>
+                    <input type="text" id="pkgName" class="input input-bordered w-full rounded-2xl"
+                        placeholder="e.g. Pro Plan" required />
+                </div>
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Price
+                        (IDR)</label>
+                    <input type="number" id="pkgPrice" class="input input-bordered w-full rounded-2xl" placeholder="0"
+                        required />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Billing
+                        Period</label>
+                    <select id="pkgPeriod" class="select select-bordered w-full rounded-2xl">
+                        <option value="MONTHLY">Monthly</option>
+                        <option value="YEARLY">Yearly</option>
+                        <option value="LIFETIME">Lifetime</option>
+                        <option value="ENTERPRISE">Enterprise</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Description</label>
+                    <input type="text" id="pkgDesc" class="input input-bordered w-full rounded-2xl"
+                        placeholder="Brief tagline..." />
+                </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 border-y border-base-content/5">
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Device
+                        Limit</label>
+                    <input type="number" id="pkgLimitDevice" class="input input-bordered w-full rounded-2xl font-bold"
+                        value="-1" />
+                    <label class="label"><span class="label-text-alt text-base-content/40 italic">-1 for
+                            unlimited</span></label>
+                </div>
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Message
+                        Limit</label>
+                    <input type="number" id="pkgLimitMessage" class="input input-bordered w-full rounded-2xl font-bold"
+                        value="-1" />
+                    <label class="label"><span class="label-text-alt text-base-content/40 italic">-1 for
+                            unlimited</span></label>
+                </div>
+            </div>
+
+            <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-4">
+                    <input type="checkbox" id="pkgIsActive" class="checkbox checkbox-primary" checked />
+                    <span class="label-text">Plan is active and visible to users</span>
+                </label>
+            </div>
+
+            <div class="modal-action">
+                <form method="dialog"><button class="btn btn-ghost">Cancel</button></form>
+                <button type="submit" class="btn btn-primary rounded-xl px-10">Save Package</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<script>
+    function openPackageModal() {
+        $('#modal-title').text('New Subscription Package');
+        $('#pkgId').val('');
+        $('#packageForm')[0].reset();
+        $('#pkgLimitDevice').val(-1);
+        $('#pkgLimitMessage').val(-1);
+        $('#modal_package')[0].showModal();
+    }
+
+    function editPackage(pkgJson) {
+        const pkg = JSON.parse(pkgJson);
+        $('#modal-title').text('Edit Package: ' + pkg.name);
+        $('#pkgId').val(pkg.id);
+        $('#pkgName').val(pkg.name);
+        $('#pkgPrice').val(pkg.price);
+        $('#pkgPeriod').val(pkg.period);
+        $('#pkgDesc').val(pkg.description);
+        $('#pkgLimitDevice').val(pkg.limit_device);
+        $('#pkgLimitMessage').val(pkg.limit_message);
+        $('#pkgIsActive').prop('checked', !!pkg.is_active);
+        $('#modal_package')[0].showModal();
+    }
+
+    $('#packageForm').on('submit', async (e) => {
+        e.preventDefault();
+        const id = $('#pkgId').val();
+        const data = {
+            name: $('#pkgName').val(),
+            price: $('#pkgPrice').val(),
+            period: $('#pkgPeriod').val(),
+            description: $('#pkgDesc').val(),
+            limit_device: $('#pkgLimitDevice').val(),
+            limit_message: $('#pkgLimitMessage').val(),
+            is_active: $('#pkgIsActive').is(':checked')
+        };
+
+        try {
+            if (id) {
+                await axios.put(`/api/admin/packages/${id}`, data);
+            } else {
+                await axios.post('/api/admin/packages', data);
+            }
+            location.reload();
+        } catch (err) {
+            showToast.error('Failed to save package', 'Error');
+        }
+    });
+
+    async function deletePackage(id) {
+        const confirm = await showConfirm(
+            'Delete Package?',
+            'This will not affect existing subscriptions until they expire.',
+            'Yes, delete',
+            'Cancel'
+        );
+
+        if (confirm.isConfirmed) {
+            try {
+                await axios.delete(`/api/admin/packages/${id}`);
+                location.reload();
+            } catch (err) {
+                showToast.error('Delete failed', 'Error');
+            }
+        }
+    }
+</script>

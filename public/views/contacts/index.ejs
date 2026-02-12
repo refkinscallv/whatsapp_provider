@@ -1,0 +1,884 @@
+<div class="flex flex-col gap-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">Contacts & Books</h1>
+            <p class="text-base-content/60">Manage your synced WhatsApp contacts and custom contact books.</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="DataTableHelper.openFilterModal('filter_modal_contacts', 'contacts-table-inner')"
+                class="btn btn-ghost glass btn-sm rounded-lg"><i class="ri-filter-3-line"></i> Filter</button>
+            <button onclick="syncContacts()" class="btn btn-ghost glass btn-sm rounded-lg"><i
+                    class="ri-refresh-line"></i> Sync Contacts</button>
+            <button onclick="openBookModal()" class="btn btn-primary btn-sm rounded-lg"><i class="ri-add-line"></i> New
+                Book</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card glass hover:border-primary/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Synced
+                            Contacts</p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-synced">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <i class="ri-contacts-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-secondary/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Contact Books
+                        </p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-books">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-secondary/10 rounded-2xl flex items-center justify-center text-secondary group-hover:scale-110 transition-transform">
+                        <i class="ri-book-3-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-accent/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Total Book
+                            Members</p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-members">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-accent/10 rounded-2xl flex items-center justify-center text-accent group-hover:scale-110 transition-transform">
+                        <i class="ri-team-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Tabs -->
+    <div role="tablist" class="tabs tabs-lifted">
+        <input type="radio" name="contact_tabs" role="tab" class="tab" aria-label="Contact Books" checked />
+        <div role="tabpanel" class="tab-content bg-transparent border-base-content/5 rounded-box p-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="book-grid">
+                <!-- Books will be loaded here -->
+                <p class="col-span-full text-center py-20 text-base-content/30 italic">No contact books found.</p>
+            </div>
+        </div>
+
+        <input type="radio" name="contact_tabs" role="tab" class="tab" aria-label="Synced Contacts" />
+        <div role="tabpanel" class="tab-content bg-transparent border-base-content/5 rounded-box p-6">
+            <div class="card glass">
+                <div class="card-body p-0">
+                    <div class="overflow-x-auto p-4">
+                        <table id="contacts-table-inner" class="table table-md w-full">
+                            <thead>
+                                <tr
+                                    class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                                    <th>Name</th>
+                                    <th>Phone</th>
+                                    <th>Source Device</th>
+                                    <th>Synced At</th>
+                                    <th>Actions</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                <!-- Data loaded via server-side DataTables -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal for Synced Contacts -->
+<dialog id="filter_modal_contacts" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl max-w-md p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/5">
+            <h3 class="font-bold text-xl text-base-content flex items-center gap-2">
+                <i class="ri-filter-3-line text-primary"></i> Filter Contacts
+            </h3>
+        </div>
+
+        <form id="filter_form_contacts" class="p-6 space-y-6">
+            <!-- Source Device Filter -->
+            <%- include('../layouts/partials/device_selector', { id: 'filter-device-token' , name: 'device_token' ,
+                label: 'Device' , showAllOption: true, extraClass: 'bg-base-200/50' }) %>
+
+                <!-- Has Name Filter -->
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Name
+                        Availability</label>
+                    <select name="has_name" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All</option>
+                        <option value="yes">Has Name</option>
+                        <option value="no">No Name</option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">From
+                            Date</label>
+                        <input type="date" name="synced_from"
+                            class="input input-bordered w-full rounded-2xl bg-base-200/50">
+                    </div>
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">To
+                            Date</label>
+                        <input type="date" name="synced_to"
+                            class="input input-bordered w-full rounded-2xl bg-base-200/50">
+                    </div>
+                </div>
+        </form>
+
+        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+            <button type="button"
+                onclick="DataTableHelper.resetFilters('filter_form_contacts', 'contacts-table-inner', 'filter_modal_contacts')"
+                class="btn btn-ghost rounded-xl">
+                <i class="ri-restart-line"></i> Reset
+            </button>
+            <button type="button"
+                onclick="DataTableHelper.applyFilters('contacts-table-inner', 'filter_modal_contacts')"
+                class="btn btn-primary rounded-xl px-8">
+                <i class="ri-check-line"></i> Apply Filter
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+
+<!-- Book Modal (Create/Edit Book Meta) -->
+<dialog id="modal_book" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5">
+        <h3 class="font-bold text-lg mb-4 text-base-content">Create Contact Book</h3>
+        <div class="form-control">
+            <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Book Name</label>
+            <input type="text" id="bookName" class="input input-bordered w-full rounded-2xl"
+                placeholder="e.g. Premium Clients" />
+        </div>
+        <div class="modal-action">
+            <form method="dialog"><button class="btn btn-ghost">Cancel</button></form>
+            <button onclick="saveBook()" class="btn btn-primary rounded-xl">Save Book</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Book Members Modal -->
+<dialog id="modal_book_members" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 max-w-4xl h-[80vh] flex flex-col">
+        <div class="flex justify-between items-center mb-6">
+            <div>
+                <h3 class="font-bold text-lg text-base-content" id="membersBookTitle">Book Members</h3>
+                <p class="text-xs text-base-content/50">Manage contacts in this book</p>
+            </div>
+            <div class="flex gap-2">
+                <button onclick="openImportSyncedModal()" class="btn btn-sm btn-ghost rounded-lg text-xs">
+                    <i class="ri-download-cloud-2-line"></i> Import Synced
+                </button>
+                <button onclick="openAddMemberModal()" class="btn btn-sm btn-primary rounded-lg text-xs">
+                    <i class="ri-user-add-line"></i> Add Contact
+                </button>
+                <form method="dialog"><button class="btn btn-ghost btn-sm btn-circle">✕</button></form>
+            </div>
+        </div>
+
+        <div class="flex-1 overflow-x-auto p-4">
+            <table id="book-members-table-inner" class="table table-sm w-full">
+                <thead>
+                    <tr
+                        class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                        <th>Name</th>
+                        <th>Phone</th>
+                        <th>Added At</th>
+                        <th class="text-right">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Members loaded via server-side DataTables -->
+                </tbody>
+            </table>
+        </div>
+    </div>
+</dialog>
+
+<!-- Add/Edit Member Modal -->
+<dialog id="modal_member" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 z-[60]"> <!-- Higher z-index -->
+        <h3 class="font-bold text-lg mb-4 text-base-content" id="memberModalTitle">Add Contact</h3>
+        <form id="memberForm" onsubmit="saveMember(event)">
+            <input type="hidden" id="memberOriginalPhone">
+            <div class="form-control mb-4">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Name</label>
+                <input type="text" id="memberName" class="input input-bordered w-full rounded-2xl" required />
+            </div>
+            <div class="form-control mb-6">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Phone</label>
+                <input type="text" id="memberPhone" class="input input-bordered w-full rounded-2xl" placeholder="628..."
+                    required />
+                <span class="text-[10px] opacity-40 mt-1">Include country code, no + or spaces.</span>
+            </div>
+            <div class="modal-action">
+                <button type="button" onclick="$('#modal_member')[0].close()" class="btn btn-ghost">Cancel</button>
+                <button type="submit" class="btn btn-primary rounded-xl">Save Contact</button>
+            </div>
+        </form>
+    </div>
+</dialog>
+
+<!-- Edit Synced Contact Modal -->
+<dialog id="modal_edit_synced" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5">
+        <h3 class="font-bold text-lg mb-4 text-base-content">Edit Contact</h3>
+        <input type="hidden" id="syncedId">
+        <div class="form-control mb-6">
+            <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Name</label>
+            <input type="text" id="syncedName" class="input input-bordered w-full rounded-2xl" required />
+        </div>
+        <div class="modal-action">
+            <form method="dialog"><button class="btn btn-ghost">Cancel</button></form>
+            <button onclick="saveSyncedContact()" class="btn btn-primary rounded-xl">Update</button>
+        </div>
+    </div>
+</dialog>
+
+<!-- Sync Contacts Device Selection Modal -->
+<dialog id="modal_sync_device" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5">
+        <h3 class="font-bold text-lg mb-2 text-base-content">Sync Contacts</h3>
+        <p class="text-xs text-base-content/50 mb-6">Select the device you want to synchronize contacts from. This will
+            update your contact list based on the selected WhatsApp account.</p>
+
+        <div class="space-y-2 max-h-[40vh] overflow-y-auto pr-1" id="sync-device-list">
+            <p class="text-xs opacity-40 text-center py-10 italic">Loading devices...</p>
+        </div>
+
+        <div class="modal-action mt-6 pt-4 border-t border-base-content/5">
+            <form method="dialog"><button class="btn btn-ghost rounded-xl">Cancel</button></form>
+        </div>
+    </div>
+</dialog>
+
+<!-- Import Synced Modal -->
+<dialog id="modal_import_synced" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 max-w-4xl h-[80vh] flex flex-col z-[70]">
+        <div class="flex justify-between items-center mb-6">
+            <h3 class="font-bold text-lg text-base-content">Import Synced Contacts</h3>
+            <form method="dialog"><button class="btn btn-ghost btn-sm btn-circle">✕</button></form>
+        </div>
+
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-6 flex-1 overflow-hidden">
+            <!-- Source Device List -->
+            <div class="space-y-2 overflow-y-auto pr-2 border-r border-base-content/5">
+                <p class="text-[10px] uppercase font-bold text-base-content/40 mb-3 px-2">Select Device</p>
+                <div id="import-device-list" class="space-y-1">
+                    <p class="text-xs opacity-40 text-center py-10">Loading devices...</p>
+                </div>
+            </div>
+
+            <!-- Contact List -->
+            <div class="md:col-span-2 flex flex-col overflow-hidden">
+                <div class="flex gap-2 mb-4">
+                    <div class="relative flex-1">
+                        <i class="ri-search-line absolute left-3 top-1/2 -translate-y-1/2 opacity-30"></i>
+                        <input type="text" id="import-search" placeholder="Search contacts..."
+                            class="input input-bordered input-sm w-full pl-9 rounded-xl">
+                    </div>
+                    <button onclick="toggleAllImport()" class="btn btn-ghost btn-sm text-primary">Toggle All</button>
+                </div>
+
+                <div id="import-contact-list" class="flex-1 overflow-y-auto space-y-1 pr-2">
+                    <p class="text-xs opacity-20 text-center py-20 italic">Select a device to view contacts</p>
+                </div>
+            </div>
+        </div>
+
+        <div class="modal-action mt-6 border-t border-base-content/5 pt-4">
+            <div class="flex-1 text-xs text-base-content/40 flex items-center">
+                <span id="import-selected-count">0</span> contacts selected
+            </div>
+            <button onclick="processImport()" class="btn btn-primary rounded-xl px-10">Import Selected</button>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    let contactsDataTable = null;
+    let membersDataTable = null;
+    let currentBookId = null;
+
+    async function initContacts() {
+        await Promise.all([
+            loadBooks(),
+            loadDevicesForFilter(), // Assuming loadDevicesForFilter is the intended function for loading devices
+            loadStats()
+        ]);
+        initContactsDataTable();
+    }
+
+    async function loadStats() {
+        try {
+            const res = await axios.get('/api/contacts/stats');
+            if (res.data.success) {
+                const s = res.data.stats;
+                $('#stat-synced').text(s.total_synced || 0);
+                $('#stat-books').text(s.total_books || 0);
+                $('#stat-members').text(s.total_book_members || 0);
+            }
+        } catch (err) {
+            console.error('Error loading contact stats:', err);
+        }
+    }
+
+    async function initContactsDataTable() {
+        // Initialize server-side DataTable
+        const columns = [
+            {
+                data: 'name',
+                render: (data) => `<span class="font-bold whitespace-nowrap text-base-content">${data || 'Unknown'}</span>`
+            },
+            {
+                data: 'phone',
+                render: (data, type, row) => `<span class="font-mono text-xs text-base-content">${data || row.whatsapp || ''}</span>`
+            },
+            {
+                data: 'device_token',
+                render: (data, type, row) => {
+                    const deviceName = row.device ? row.device.name : 'Connected Device';
+                    return `<td><span class="badge badge-ghost badge-sm">${deviceName}</span></td>`;
+                }
+            },
+            {
+                data: 'last_synced_at',
+                render: (data, type, row) => {
+                    const date = data || row.createdAt;
+                    return `<span class="text-xs text-base-content/40">${new Date(date).toLocaleDateString()}</span>`;
+                }
+            },
+            {
+                data: 'id',
+                orderable: false,
+                render: (data, type, row) => `
+                    <button onclick="editSyncedContact('${data}', '${escape(row.name || '')}')" class="btn btn-ghost btn-xs text-info">
+                        <i class="ri-edit-line"></i>
+                    </button>
+                `
+            }
+        ];
+
+        contactsDataTable = DataTableHelper.init('contacts-table-inner', '/api/datatable/contacts', columns, {
+            order: [[3, 'desc']],
+            pageLength: 15,
+            filterFormId: 'filter_form_contacts'
+        });
+    }
+
+    async function loadDevicesForFilter() {
+        // Handled by device_selector partial
+    }
+
+    // Obsolete filter change handler - removed
+
+    // Obsolete loadDevicesForFilter - removed (duplicate preserved above)
+
+    async function loadBooks() {
+        try {
+            const res = await axios.get('/api/contacts/books');
+            if (res.data.success) {
+                const grid = $('#book-grid');
+                const books = res.data.books;
+                if (books.length > 0) {
+                    grid.html(books.map(b => `
+                        <div class="card glass hover:shadow-xl transition-all border border-base-content/10 group text-base-content">
+                            <div class="card-body p-6">
+                                <div class="flex justify-between items-start">
+                                    <div class="w-10 h-10 bg-primary/10 rounded-lg flex items-center justify-center text-primary">
+                                        <i class="ri-book-2-fill text-xl"></i>
+                                    </div>
+                                    <button onclick="deleteBook('${b.id}')" class="btn btn-ghost btn-xs text-error opacity-0 group-hover:opacity-100 transition-opacity">Delete</button>
+                                </div>
+                                <h3 class="font-bold text-lg mt-4 text-base-content">${b.name}</h3>
+                                <p class="text-xs text-base-content/50">${b.contacts_count || (b.contacts ? b.contacts.length : 0)} contacts</p>
+                                <div class="card-actions justify-end mt-4">
+                                    <button onclick="viewBookMembers('${b.id}', '${escape(b.name)}')" class="btn btn-sm btn-ghost w-full mb-2">Manage Members</button>
+                                    <a href="/messaging?book=${b.id}" class="btn btn-primary btn-sm btn-outline rounded-lg w-full">Broadcast</a>
+                                </div>
+                            </div>
+                        </div>
+                    `).join(''));
+                } else {
+                    grid.html('<p class="col-span-full text-center py-20 text-base-content/30 italic">No contact books found.</p>');
+                }
+            }
+        } catch (err) { console.error(err); }
+    }
+
+    async function syncContacts() {
+        try {
+            const devRes = await axios.get('/api/devices');
+            const devices = devRes.data.devices.filter(d => d.status === 'ready');
+
+            if (devices.length === 0) {
+                return showToast.error('No ready device found to sync from.', 'Error');
+            }
+
+            if (devices.length === 1) {
+                const confirm = await showConfirm(
+                    'Sync Contacts?',
+                    `Sync contacts from your device "${devices[0].name}"?`,
+                    'Yes, Sync',
+                    'Cancel'
+                );
+                if (!confirm.isConfirmed) return;
+                startSync(devices[0].token);
+            } else {
+                // Populate and show modern modal
+                const list = $('#sync-device-list');
+                list.html(devices.map(d => `
+                    <button onclick="startSync('${d.token}')" 
+                        class="btn btn-ghost btn-md w-full justify-start text-left font-normal normal-case rounded-xl hover:bg-primary/10 hover:text-primary border border-base-content/5 transition-all mb-1">
+                        <div class="flex items-center gap-3 w-full">
+                            <div class="w-10 h-10 rounded-full bg-base-200 flex items-center justify-center text-xl">
+                                <i class="ri-smartphone-line"></i>
+                            </div>
+                            <div class="flex-1 overflow-hidden">
+                                <p class="font-bold truncate">${d.name}</p>
+                                <p class="text-[10px] opacity-40 uppercase tracking-widest">${d.status}</p>
+                            </div>
+                            <i class="ri-arrow-right-s-line ml-auto opacity-20"></i>
+                        </div>
+                    </button>
+                `).join(''));
+                $('#modal_sync_device')[0].showModal();
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Sync failed', 'Error');
+        }
+    }
+
+    async function startSync(deviceToken) {
+        try {
+            // Close modal if open
+            const modal = $('#modal_sync_device')[0];
+            if (modal.open) modal.close();
+
+            showToast.loading('This may take a while depending on your contact list.', 'Syncing...');
+
+            const res = await axios.post('/api/contacts/sync', { device_token: deviceToken });
+            showToast.close();
+
+            if (res.data.success) {
+                showToast.success('Contacts synchronized successfully', 'Synced!');
+                DataTableHelper.reloadTable('contacts-table-inner');
+                loadStats(); // Update stats as well
+            }
+        } catch (err) {
+            showToast.close();
+            showToast.error(err.response?.data?.message || 'Sync failed', 'Error');
+        }
+    }
+
+    function openBookModal() { $('#modal_book')[0].showModal(); }
+
+    async function saveBook() {
+        const name = $('#bookName').val();
+        if (!name) return;
+        try {
+            await axios.post('/api/contacts/books', { name });
+            $('#modal_book')[0].close();
+            $('#bookName').val('');
+            loadBooks();
+            showToast.success('Contact book created successfully', 'Success');
+        } catch (err) { showToast.error('Failed to save book', 'Error'); }
+    }
+
+    async function deleteBook(id) {
+        const confirmResult = await showConfirm(
+            'Delete this book?',
+            'Members will not be deleted.',
+            'Yes, delete',
+            'Cancel'
+        );
+        if (!confirmResult.isConfirmed) return;
+        try {
+            await axios.delete(`/api/contacts/books/${id}`);
+            loadBooks();
+            showToast.success('Contact book deleted', 'Success');
+        } catch (err) { showToast.error('Failed to delete book', 'Error'); }
+    }
+
+    /* --- Book Members Logic --- */
+
+    async function viewBookMembers(id, name) {
+        currentBookId = id;
+        $('#membersBookTitle').text(unescape(name));
+        $('#modal_book_members')[0].showModal();
+
+        if (membersDataTable) {
+            DataTableHelper.reloadTable('book-members-table-inner', { book_id: id });
+        } else {
+            initMembersDataTable(id);
+        }
+    }
+
+    function initMembersDataTable(bookId) {
+        const columns = [
+            {
+                data: 'name',
+                render: (data) => `<span class="font-bold whitespace-nowrap text-base-content">${data || 'Unknown'}</span>`
+            },
+            {
+                data: 'phone',
+                render: (data) => `<span class="font-mono text-xs text-base-content">${data || ''}</span>`
+            },
+            {
+                data: 'added_at',
+                render: (data) => `<span class="text-xs text-base-content/40">${new Date(data).toLocaleDateString()}</span>`
+            },
+            {
+                data: 'phone', // Use phone as identifier for actions
+                orderable: false,
+                className: 'text-right',
+                render: (data, type, row) => `
+                    <button onclick="editMember('${data}', '${escape(row.name)}')" class="btn btn-ghost btn-xs text-info"><i class="ri-edit-line"></i></button>
+                    <button onclick="deleteMember('${data}')" class="btn btn-ghost btn-xs text-error"><i class="ri-delete-bin-line"></i></button>
+                `
+            }
+        ];
+
+        membersDataTable = DataTableHelper.init('book-members-table-inner', '/api/datatable/contacts/book-members', columns, {
+            order: [[2, 'desc']],
+            pageLength: 10,
+            ajaxParams: { book_id: bookId }
+        });
+    }
+
+    // Removed manual loadMembers as it's now handled by DataTables
+
+    function openAddMemberModal() {
+        $('#memberModalTitle').text('Add Contact');
+        $('#memberName').val('');
+        $('#memberPhone').val('');
+        $('#memberOriginalPhone').val(''); // Empty for add
+        $('#modal_member')[0].showModal();
+    }
+
+    function editMember(phone, name) {
+        $('#memberModalTitle').text('Edit Contact');
+        $('#memberName').val(unescape(name));
+        $('#memberPhone').val(phone);
+        $('#memberOriginalPhone').val(phone); // Set for edit
+        $('#modal_member')[0].showModal();
+    }
+
+    async function saveMember(e) {
+        e.preventDefault();
+        const name = $('#memberName').val();
+        const phone = $('#memberPhone').val();
+        const originalPhone = $('#memberOriginalPhone').val();
+
+        try {
+            if (originalPhone) {
+                // Edit
+                await axios.put(`/api/contacts/books/${currentBookId}/contacts/${originalPhone}`, { name, phone });
+            } else {
+                // Add
+                await axios.post(`/api/contacts/books/${currentBookId}/contacts`, { name, phone });
+            }
+            $('#modal_member')[0].close();
+            DataTableHelper.reloadTable('book-members-table-inner');
+            loadBooks(); // Update count
+            showToast.success('Contact saved successfully', 'Saved');
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to save contact', 'Error');
+        }
+    }
+
+    async function deleteMember(phone) {
+        const confirm = await showConfirm(
+            'Remove contact?',
+            'This contact will be removed from the book.',
+            'Yes, remove',
+            'Cancel'
+        );
+        if (!confirm.isConfirmed) return;
+
+        try {
+            await axios.delete(`/api/contacts/books/${currentBookId}/contacts/${phone}`);
+            DataTableHelper.reloadTable('book-members-table-inner');
+            loadBooks(); // Update count
+            showToast.success('Contact removed from book', 'Success');
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to remove', 'Error');
+        }
+    }
+
+    /* --- Synced Contact Edit Logic --- */
+    function editSyncedContact(id, name) {
+        $('#syncedId').val(id);
+        $('#syncedName').val(unescape(name));
+        $('#modal_edit_synced')[0].showModal();
+    }
+
+    async function saveSyncedContact() {
+        const id = $('#syncedId').val();
+        const name = $('#syncedName').val();
+        try {
+            await axios.put(`/api/contacts/${id}`, { name });
+            $('#modal_edit_synced')[0].close();
+            DataTableHelper.reloadTable('contacts-table-inner');
+            showToast.success('Contact updated successfully', 'Updated');
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to update', 'Error');
+        }
+    }
+
+    /* --- Import Synced Logic with Infinite Scroll --- */
+    let importState = {
+        offset: 0,
+        limit: 50,
+        isLoading: false,
+        hasMore: true,
+        deviceToken: null,
+        searchQuery: '',
+        selected: new Set(),
+        details: {} // phone -> {name, phone}
+    };
+
+    async function openImportSyncedModal() {
+        $('#modal_import_synced')[0].showModal();
+        loadDevicesForImport();
+
+        // Infinite Scroll Listener
+        const list = $('#import-contact-list');
+        list.off('scroll').on('scroll', function () {
+            if (this.scrollTop + this.clientHeight >= this.scrollHeight - 50) {
+                if (importState.hasMore && !importState.isLoading && importState.deviceToken) {
+                    loadMoreImportContacts();
+                }
+            }
+        });
+
+        // Debounced Search
+        $('#import-search').off('input').on('input', _.debounce(function () {
+            importState.searchQuery = $(this).val();
+            if (importState.deviceToken) {
+                resetAndLoadImportContacts();
+            }
+        }, 500));
+    }
+
+    async function loadDevicesForImport() {
+        const list = $('#import-device-list');
+        try {
+            const res = await axios.get('/api/devices');
+            if (res.data.success) {
+                const devices = res.data.devices;
+                if (devices.length === 0) {
+                    list.html('<p class="text-xs opacity-40 text-center py-10">No devices found</p>');
+                } else {
+                    list.html(devices.map(d => `
+                        <button onclick="selectImportDevice('${d.token}')" 
+                            class="btn btn-ghost btn-sm w-full justify-start text-left font-normal normal-case rounded-xl hover:bg-success/10 hover:text-success transition-all">
+                            <i class="ri-smartphone-line text-lg"></i>
+                            <span class="truncate">${d.name}</span>
+                            <span class="badge badge-xs badge-ghost ml-auto opacity-50">${d.status}</span>
+                        </button>
+                    `).join(''));
+                }
+            }
+        } catch (err) { list.html('<p class="text-xs text-error p-4">Error loading devices</p>'); }
+    }
+
+    function selectImportDevice(token) {
+        importState.deviceToken = token;
+        resetAndLoadImportContacts();
+    }
+
+    function resetAndLoadImportContacts() {
+        importState.offset = 0;
+        importState.hasMore = true;
+        // Don't clear selected contacts when switching filters, but maybe when switching devices? 
+        // User might expect to keep selection. Let's keep it.
+        $('#import-contact-list').scrollTop(0).empty();
+        loadMoreImportContacts(true);
+    }
+
+    async function loadMoreImportContacts(isInitial = false) {
+        if (importState.isLoading || !importState.hasMore) return;
+
+        importState.isLoading = true;
+        const list = $('#import-contact-list');
+
+        if (isInitial) {
+            list.html('<p class="text-xs opacity-40 text-center py-20 loading-indicator">Loading contacts...</p>');
+        } else {
+            list.append('<div class="text-center py-2 loading-indicator"><span class="loading loading-spinner loading-xs"></span></div>');
+        }
+
+        try {
+            const params = {
+                device_token: importState.deviceToken,
+                limit: importState.limit,
+                offset: importState.offset,
+                search: importState.searchQuery
+            };
+
+            const res = await axios.get('/api/contacts', { params });
+            list.find('.loading-indicator').remove();
+
+            if (res.data.success) {
+                const rawContacts = Array.isArray(res.data.contacts) ? res.data.contacts : [];
+
+                if (rawContacts.length < importState.limit) {
+                    importState.hasMore = false;
+                }
+
+                const newContacts = rawContacts.map(c => {
+                    const phone = (c.phone || c.whatsapp || c.whatsapp_id?.split('@')[0] || '').toString().replace(/\D/g, '');
+                    return {
+                        name: c.name || c.push_name || c.pushname || 'No Name',
+                        phone,
+                        whatsapp: phone // redundancy for safety
+                    };
+                }).filter(c => c.phone);
+
+                importState.offset += importState.limit;
+
+                // Store details for newly loaded contacts so we can import them
+                newContacts.forEach(c => {
+                    importState.details[c.phone] = c;
+                });
+
+                renderImportContactsAppend(newContacts, list);
+
+                if (importState.offset === 0 && newContacts.length === 0) { // logic check: offset incremented after, so check if count 0 on initial
+                    // wait, offset incremented above. Initial offset=0. If newContacts 0.
+                }
+                if (isInitial && newContacts.length === 0) {
+                    list.html('<p class="text-xs opacity-20 text-center py-20 italic">No contacts found</p>');
+                }
+            }
+        } catch (err) {
+            console.error(err);
+            list.find('.loading-indicator').remove();
+            if (isInitial) list.html('<p class="text-xs text-error p-4 text-center">Error loading contacts</p>');
+        } finally {
+            importState.isLoading = false;
+        }
+    }
+
+    function renderImportContactsAppend(contacts, container) {
+        const html = contacts.map(c => `
+            <label class="flex items-center gap-3 p-2 hover:bg-base-200/50 rounded-xl cursor-pointer transition-colors group">
+                <input type="checkbox" class="checkbox checkbox-primary checkbox-sm" 
+                    ${importState.selected.has(c.phone) ? 'checked' : ''} 
+                    onchange="toggleImportSelection('${c.phone}')">
+                <div class="flex-1 overflow-hidden">
+                    <p class="text-sm font-bold truncate group-hover:text-primary transition-colors">${c.name}</p>
+                    <p class="text-[10px] font-mono opacity-50">${c.phone}</p>
+                </div>
+            </label>
+        `).join('');
+        container.append(html);
+    }
+
+    // lodash debounce polyfill if not present (copied from messaging/index.ejs just in case)
+    const _ = window._ || {
+        debounce: (func, wait) => {
+            let timeout;
+            return function executedFunction(...args) {
+                const later = () => {
+                    clearTimeout(timeout);
+                    func.apply(this, args);
+                };
+                clearTimeout(timeout);
+                timeout = setTimeout(later, wait);
+            };
+        }
+    };
+
+    function toggleImportSelection(phone) {
+        if (importState.selected.has(phone)) {
+            importState.selected.delete(phone);
+        } else {
+            importState.selected.add(phone);
+        }
+        $('#import-selected-count').text(importState.selected.size);
+    }
+
+    // Exposed global
+    window.toggleImportSelection = toggleImportSelection;
+
+    function toggleAllImport() {
+        const search = $('#import-search').val().toLowerCase();
+        // Toggle all currently loaded in details (filtered by search if relevant)
+        const visiblePhones = Object.keys(importState.details).filter(p => {
+            const c = importState.details[p];
+            return (c.name || '').toLowerCase().includes(search) || p.includes(search);
+        });
+
+        const allSelected = visiblePhones.every(p => importState.selected.has(p));
+
+        visiblePhones.forEach(p => {
+            if (allSelected) importState.selected.delete(p);
+            else importState.selected.add(p);
+        });
+
+        $('#import-selected-count').text(importState.selected.size);
+
+        // Update DOM checkboxes directly
+        $('#import-contact-list input[type="checkbox"]').each(function () {
+            const p = $(this).attr('onchange').match(/'(.*?)'/)[1];
+            if (visiblePhones.includes(p)) {
+                $(this).prop('checked', !allSelected);
+            }
+        });
+    }
+    window.toggleAllImport = toggleAllImport;
+
+    async function processImport() {
+        if (importState.selected.size === 0) return showToast.warning('Please select at least one contact', 'No Selection');
+
+        const contactsToImport = Array.from(importState.selected).map(p => importState.details[p]);
+
+        try {
+            await axios.post(`/api/contacts/books/${currentBookId}/contacts/bulk`, { contacts: contactsToImport });
+
+            $('#modal_import_synced')[0].close();
+            // Reset selection after import
+            importState.selected.clear();
+            importState.details = {};
+            importState.offset = 0;
+            importState.deviceToken = null;
+            $('#import-selected-count').text(0);
+
+            DataTableHelper.reloadTable('book-members-table-inner');
+            loadBooks();
+            showToast.success(`${contactsToImport.length} contacts added to book`, 'Imported');
+        } catch (err) {
+            showToast.error('Failed to import contacts', 'Error');
+        }
+    }
+
+    // Exposed global
+    window.processImport = processImport;
+
+    $(document).ready(() => {
+        initContacts();
+    });
+</script>

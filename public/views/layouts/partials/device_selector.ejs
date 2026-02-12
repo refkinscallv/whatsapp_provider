@@ -1,0 +1,85 @@
+<div class="form-control">
+    <% if (locals.label !==false) { %>
+        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">
+            <%= locals.label || 'Select Device' %>
+        </label>
+        <% } %>
+            <select id="<%= locals.id || 'deviceSelect' %>" name="<%= locals.name || 'device_token' %>"
+                class="select select-bordered w-full rounded-2xl <%= locals.extraClass || '' %>" <%=locals.required
+                ? 'required' : '' %>>
+                <option value="" disabled selected>Loading devices...</option>
+            </select>
+</div>
+
+<script>
+    (function () {
+        var _selectId = "<%= locals.id || 'deviceSelect' %>";
+        var _autoSelect = "<%= locals.autoSelect || '' %>";
+        var _showAll = <%= !!locals.showAllOption %>;
+        var _allLabel = "<%= locals.allOptionLabel || 'All Devices' %>";
+        var _retry = 0;
+
+        var _load = async function () {
+            var el = document.getElementById(_selectId);
+            if (!el) return;
+
+            if (typeof axios === 'undefined') {
+                if (_retry < 50) {
+                    _retry++;
+                    setTimeout(_load, 100);
+                }
+                return;
+            }
+
+            try {
+                var res = await axios.get('/api/devices');
+                if (res.data && res.data.success && Array.isArray(res.data.devices)) {
+                    var devs = res.data.devices.filter(function (d) { return d.status === 'ready'; });
+                    console.log(devs);
+
+                    if (devs.length === 0 && !_showAll) {
+                        el.innerHTML = '<option value="" disabled selected>No ready devices found</option>';
+                    } else {
+                        var html = '';
+                        if (_showAll) {
+                            html += '<option value="">' + _allLabel + '</option>';
+                        } else {
+                            html += '<option value="" disabled selected>Choose a device...</option>';
+                        }
+
+                        for (var i = 0; i < devs.length; i++) {
+                            var d = devs[i];
+                            var wid = 'Ready';
+                            if (d.clientInfo && d.clientInfo.info) {
+                                if (d.clientInfo.info.wid && d.clientInfo.info.wid._serialized) {
+                                    wid = d.clientInfo.info.wid._serialized;
+                                } else if (d.clientInfo.info.pushname) {
+                                    wid = d.clientInfo.info.pushname;
+                                }
+                            }
+                            html += '<option value="' + d.token + '">' + (d.name || 'Unnamed') + ' (' + wid + ')</option>';
+                        }
+                        el.innerHTML = html;
+
+                        if (_autoSelect) {
+                            el.value = _autoSelect;
+                        } else if (!_showAll) {
+                            var params = new URLSearchParams(window.location.search);
+                            var fromUrl = params.get('device');
+                            if (fromUrl) el.value = fromUrl;
+                        }
+                    }
+                }
+            } catch (err) {
+                console.error('Device Selector Error:', err);
+                el.innerHTML = '<option value="" disabled>Error loading devices</option>';
+            }
+        };
+
+        if (document.readyState === 'complete') {
+            _load();
+        } else {
+            window.addEventListener('load', _load);
+        }
+    })();
+</script>

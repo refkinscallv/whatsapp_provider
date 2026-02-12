@@ -1,0 +1,237 @@
+<div class="flex flex-col gap-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">Auto Reply Rules</h1>
+            <p class="text-base-content/60">Set up bot rules to automatically respond to incoming messages.</p>
+        </div>
+        <div>
+            <button onclick="openRuleModal()" class="btn btn-primary rounded-xl"><i class="ri-add-line"></i> Add
+                Rule</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card glass hover:border-primary/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Total Rules
+                        </p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-total">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <i class="ri-robot-2-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-success/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Active Rules
+                        </p>
+                        <h2 class="text-4xl font-black mt-2 text-success" id="stat-active">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-success/10 rounded-2xl flex items-center justify-center text-success group-hover:scale-110 transition-transform">
+                        <i class="ri-checkbox-circle-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-warning/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Inactive</p>
+                        <h2 class="text-4xl font-black mt-2 text-warning" id="stat-inactive">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-warning/10 rounded-2xl flex items-center justify-center text-warning group-hover:scale-110 transition-transform">
+                        <i class="ri-pause-circle-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Rules List -->
+    <div class="grid grid-cols-1 gap-4" id="rule-grid">
+        <p class="text-center py-20 text-base-content/30 italic">No auto-reply rules configured yet.</p>
+    </div>
+</div>
+
+<!-- Modal -->
+<dialog id="modal_rule" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden max-w-2xl">
+        <div class="p-6 border-b border-base-content/5">
+            <h3 class="font-bold text-xl text-base-content">New Auto-Reply Rule</h3>
+        </div>
+
+        <div class="p-6 space-y-6">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <%- include('../layouts/partials/device_selector', { id: 'ruleDevice' , label: 'Apply to Device' ,
+                    required: true }) %>
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Rule
+                            Name</label>
+                        <input type="text" id="ruleName" class="input input-bordered w-full rounded-2xl"
+                            placeholder="e.g. Greeting Bot" />
+                    </div>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Trigger
+                        Type</label>
+                    <select id="ruleType" class="select select-bordered w-full rounded-2xl">
+                        <option value="exact">Exact Match</option>
+                        <option value="contains">Contains Word</option>
+                        <option value="starts_with">Starts With</option>
+                        <option value="ends_with">Ends With</option>
+                        <option value="regex">Regex Pattern</option>
+                    </select>
+                </div>
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Trigger
+                        Pattern</label>
+                    <input type="text" id="rulePattern" class="input input-bordered w-full rounded-2xl"
+                        placeholder="Keyword or regex..." />
+                </div>
+            </div>
+
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Response
+                    Message</label>
+                <textarea id="ruleReply" class="textarea textarea-bordered w-full h-32 rounded-2xl"
+                    placeholder="Hello! Thanks for reaching out..."></textarea>
+            </div>
+        </div>
+
+        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+            <form method="dialog"><button class="btn btn-ghost rounded-xl">Cancel</button></form>
+            <button onclick="saveRule()" class="btn btn-primary rounded-xl px-10">Save Rule</button>
+        </div>
+    </div>
+</dialog>
+
+<script>
+    async function loadRules() {
+        try {
+            const res = await axios.get('/api/auto-replies');
+            const grid = $('#rule-grid');
+            if (res.data.success && res.data.rules.length > 0) {
+                grid.html(res.data.rules.map(r => `
+                    <div class="card glass border border-white/5 p-4 flex flex-row items-center justify-between gap-6 group">
+                        <div class="flex items-center gap-4 flex-1">
+                            <div class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary text-xl">
+                                <i class="ri-robot-line"></i>
+                            </div>
+                            <div>
+                                <h4 class="font-bold text-base-content">${r.name}</h4>
+                                <div class="flex gap-2 mt-1">
+                                    <span class="badge badge-ghost badge-sm text-[10px] uppercase">${r.trigger_type}</span>
+                                    <span class="text-xs text-base-content/40 font-mono italic">"${r.trigger_pattern}"</span>
+                                </div>
+                            </div>
+                        </div>
+                        <div class="hidden lg:block flex-1">
+                            <p class="text-[10px] text-base-content/40 uppercase tracking-widest font-bold">Reply Content</p>
+                            <p class="text-xs text-base-content/60 line-clamp-2">${r.reply_message}</p>
+                            <p class="text-[9px] opacity-40 mt-1 uppercase">By: ${r.user?.name || '-'}</p>
+                        </div>
+                        <div class="text-right">
+                             <div class="flex items-center gap-4">
+                                <span class="badge badge-success badge-sm">${r.usage_count} hits</span>
+                                <input type="checkbox" class="toggle toggle-primary toggle-sm" ${r.is_active ? 'checked' : ''} onchange="toggleRule('${r.token}', this.checked)" />
+                                <button onclick="deleteRule('${r.token}')" class="btn btn-ghost btn-sm text-error rounded-lg opacity-0 group-hover:opacity-100">
+                                    <i class="ri-delete-bin-line text-lg"></i>
+                                </button>
+                             </div>
+                        </div>
+                    </div>
+                `).join(''));
+            } else {
+                grid.html('<p class="text-center py-20 text-base-content/30 italic">No auto-reply rules configured yet.</p>');
+            }
+        } catch (err) { console.error(err); }
+    }
+
+
+
+    function openRuleModal() {
+        $('#ruleName').val('');
+        $('#rulePattern').val('');
+        $('#ruleReply').val('');
+        $('#modal_rule')[0].showModal();
+    }
+
+    async function toggleRule(token, status) {
+        try {
+            await axios.put(`/api/auto-replies/${token}`, { is_active: status });
+            loadStats();
+        } catch (err) {
+            showToast.error('Failed to toggle status', 'Error');
+            loadRules();
+        }
+    }
+
+    async function saveRule() {
+        const data = {
+            device_token: $('#ruleDevice').val(),
+            name: $('#ruleName').val(),
+            trigger_type: $('#ruleType').val(),
+            trigger_pattern: $('#rulePattern').val(),
+            reply_message: $('#ruleReply').val(),
+            is_active: true
+        };
+        if (!data.name || !data.trigger_pattern || !data.reply_message) return;
+
+        try {
+            await axios.post('/api/auto-replies', data);
+            $('#modal_rule')[0].close();
+            loadRules();
+            loadStats();
+        } catch (err) { showToast.error('Failed to save rule', 'Error'); }
+    }
+
+    async function deleteRule(token) {
+        const confirmResult = await showConfirm(
+            'Delete this rule?',
+            'This action cannot be undone.'
+        );
+        if (!confirmResult.isConfirmed) return;
+        try {
+            await axios.delete(`/api/auto-replies/${token}`);
+            loadRules();
+            loadStats();
+        } catch (err) { showToast.error('Failed to delete rule', 'Error'); }
+    }
+
+    async function initPage() {
+        await Promise.all([
+            loadRules(),
+            loadStats()
+        ]);
+    }
+
+    async function loadStats() {
+        try {
+            const res = await axios.get('/api/auto-replies/stats');
+            if (res.data.success) {
+                const s = res.data.stats;
+                $('#stat-total').text(s.total || 0);
+                $('#stat-active').text(s.active || 0);
+                $('#stat-inactive').text(s.inactive || 0);
+            }
+        } catch (err) {
+            console.error('Error loading auto-reply stats:', err);
+        }
+    }
+
+    $(document).ready(initPage);
+</script>

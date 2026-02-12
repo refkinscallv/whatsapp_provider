@@ -1,0 +1,340 @@
+<div class="flex flex-col gap-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">Message History</h1>
+            <p class="text-base-content/60">View and track all your outgoing messages.</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="DataTableHelper.openFilterModal('filter_modal_history', 'history-table')"
+                class="btn btn-primary btn-sm rounded-lg"><i class="ri-filter-3-line"></i> Filter</button>
+            <button onclick="DataTableHelper.reloadTable('history-table')"
+                class="btn btn-ghost glass btn-sm rounded-lg"><i class="ri-refresh-line"></i> Refresh</button>
+            <button onclick="clearHistory()" class="btn btn-error btn-outline btn-sm rounded-lg"><i
+                    class="ri-delete-bin-line"></i> Clear Logs</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div class="card glass hover:border-primary/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Total Sent
+                            (30d)</p>
+                        <h2 class="text-3xl font-black mt-1 text-base-content" id="stat-total">0</h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <i class="ri-send-plane-fill text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-success/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Success Rate
+                        </p>
+                        <h2 class="text-3xl font-black mt-1 text-base-content" id="stat-rate">0%</h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center text-success group-hover:scale-110 transition-transform">
+                        <i class="ri-checkbox-circle-line text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-info/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Successful</p>
+                        <h2 class="text-3xl font-black mt-1 text-base-content" id="stat-success">0</h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-info/10 rounded-xl flex items-center justify-center text-info group-hover:scale-110 transition-transform">
+                        <i class="ri-check-double-line text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-error/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Failed</p>
+                        <h2 class="text-3xl font-black mt-1 text-base-content" id="stat-failed">0</h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-error/10 rounded-xl flex items-center justify-center text-error group-hover:scale-110 transition-transform">
+                        <i class="ri-error-warning-line text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Table -->
+    <div class="card glass shadow-sm">
+        <div class="card-body">
+            <h3 class="font-bold text-lg mb-4 text-base-content">History List</h3>
+            <div class="overflow-x-auto">
+                <table id="history-table" class="table table-md w-full">
+                    <thead>
+                        <tr
+                            class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                            <th>Device</th>
+                            <th>Sender</th>
+                            <th>To</th>
+                            <th>Message</th>
+                            <th>Type</th>
+                            <th>Status</th>
+                            <th>Time</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data loaded via server-side DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<dialog id="filter_modal_history" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl max-w-md p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/5">
+            <h3 class="font-bold text-xl text-base-content flex items-center gap-2">
+                <i class="ri-filter-3-line text-primary"></i> Filter History
+            </h3>
+        </div>
+
+        <form id="filter_form_history" class="p-6 space-y-6">
+            <!-- Device Filter -->
+            <%- include('../layouts/partials/device_selector', { name: 'device_token' , label: 'Device' , showAllOption:
+                true, extraClass: 'bg-base-200/50' }) %>
+
+                <!-- Status Filter -->
+                <div class="form-control">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Status</label>
+                    <select name="status" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All Status</option>
+                        <option value="sent">Sent</option>
+                        <option value="delivered">Delivered</option>
+                        <option value="read">Read</option>
+                        <option value="failed">Failed</option>
+                    </select>
+                </div>
+
+                <!-- Type Filter -->
+                <div class="form-control">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Type</label>
+                    <select name="type" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All Types</option>
+                        <option value="text">Text</option>
+                        <option value="image">Image</option>
+                        <option value="document">Document</option>
+                        <option value="video">Video</option>
+                        <option value="audio">Audio</option>
+                    </select>
+                </div>
+
+                <!-- Date Range -->
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">From
+                            Date</label>
+                        <input type="date" name="sent_from"
+                            class="input input-bordered w-full rounded-2xl bg-base-200/50">
+                    </div>
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">To
+                            Date</label>
+                        <input type="date" name="sent_to"
+                            class="input input-bordered w-full rounded-2xl bg-base-200/50">
+                    </div>
+                </div>
+        </form>
+
+        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+            <button type="button"
+                onclick="DataTableHelper.resetFilters('filter_form_history', 'history-table', 'filter_modal_history')"
+                class="btn btn-ghost rounded-xl">
+                <i class="ri-restart-line"></i> Reset
+            </button>
+            <button type="button" onclick="DataTableHelper.applyFilters('history-table', 'filter_modal_history')"
+                class="btn btn-primary rounded-xl px-8">
+                <i class="ri-check-line"></i> Apply Filter
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+    let historyDataTable = null;
+
+    function getStatusClass(status) {
+        if (status === 'sent' || status === 'delivered' || status === 'read') return 'badge-success';
+        if (status === 'failed') return 'badge-error';
+        return 'badge-warning';
+    }
+
+    async function clearHistory() {
+        const confirm = await showConfirm(
+            'Clear all logs?',
+            'This action cannot be undone.',
+            'Yes, clear all',
+            'Cancel'
+        );
+
+        if (confirm.isConfirmed) {
+            try {
+                await axios.delete('/api/messages/history/clear');
+                DataTableHelper.reloadTable('history-table');
+                showToast.success('Message history cleared', 'Success');
+            } catch (err) {
+                showToast.error('Failed to clear logs', 'Error');
+            }
+        }
+    }
+
+    async function initPage() {
+        await loadStats();
+        initHistoryDataTable();
+    }
+
+    async function loadStats() {
+        try {
+            const res = await axios.get('/api/messages/history/stats');
+            if (res.data.success) {
+                const s = res.data.stats;
+                $('#stat-total').text(s.total_30d || 0);
+                $('#stat-rate').text((s.success_rate || 0) + '%');
+                $('#stat-success').text(s.success_30d || 0);
+                $('#stat-failed').text(s.failed_30d || 0);
+            }
+        } catch (err) {
+            console.error('Error loading history stats:', err);
+        }
+    }
+
+
+
+    $(document).ready(function () {
+        initPage();
+    });
+
+    function initHistoryDataTable() {
+
+        // Initialize server-side DataTable
+        const columns = [
+            {
+                data: 'device_token',
+                render: function (data) {
+                    return `<span class="text-[10px] font-mono text-base-content/40">${data.substring(0, 8)}...</span>`;
+                }
+            },
+            {
+                data: 'user',
+                render: function (data) {
+                    return `<div class="font-bold text-base-content/80 text-xs">${data?.name || 'System / Batch'}</div>`;
+                }
+            },
+            {
+                data: 'to',
+                render: function (data) {
+                    return `<span class="font-mono text-sm text-base-content">${data}</span>`;
+                }
+            },
+            {
+                data: 'message',
+                render: function (data) {
+                    return `<span class="max-w-xs truncate text-base-content/80 text-xs block">${data}</span>`;
+                }
+            },
+            {
+                data: 'type',
+                render: function (data) {
+                    return `<span class="badge badge-ghost badge-xs uppercase px-2 font-bold">${data}</span>`;
+                }
+            },
+            {
+                data: 'status',
+                render: function (data) {
+                    return `<span class="badge ${getStatusClass(data)} badge-sm uppercase text-[10px] font-bold">${data}</span>`;
+                }
+            },
+            {
+                data: 'createdAt',
+                render: function (data) {
+                    const date = new Date(data);
+                    return `
+                        <div class="text-xs text-base-content/40">
+                            <div>${date.toLocaleDateString()}</div>
+                            <div class="opacity-50">${date.toLocaleTimeString()}</div>
+                        </div>
+                    `;
+                }
+            }
+        ];
+
+        const urlParams = new URLSearchParams(window.location.search);
+        const scheduledMsgToken = urlParams.get('scheduled_msg_token');
+
+        historyDataTable = DataTableHelper.initServerSideDataTable(
+            'history-table',
+            '/api/datatable/history',
+            columns,
+            {
+                order: [[6, 'desc']], // Order by time descending
+                pageLength: 20,
+                ajaxParams: scheduledMsgToken ? { scheduled_msg_token: scheduledMsgToken } : {},
+                createdRow: (row, data) => {
+                    $(row).attr('data-message-id', data.message_id);
+                }
+            }
+        );
+
+        if (scheduledMsgToken) {
+            showToast.info('Showing messages from specific schedule series', 'Filtered View');
+        }
+    }
+
+    // Socket.io Real-time Updates
+    const socket = io({
+        query: { userToken: '<%= userToken %>' }
+    });
+
+    socket.on('message:ack', (data) => {
+        const { messageId, ackName } = data;
+        const row = $(`tr[data-message-id="${messageId}"]`);
+        if (row.length) {
+            const statusCell = row.find('td:eq(5)'); // Index 5 is Status
+            const badge = statusCell.find('.badge');
+
+            badge.text(ackName);
+            badge.removeClass('badge-success badge-error badge-warning badge-ghost');
+            badge.addClass(getStatusClass(ackName));
+
+            // Also update the DataTable's internal data if possible,
+            // but for real-time visual update, just DOM is enough until refresh
+            if (historyDataTable) {
+                const dtRow = historyDataTable.row(row);
+                const rowData = dtRow.data();
+                if (rowData) {
+                    rowData.status = ackName;
+                    // No draw() to avoid jumping
+                }
+            }
+        }
+    });
+</script>

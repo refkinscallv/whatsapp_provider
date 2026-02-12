@@ -1,0 +1,98 @@
+<div class="card w-full max-w-lg bg-base-100 shadow-2xl backdrop-blur-xl">
+    <div class="card-body p-8">
+        <div class="text-center mb-8">
+            <h1 class="text-3xl font-bold text-base-content italic tracking-tighter">
+                <%= config.app.name %>
+            </h1>
+            <p class="text-sm text-base-content/60 mt-2">Join the ultimate WhatsApp Gateway</p>
+        </div>
+
+        <form id="registerForm" class="space-y-4">
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Full
+                        Name</label>
+                    <input type="text" id="name" placeholder="John Doe"
+                        class="input input-bordered w-full focus:border-primary rounded-2xl" required />
+                </div>
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">WhatsApp
+                        Number</label>
+                    <div class="input-group flex">
+                        <select id="country_code"
+                            class="select select-bordered rounded-l-2xl border-r-0 focus:border-primary w-24 px-2">
+                            <option value="62">🇮🇩 +62</option>
+                            <option value="60">🇲🇾 +60</option>
+                            <option value="65">🇸🇬 +65</option>
+                            <option value="66">🇹🇭 +66</option>
+                            <option value="63">🇵🇭 +63</option>
+                            <option value="84">🇻🇳 +84</option>
+                        </select>
+                        <input type="text" id="whatsapp" placeholder="8123xxx"
+                            class="input input-bordered focus:border-primary rounded-r-2xl flex-1" required />
+                    </div>
+                    <span class="label-text-alt text-[10px] text-slate-500 mt-1">Select ASEAN country code</span>
+                </div>
+            </div>
+
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Email
+                    Address</label>
+                <input type="email" id="email" placeholder="john@example.com"
+                    class="input input-bordered w-full focus:border-primary rounded-2xl" required />
+            </div>
+
+            <div class="form-control">
+                <label
+                    class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Password</label>
+                <input type="password" id="password" placeholder="••••••••"
+                    class="input input-bordered w-full focus:border-primary rounded-2xl" required />
+            </div>
+
+            <div class="form-control mt-6">
+                <button type="submit" id="btnSubmit"
+                    class="btn btn-primary h-12 shadow-lg shadow-primary/20 rounded-xl text-lg">
+                    Create Account
+                </button>
+            </div>
+        </form>
+
+        <p class="text-center text-sm text-base-content/60 mt-6">
+            Already have an account? <a href="/login" class="text-primary font-bold hover:underline">Login here</a>
+        </p>
+    </div>
+</div>
+
+<script>
+    $('#registerForm').on('submit', async function (e) {
+        e.preventDefault();
+        const btn = $('#btnSubmit');
+        const data = {
+            name: $('#name').val(),
+            email: $('#email').val(),
+            whatsapp: $('#country_code').val() + $('#whatsapp').val(),
+            password: $('#password').val(),
+            user_type: 'personal'
+        };
+
+        btn.prop('disabled', true);
+        btn.html('<span class="loading loading-spinner"></span> Creating...');
+
+        try {
+            const res = await axios.post('/api/auth/register', data);
+
+            if (res.data.success) {
+                Cookies.set('token', res.data.token, { expires: 7 });
+                showToast.success('Welcome to WARF. Redirecting to dashboard...', 'Account Created!');
+                setTimeout(() => {
+                    window.location.href = '/dashboard';
+                }, 2000);
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Something went wrong', 'Registration Failed');
+        } finally {
+            btn.prop('disabled', false);
+            btn.html('Create Account');
+        }
+    });
+</script>

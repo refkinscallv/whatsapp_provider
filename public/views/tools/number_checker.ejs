@@ -1,0 +1,434 @@
+<div class="flex flex-col gap-8 h-full">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">Number Checker</h1>
+            <p class="text-base-content/60">Verify if phone numbers are registered on WhatsApp before sending messages.
+            </p>
+        </div>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <!-- Input Form -->
+        <div class="lg:col-span-1 space-y-6">
+            <div class="card glass shadow-xl border border-base-content/5">
+                <div class="card-body p-6">
+                    <h3 class="font-bold text-lg mb-4 text-base-content flex items-center gap-2">
+                        <i class="ri-phone-find-line text-primary"></i> Check Numbers
+                    </h3>
+
+                    <form id="checkerForm" class="space-y-6">
+                        <!-- Device Selection -->
+                        <div class="form-control">
+                            <%- include('../layouts/partials/device_selector', { id: 'deviceSelect' ,
+                                label: 'Select Active Device' , required: true }) %>
+                                <p class="text-[10px] opacity-40 mt-1 italic">Only active/connected devices can check
+                                    numbers.</p>
+                        </div>
+
+                        <!-- Numbers Input -->
+                        <div class="form-control">
+                            <label class="flex justify-between items-center mb-2">
+                                <span class="block uppercase text-[11px] font-semibold tracking-widest opacity-60">Phone
+                                    Numbers</span>
+                                <span class="text-[10px] opacity-40 italic">One per line or comma-separated</span>
+                            </label>
+                            <textarea id="numbersInput" placeholder="62812345678&#10;62856789012"
+                                class="textarea textarea-bordered w-full h-48 rounded-2xl font-mono text-sm text-base-content focus:border-primary transition-all"
+                                required></textarea>
+                            <div class="flex justify-between mt-2">
+                                <span id="number-count" class="text-[10px] text-base-content/40">0 numbers
+                                    detected</span>
+                                <button type="button" onclick="clearInput()"
+                                    class="text-[10px] text-error hover:underline">Clear All</button>
+                            </div>
+                        </div>
+
+                        <div class="card-actions mt-4">
+                            <button type="submit" id="btnCheck"
+                                class="btn btn-primary w-full rounded-xl shadow-lg shadow-primary/20 transition-all hover:scale-[1.02] active:scale-[0.98]">
+                                <i class="ri-search-eye-line"></i> Verify Numbers
+                            </button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+
+            <!-- Guidelines -->
+            <div class="card glass bg-base-200/50 border border-base-content/5">
+                <div class="card-body p-6">
+                    <h4 class="font-bold text-sm text-base-content mb-3 italic tracking-tight opacity-70">Information &
+                        Rules</h4>
+                    <ul class="space-y-3">
+                        <li class="flex gap-3 text-xs opacity-60">
+                            <i class="ri-information-fill text-primary mt-0.5"></i>
+                            <p>Bulk checks include a <span class="font-bold">500ms delay</span> between each number to
+                                maintain stability.</p>
+                        </li>
+                        <li class="flex gap-3 text-xs opacity-60">
+                            <i class="ri-shield-check-fill text-success mt-0.5"></i>
+                            <p>Checking numbers doesn't send any notification to the recipient.</p>
+                        </li>
+                        <li class="flex gap-3 text-xs opacity-60">
+                            <i class="ri-error-warning-fill text-warning mt-0.5"></i>
+                            <p>Do not check too many numbers (thousands) at once to avoid account flags.</p>
+                        </li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Results Section -->
+        <div class="lg:col-span-2 space-y-6">
+            <div class="card glass shadow-xl border border-base-content/5 min-h-[500px]">
+                <div class="card-body p-0">
+                    <!-- Tabs -->
+                    <div class="tabs tabs-boxed bg-transparent p-4 gap-2">
+                        <button class="tab tab-lg active gap-2 rounded-xl transition-all"
+                            onclick="switchTab('current')">
+                            <i class="ri-flashlight-line"></i> Current Batch
+                        </button>
+                        <button class="tab tab-lg gap-2 rounded-xl transition-all" onclick="switchTab('history')">
+                            <i class="ri-history-line"></i> History
+                        </button>
+                    </div>
+
+                    <!-- Progress Indicator (Only for Current) -->
+                    <div id="checkProgress" class="hidden px-6 py-4 bg-primary/5 border-b border-primary/10">
+                        <div class="flex justify-between items-center mb-2">
+                            <span class="text-xs font-bold text-primary italic uppercase tracking-widest">Checking in
+                                progress...</span>
+                            <span id="progressPercent" class="text-xs font-bold text-primary">0%</span>
+                        </div>
+                        <progress id="progressBar" class="progress progress-primary w-full h-2" value="0"
+                            max="100"></progress>
+                        <p id="progressStatus" class="text-[10px] mt-2 opacity-50">Processing number 0 of 0...</p>
+                    </div>
+
+                    <!-- Filter Area (Hidden by default, shown for History) -->
+                    <div id="filter-container" class="hidden px-6 py-4 bg-base-200/30 border-b border-base-content/5">
+                        <form id="filter_form_history" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                            <div class="form-control">
+                                <label class="label p-1"><span
+                                        class="label-text text-[10px] uppercase font-bold opacity-50">Device</span></label>
+                                <%- include('../layouts/partials/device_selector', { id: 'filter_device_token' ,
+                                    name: 'device_token' , showAll: true }) %>
+                            </div>
+                            <div class="form-control">
+                                <label class="label p-1"><span
+                                        class="label-text text-[10px] uppercase font-bold opacity-50">Status</span></label>
+                                <select name="exists" class="select select-bordered select-sm rounded-xl">
+                                    <option value="">All Status</option>
+                                    <option value="yes">Registered</option>
+                                    <option value="no">Not Registered</option>
+                                </select>
+                            </div>
+                            <div class="form-control">
+                                <label class="label p-1"><span
+                                        class="label-text text-[10px] uppercase font-bold opacity-50">From
+                                        Date</span></label>
+                                <input type="date" name="created_from" class="input input-bordered input-sm rounded-xl">
+                            </div>
+                            <div class="flex gap-2">
+                                <button type="button" onclick="DataTableHelper.applyFilters('history-table')"
+                                    class="btn btn-primary btn-sm rounded-xl flex-1">Filter</button>
+                                <button type="button"
+                                    onclick="DataTableHelper.resetFilters('filter_form_history', 'history-table')"
+                                    class="btn btn-ghost btn-sm rounded-xl"><i class="ri-refresh-line"></i></button>
+                            </div>
+                        </form>
+                    </div>
+
+                    <!-- Table Actions -->
+                    <div
+                        class="px-6 py-3 border-b border-base-content/5 flex justify-between items-center bg-base-200/20">
+                        <div id="current-batch-info" class="text-[11px] font-bold opacity-40 uppercase tracking-wider">
+                            <span id="batchIdDisplay">No Active Batch</span>
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="copyTableNumbers()" class="btn btn-outline btn-xs gap-1 rounded-lg">
+                                <i class="ri-file-copy-line"></i> Copy Current View
+                            </button>
+                            <button onclick="exportTableResults()"
+                                class="btn btn-ghost btn-xs gap-1 rounded-lg text-primary">
+                                <i class="ri-download-line"></i> CSV
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Current Batch Table -->
+                    <div id="current-container" class="p-0">
+                        <div class="overflow-x-auto">
+                            <table class="table w-full" id="current-table">
+                                <thead>
+                                    <tr>
+                                        <th>Number</th>
+                                        <th>Status</th>
+                                        <th>Checked At</th>
+                                        <th class="w-20">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+
+                    <!-- History Table -->
+                    <div id="history-container" class="hidden p-0">
+                        <div class="overflow-x-auto">
+                            <table class="table w-full" id="history-table">
+                                <thead>
+                                    <tr>
+                                        <th>Number</th>
+                                        <th>Status</th>
+                                        <th>Device</th>
+                                        <th>Checked At</th>
+                                        <th class="w-20">Action</th>
+                                    </tr>
+                                </thead>
+                                <tbody></tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    let currentBatchId = null;
+
+    $(document).ready(() => {
+        $('#numbersInput').on('input', function () {
+            const count = $(this).val().split(/[\n,]/).filter(n => n.trim().length > 0).length;
+            $('#number-count').text(`${count} number${count !== 1 ? 's' : ''} detected`);
+        });
+
+        $('#checkerForm').on('submit', handleCheck);
+
+        // Initialize DataTables
+        initTables();
+    });
+
+    function initTables() {
+        // Current Batch Table
+        DataTableHelper.init('current-table', '/api/datatable/number-checker', [
+            { data: 'number', render: (data) => `<span class="font-mono text-sm">${data}</span>` },
+            {
+                data: 'exists',
+                render: (data, type, row) => {
+                    const badgeClass = row.status === 'error' ? 'badge-ghost' : (data ? 'badge-success' : 'badge-error');
+                    const statusText = row.status === 'error' ? 'Error' : (data ? 'Registered' : 'Not Registered');
+                    const icon = row.status === 'error' ? 'ri-error-warning-line' : (data ? 'ri-checkbox-circle-fill' : 'ri-close-circle-fill');
+                    return `<div class="badge ${badgeClass} badge-sm gap-1 pl-1 font-bold"><i class="${icon}"></i> ${statusText}</div>${row.message ? `<div class="text-[9px] text-error mt-0.5">${row.message}</div>` : ''}`;
+                }
+            },
+            {
+                data: 'createdAt',
+                render: (data) => `<span class="text-[10px] opacity-50">${dayjs(data).format('DD MMM YYYY, HH:mm')}</span>`
+            },
+            {
+                data: null,
+                orderable: false,
+                render: (data) => `
+                    <div class="flex gap-1">
+                        <button onclick="copyToClipboard('${data.number}')" class="btn btn-ghost btn-xs text-primary" title="Copy"><i class="ri-file-copy-line"></i></button>
+                        ${data.exists ? `<a href="/messaging?to=${data.number}" class="btn btn-ghost btn-xs text-secondary" title="Chat"><i class="ri-send-plane-line"></i></a>` : ''}
+                    </div>
+                `
+            }
+        ], {
+            ajaxParams: { batch_id: 'NONE' }, // Initial empty state
+            order: [[2, 'desc']]
+        });
+
+        // History Table
+        DataTableHelper.init('history-table', '/api/datatable/number-checker', [
+            { data: 'number', render: (data) => `<span class="font-mono text-sm">${data}</span>` },
+            {
+                data: 'exists',
+                render: (data, type, row) => {
+                    const badgeClass = row.status === 'error' ? 'badge-ghost' : (data ? 'badge-success' : 'badge-error');
+                    const statusText = row.status === 'error' ? 'Error' : (data ? 'Registered' : 'Not Registered');
+                    return `<div class="badge ${badgeClass} badge-sm font-bold">${statusText}</div>`;
+                }
+            },
+            { data: 'device.name', defaultContent: '<span class="opacity-30">-</span>', render: (data) => `<span class="text-xs font-bold">${data || '-'}</span>` },
+            {
+                data: 'createdAt',
+                render: (data) => `<span class="text-[10px] opacity-50">${dayjs(data).format('DD MMM YYYY, HH:mm')}</span>`
+            },
+            {
+                data: null,
+                orderable: false,
+                render: (data) => `
+                    <div class="flex gap-1">
+                        <button onclick="copyToClipboard('${data.number}')" class="btn btn-ghost btn-xs text-primary" title="Copy"><i class="ri-file-copy-line"></i></button>
+                    </div>
+                `
+            }
+        ], {
+            order: [[3, 'desc']]
+        });
+    }
+
+    function switchTab(tab) {
+        $('.tab').removeClass('active tab-active');
+        $(`button[onclick="switchTab('${tab}')"]`).addClass('active tab-active');
+
+        if (tab === 'current') {
+            $('#current-container').removeClass('hidden');
+            $('#history-container').addClass('hidden');
+            $('#filter-container').addClass('hidden');
+            $('#current-batch-info').removeClass('hidden');
+        } else {
+            $('#current-container').addClass('hidden');
+            $('#history-container').removeClass('hidden');
+            $('#filter-container').removeClass('hidden');
+            $('#current-batch-info').addClass('hidden');
+            DataTableHelper.reloadTable('history-table');
+        }
+    }
+
+    function clearInput() {
+        $('#numbersInput').val('').trigger('input');
+    }
+
+    async function handleCheck(e) {
+        e.preventDefault();
+        const device = $('#deviceSelect').val();
+        const input = $('#numbersInput').val();
+
+        if (!device) return showToast.error('Please select an active device');
+
+        const numbers = input.split(/[\n,]/)
+            .map(n => n.trim())
+            .filter(n => n.length > 0);
+
+        if (numbers.length === 0) return showToast.error('Please enter at least one phone number');
+
+        // Reset UI for check
+        $('#btnCheck').prop('disabled', true).html('<span class="loading loading-spinner"></span> Checking...');
+        $('#checkProgress').removeClass('hidden');
+        $('#progressBar').val(0);
+        $('#progressPercent').text('0%');
+
+        switchTab('current');
+
+        // Generate a frontend batch ID
+        currentBatchId = 'BATCH-' + Date.now();
+        $('#batchIdDisplay').text(`Batch: ${currentBatchId.substring(6)}`);
+
+        // Reset current table to this batch (empty at first)
+        DataTableHelper.reloadTable('current-table', { batch_id: currentBatchId });
+
+        const total = numbers.length;
+        let processed = 0;
+
+        for (const number of numbers) {
+            try {
+                $('#progressStatus').text(`Verifying ${number}...`);
+                await axios.post(`/api/devices/${device}/check`, {
+                    numbers: [number],
+                    batch_id: currentBatchId
+                });
+
+                // Silent reload table to show progress
+                const table = window[`dt_current-table`];
+                if (table) table.ajax.reload(null, false);
+            } catch (err) {
+                console.error('Check error:', err);
+            }
+
+            processed++;
+            const percent = Math.round((processed / total) * 100);
+            $('#progressBar').val(percent);
+            $('#progressPercent').text(`${percent}%`);
+        }
+
+        // Completion
+        $('#checkProgress').addClass('hidden');
+        $('#btnCheck').prop('disabled', false).html('<i class="ri-search-eye-line"></i> Verify Numbers');
+        showToast.success(`Finished checking ${total} numbers`, 'Check Complete');
+    }
+
+    function copyToClipboard(text) {
+        navigator.clipboard.writeText(text);
+        showToast.success('Number copied to clipboard', 'Copied');
+    }
+
+    async function copyTableNumbers() {
+        const activeTab = $('.tab.active').text().includes('Current') ? 'current' : 'history';
+        const tableId = activeTab === 'current' ? 'current-table' : 'history-table';
+        const table = window[`dt_${tableId}`];
+
+        if (!table) return;
+
+        // Try to get all filtered numbers from the server instead of just current page
+        const params = {
+            ...DataTableHelper.getActiveFilters(tableId),
+            ...(window[`dt_params_${tableId}`] || {}),
+            length: -1, // Custom param to get all
+            start: 0
+        };
+
+        try {
+            showToast.loading('Fetching numbers...');
+            const res = await axios.post(`/api/datatable/number-checker`, params);
+            showToast.close();
+
+            if (res.data.success && res.data.data.data) {
+                const numbers = res.data.data.data.map(row => row.number).join('\n');
+                if (!numbers) return showToast.info('No numbers found with current filters');
+
+                navigator.clipboard.writeText(numbers);
+                showToast.success(`Copied ${res.data.data.data.length} numbers (all filtered)`, 'Copied');
+            }
+        } catch (err) {
+            showToast.close();
+            console.error('Copy filtered error:', err);
+            // Fallback to current page
+            const data = table.rows({ filter: 'applied' }).data().toArray();
+            const numbers = data.map(row => row.number).join('\n');
+            navigator.clipboard.writeText(numbers);
+            showToast.success(`Copied ${data.length} numbers from current view`, 'Copied');
+        }
+    }
+
+    async function exportTableResults() {
+        const activeTab = $('.tab.active').text().includes('Current') ? 'current' : 'history';
+        const tableId = activeTab === 'current' ? 'current-table' : 'history-table';
+
+        const params = {
+            ...DataTableHelper.getActiveFilters(tableId),
+            ...(window[`dt_params_${tableId}`] || {}),
+            length: -1,
+            start: 0
+        };
+
+        try {
+            showToast.loading('Preparing export...');
+            const res = await axios.post(`/api/datatable/number-checker`, params);
+            showToast.close();
+
+            if (res.data.success && res.data.data.data) {
+                const data = res.data.data.data;
+                const csvContent = "data:text/csv;charset=utf-8,"
+                    + "Number,Status,Device,Date\n"
+                    + data.map(r => `${r.number},${r.exists ? 'Registered' : 'Not Registered'},${r.device?.name || '-'},${r.createdAt}`).join("\n");
+
+                const encodedUri = encodeURI(csvContent);
+                const link = document.createElement("a");
+                link.setAttribute("href", encodedUri);
+                link.setAttribute("download", `wa_check_${activeTab}_${new Date().getTime()}.csv`);
+                document.body.appendChild(link);
+                link.click();
+                document.body.removeChild(link);
+            }
+        } catch (err) {
+            showToast.close();
+            showToast.error('Export failed');
+        }
+    }
+</script>

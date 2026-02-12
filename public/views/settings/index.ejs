@@ -1,0 +1,546 @@
+<div class="max-w-5xl mx-auto space-y-12">
+    <!-- Header -->
+    <div class="flex flex-col gap-2">
+        <h1 class="text-3xl font-bold text-base-content">Settings & Profile</h1>
+        <p class="text-base-content/60">Manage your account details, API keys, and webhooks.</p>
+    </div>
+
+    <div class="grid grid-cols-1 lg:grid-cols-4 gap-8">
+        <!-- Sidebar Navigation -->
+        <div class="space-y-1" id="settings-nav">
+            <button onclick="switchTab('profile')" id="tab-profile"
+                class="btn btn-ghost justify-start w-full transition-all duration-300 nav-tab sidebar-active">
+                <i class="ri-user-settings-line"></i> Profile
+            </button>
+            <button onclick="switchTab('api')" id="tab-api"
+                class="btn btn-ghost justify-start w-full transition-all duration-300 nav-tab">
+                <i class="ri-key-2-line"></i> API Keys
+            </button>
+            <button onclick="switchTab('webhooks')" id="tab-webhooks"
+                class="btn btn-ghost justify-start w-full transition-all duration-300 nav-tab">
+                <i class="ri-notification-3-line"></i> Webhooks
+            </button>
+            <button onclick="switchTab('security')" id="tab-security"
+                class="btn btn-ghost justify-start w-full transition-all duration-300 nav-tab">
+                <i class="ri-shield-check-line"></i> Security
+            </button>
+            <button onclick="switchTab('messaging')" id="tab-messaging"
+                class="btn btn-ghost justify-start w-full transition-all duration-300 nav-tab">
+                <i class="ri-message-3-line"></i> Messaging
+            </button>
+        </div>
+
+        <!-- Main Content (Profile) -->
+        <div class="lg:col-span-3 space-y-8">
+            <!-- Profile Tab -->
+            <div id="content-profile" class="tab-content" style="display: block;">
+                <div class="card glass shadow-sm">
+                    <div class="card-body p-8">
+                        <h3 class="font-bold text-lg text-base-content mb-6">Personal Details</h3>
+                        <form id="profileForm" class="space-y-6">
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="form-control">
+                                    <label
+                                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Full
+                                        Name</label>
+                                    <input type="text" id="profName" class="input input-bordered w-full rounded-2xl" />
+                                </div>
+                                <div class="form-control">
+                                    <label
+                                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">WhatsApp
+                                        Number</label>
+                                    <input type="text" id="profWhatsapp"
+                                        class="input input-bordered w-full rounded-2xl" />
+                                </div>
+                            </div>
+                            <div class="form-control">
+                                <label class="flex justify-between items-center mb-2">
+                                    <span
+                                        class="block uppercase text-[11px] font-semibold tracking-widest opacity-60">Email
+                                        Address</span>
+                                    <span class="text-[10px] opacity-40 italic">Cannot be changed</span>
+                                </label>
+                                <input type="email" id="profEmail" class="input input-bordered w-full rounded-2xl"
+                                    readonly />
+                            </div>
+                            <div class="card-actions justify-end mt-4">
+                                <button type="submit" class="btn btn-primary px-10 rounded-xl">Update Profile</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- API Keys Tab -->
+            <div id="content-api" class="tab-content" style="display: none;">
+                <div class="card glass shadow-sm">
+                    <div class="card-body p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="font-bold text-lg text-base-content">Your API Keys</h3>
+                                <p class="text-xs text-base-content/40 uppercase tracking-widest mt-1">External Access
+                                    Control
+                                </p>
+                            </div>
+                            <button onclick="createApiKey()" class="btn btn-primary btn-sm rounded-lg"><i
+                                    class="ri-add-line"></i> New Key</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table id="api-keys-table" class="table w-full">
+                                <thead>
+                                    <tr
+                                        class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                                        <th>Name</th>
+                                        <th>Key</th>
+                                        <th>Created</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data loaded via server-side DataTables -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Webhooks Tab -->
+            <div id="content-webhooks" class="tab-content" style="display: none;">
+                <div class="card glass shadow-sm">
+                    <div class="card-body p-8">
+                        <div class="flex justify-between items-center mb-6">
+                            <div>
+                                <h3 class="font-bold text-lg text-base-content">Webhook Configurations</h3>
+                                <p class="text-xs text-primary font-bold uppercase tracking-widest mt-1">Outbound Event
+                                    Delivery
+                                </p>
+                                <p class="text-[10px] text-base-content/40 mt-1">Real-time notifications sent to your
+                                    server for specific events.</p>
+                            </div>
+                            <button onclick="saveWebhookForm()" class="btn btn-primary btn-sm rounded-lg"><i
+                                    class="ri-add-line"></i> Configure Webhook</button>
+                        </div>
+                        <div class="overflow-x-auto">
+                            <table id="webhooks-table" class="table w-full">
+                                <thead>
+                                    <tr
+                                        class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                                        <th>Endpoint URL</th>
+                                        <th>Device Target</th>
+                                        <th>Events</th>
+                                        <th class="text-right">Actions</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <!-- Data loaded via server-side DataTables -->
+                                </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Security Tab -->
+            <div id="content-security" class="tab-content" style="display: none;">
+                <div class="card glass shadow-sm">
+                    <div class="card-body p-8">
+                        <h3 class="font-bold text-lg text-base-content mb-6">Security & Password</h3>
+                        <form id="securityForm" class="space-y-6">
+                            <div class="form-control">
+                                <label
+                                    class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Old
+                                    Password</label>
+                                <input type="password" id="oldPassword" class="input input-bordered w-full rounded-2xl"
+                                    required />
+                            </div>
+                            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                                <div class="form-control">
+                                    <label
+                                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">New
+                                        Password</label>
+                                    <input type="password" id="newPassword"
+                                        class="input input-bordered w-full rounded-2xl" required />
+                                </div>
+                                <div class="form-control">
+                                    <label
+                                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Confirm
+                                        New Password</label>
+                                    <input type="password" id="confirmPassword"
+                                        class="input input-bordered w-full rounded-2xl" required />
+                                </div>
+                            </div>
+                            <div class="card-actions justify-end mt-4">
+                                <button type="submit" class="btn btn-error btn-outline px-10 rounded-xl">Change
+                                    Password</button>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Messaging Settings Tab -->
+            <div id="content-messaging" class="tab-content" style="display: none;">
+                <div class="card glass shadow-sm">
+                    <div class="card-body p-8">
+                        <h3 class="font-bold text-lg text-base-content mb-6">Messaging Settings</h3>
+                        <form id="messagingSettingsForm" class="space-y-6">
+                            <div class="form-control">
+                                <label
+                                    class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Message
+                                    Queue Delay (Seconds)</label>
+                                <div class="flex items-center gap-4">
+                                    <input type="range" id="queueDelayRange" min="1" max="60" value="1"
+                                        class="range range-primary flex-1"
+                                        oninput="document.getElementById('queueDelayValue').innerText = this.value + 's'" />
+                                    <span id="queueDelayValue" class="font-bold text-primary w-12 text-center">1s</span>
+                                </div>
+                                <p class="text-[10px] opacity-40 mt-2 italic">Delay between each message when sending in
+                                    bulk. Higher values are safer for WhatsApp accounts.</p>
+                            </div>
+
+                            <% if (canDirectSend) { %>
+                                <div class="form-control bg-base-200/50 p-4 rounded-2xl border border-base-content/5">
+                                    <label class="label cursor-pointer justify-start gap-4">
+                                        <input type="checkbox" id="queueManualControl"
+                                            class="checkbox checkbox-primary" />
+                                        <span class="flex flex-col">
+                                            <span class="text-xs font-semibold text-base-content">Enable Manual Queuing
+                                                Control</span>
+                                            <span class="text-[10px] text-base-content/50">When enabled, you can choose
+                                                whether to use the queue or send directly in the Messenger composition
+                                                form.</span>
+                                        </span>
+                                    </label>
+                                </div>
+                                <% } %>
+                                    <div class="card-actions justify-end mt-4">
+                                        <button type="submit" class="btn btn-primary px-10 rounded-xl">Save Messaging
+                                            Settings</button>
+                                    </div>
+                        </form>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    /**
+     * Settings View Controller - Verificably Robust Version
+     */
+
+    // Core Tab Switcher - Exposed globally for onclick
+    window.switchTab = function (tabId) {
+        try {
+            // 1. Reset all contents
+            const contents = document.getElementsByClassName('tab-content');
+            for (let i = 0; i < contents.length; i++) {
+                contents[i].style.setProperty('display', 'none', 'important');
+            }
+
+            // 2. Active content
+            const activeContent = document.getElementById('content-' + tabId);
+            if (activeContent) {
+                activeContent.style.setProperty('display', 'block', 'important');
+            }
+            // else { // Removed console.error
+            //     console.error('[Settings] Content Element Missing!', 'content-' + tabId);
+            // }
+
+            // 3. Reset Nav Buttons
+            const buttons = document.getElementsByClassName('nav-tab');
+            for (let i = 0; i < buttons.length; i++) {
+                buttons[i].classList.remove('sidebar-active');
+            }
+
+            // 4. Set Active Nav
+            const activeBtn = document.getElementById('tab-' + tabId);
+            if (activeBtn) {
+                activeBtn.classList.add('sidebar-active');
+            }
+        } catch (err) {
+            // console.error('[Settings] Tab Switch Error:', err); // Removed console.error
+        }
+    };
+
+    // Sub-loaders
+    async function loadProfile() {
+        try {
+            const res = await axios.get('/api/settings/profile');
+            if (res.data.success) {
+                const u = res.data.profile;
+                if (document.getElementById('profName')) document.getElementById('profName').value = u.name || '';
+                if (document.getElementById('profWhatsapp')) document.getElementById('profWhatsapp').value = u.whatsapp || '';
+                if (document.getElementById('profEmail')) document.getElementById('profEmail').value = u.email || '';
+
+                // Load metadata settings
+                if (u.metadata && u.metadata.settings) {
+                    const s = u.metadata.settings;
+                    if (document.getElementById('queueDelayRange')) {
+                        const delay = s.queue_delay || 1;
+                        document.getElementById('queueDelayRange').value = delay;
+                        document.getElementById('queueDelayValue').innerText = delay + 's';
+                    }
+                    if (document.getElementById('queueManualControl')) {
+                        document.getElementById('queueManualControl').checked = s.enable_manual_queue === true || s.enable_manual_queue === 'true';
+                    }
+                }
+            }
+        } catch (e) { /* console.error('[Settings] Profile Load Fail'); */ }
+    }
+
+    let apiKeysDataTable = null;
+    let webhooksDataTable = null;
+
+    async function loadApiKeys() {
+        const columns = [
+            {
+                data: 'name',
+                render: (data) => `<p class="text-[10px] font-bold text-base-content/60 uppercase tracking-widest">${data}</p>`
+            },
+            {
+                data: 'key',
+                render: (data) => `<p class="font-mono text-xs text-base-content mt-1">********************${data.slice(-4)}</p>`
+            },
+            {
+                data: 'createdAt',
+                render: (data) => `<span class="text-xs text-base-content/40">${new Date(data).toLocaleDateString()}</span>`
+            },
+            {
+                data: 'token',
+                className: 'text-right',
+                orderable: false,
+                render: (data) => `
+                    <button onclick="deleteKey('${data}')" class="btn btn-ghost btn-xs text-error">
+                        <i class="ri-delete-bin-line"></i>
+                    </button>
+                `
+            }
+        ];
+
+        apiKeysDataTable = DataTableHelper.init('api-keys-table', '/api/datatable/api-keys', columns, {
+            order: [[2, 'desc']],
+            pageLength: 5
+        });
+    }
+
+    async function loadWebhooks() {
+        const columns = [
+            {
+                data: 'url',
+                render: (data) => `<p class="font-bold text-base-content text-sm truncate max-w-xs">${data}</p>`
+            },
+            {
+                data: 'device_token',
+                render: (data, type, row) => {
+                    const target = data ? `Device (${row.device ? row.device.name : data.slice(0, 8)})` : 'Global (All Devices)';
+                    return `<p class="text-[10px] opacity-50 uppercase tracking-widest mt-0.5">${target}</p>`;
+                }
+            },
+            {
+                data: 'events',
+                render: (data) => {
+                    const events = Array.isArray(data) ? data : (typeof data === 'string' ? data.split(',') : []);
+                    return `<div class="flex flex-wrap gap-1">
+                        ${events.map(e => `<span class="badge badge-primary badge-xs py-2">${e.trim()}</span>`).join('')}
+                    </div>`;
+                }
+            },
+            {
+                data: 'token',
+                className: 'text-right',
+                orderable: false,
+                render: (data) => `
+                    <button onclick="deleteWebhook('${data}')" class="btn btn-ghost btn-xs text-error">
+                        <i class="ri-delete-bin-line"></i>
+                    </button>
+                `
+            }
+        ];
+
+        webhooksDataTable = DataTableHelper.init('webhooks-table', '/api/datatable/webhooks', columns, {
+            order: [[0, 'asc']],
+            pageLength: 5
+        });
+    }
+
+    // Actions
+    window.createApiKey = async function () {
+        try {
+            const { value: name } = await Swal.fire({
+                title: 'Key Name',
+                input: 'text',
+                showCancelButton: true,
+                background: getThemeColors().background,
+                color: getThemeColors().text
+            });
+            if (name) {
+                const res = await axios.post('/api/keys', { name });
+                if (res.data.success) {
+                    Swal.fire({
+                        title: 'Created',
+                        icon: 'success',
+                        html: `<p class="mb-2 text-sm opacity-60 text-left uppercase font-bold tracking-widest italic">Copy and save this key. It won't be shown again!</p><code class='text-xs break-all block p-3 bg-base-300 rounded-lg'>${res.data.key.key}</code>`,
+                        background: getThemeColors().background,
+                        color: getThemeColors().text
+                    });
+                    loadApiKeys();
+                } else {
+                    showToast.error(res.data.message || 'Failed to create key', 'Error');
+                }
+            }
+        } catch (err) {
+            const msg = err.response && err.response.data && err.response.data.message ? err.response.data.message : err.message;
+            showToast.error(msg, 'Failed');
+        }
+    };
+
+    window.deleteKey = async function (token) {
+        if ((await showConfirm('Revoke key?', 'This key will no longer be valid.')).isConfirmed) {
+            await axios.delete('/api/keys/' + token);
+            DataTableHelper.reloadTable('api-keys-table');
+        }
+    };
+
+    window.saveWebhookForm = async function () {
+        try {
+            // Fetch devices for the selector
+            const deviceRes = await axios.get('/api/devices');
+            const devices = deviceRes.data.success ? deviceRes.data.devices : [];
+
+            const deviceOptions = devices.reduce((acc, d) => {
+                acc[d.token] = d.name || d.whatsapp || d.token.slice(0, 8);
+                return acc;
+            }, { '': 'Global (Listen to all devices)' });
+
+            const { value: formValues } = await Swal.fire({
+                title: 'Webhook Configuration',
+                html: `
+                    <div class="space-y-4 text-left p-1">
+                        <div class="form-control w-full">
+                            <label class="label p-0 mb-2">
+                                <span class="text-[10px] font-bold uppercase tracking-widest opacity-60">Endpoint URL</span>
+                            </label>
+                            <input id="swal-url" type="url" class="input input-bordered w-full rounded-xl text-sm" placeholder="https://your-server.com/webhook">
+                        </div>
+                        <div class="form-control w-full">
+                            <label class="label p-0 mb-2">
+                                <span class="text-[10px] font-bold uppercase tracking-widest opacity-60">Device Context</span>
+                            </label>
+                            <select id="swal-device" class="select select-bordered w-full rounded-xl text-sm">
+                                \${Object.entries(deviceOptions).map(([val, text]) => \`<option value="\${val}">\${text}</option>\`).join('')}
+                            </select>
+                            <label class="label p-0 mt-1">
+                                <span class="text-[9px] opacity-40">Choose specific device or global listener.</span>
+                            </label>
+                        </div>
+                    </div>
+                `,
+                showCancelButton: true,
+                confirmButtonText: 'Save Configuration',
+                cancelButtonText: 'Cancel',
+                background: getThemeColors().background,
+                color: getThemeColors().text,
+                focusConfirm: false,
+                customClass: {
+                    popup: 'rounded-2xl shadow-xl border border-base-content/10',
+                    confirmButton: 'btn btn-primary rounded-xl',
+                    cancelButton: 'btn btn-ghost rounded-xl'
+                },
+                buttonsStyling: false,
+                preConfirm: () => {
+                    const url = document.getElementById('swal-url').value;
+                    const device_token = document.getElementById('swal-device').value;
+
+                    if (!url) {
+                        Swal.showValidationMessage('URL is required');
+                        return false;
+                    }
+                    try { new URL(url); } catch (e) {
+                        Swal.showValidationMessage('Please enter a valid URL');
+                        return false;
+                    }
+
+                    return { url, device_token };
+                }
+            });
+
+            if (formValues) {
+                showToast.loading('Updating webhook target...', 'Please wait');
+                const response = await axios.post('/api/webhooks', {
+                    url: formValues.url,
+                    device_token: formValues.device_token || null,
+                    events: ['message', 'qr', 'ready'],
+                    is_active: true
+                });
+
+                if (response.data.success) {
+                    showToast.success('Webhook target saved successfully');
+                    DataTableHelper.reloadTable('webhooks-table');
+                } else {
+                    showToast.error(response.data.message || 'Failed to save webhook');
+                }
+            }
+        } catch (err) {
+            const msg = err.response?.data?.message || err.message;
+            showToast.error(msg, 'Error');
+        }
+    };
+
+    window.deleteWebhook = async function (token) {
+        if ((await showConfirm('Delete Webhook?', 'You will stop receiving real-time event notifications.')).isConfirmed) {
+            await axios.delete('/api/webhooks/' + token);
+            DataTableHelper.reloadTable('webhooks-table');
+        }
+    };
+
+    // Init
+    const initPage = () => {
+        // console.log('[Settings] DOM Ready, Initializing...'); // Removed console.log
+        loadProfile();
+        loadApiKeys();
+        loadWebhooks();
+
+        // Listeners for Forms
+        document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            await axios.put('/api/settings/profile', {
+                whatsapp: document.getElementById('profWhatsapp').value
+            });
+            showToast.success('Profile updated successfully', 'Updated');
+        });
+
+        document.getElementById('securityForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const np = document.getElementById('newPassword').value;
+            const op = document.getElementById('oldPassword').value;
+            await axios.post('/api/auth/change-password', { oldPassword: op, newPassword: np });
+            showToast.success('Your password has been changed.', 'Password Changed');
+            e.target.reset();
+        });
+
+        document.getElementById('messagingSettingsForm')?.addEventListener('submit', async (e) => {
+            e.preventDefault();
+            const delay = document.getElementById('queueDelayRange').value;
+            const manualControl = document.getElementById('queueManualControl')?.checked || false;
+
+            await axios.put('/api/settings', {
+                queue_delay: delay,
+                enable_manual_queue: manualControl
+            });
+            showToast.success('Settings saved successfully', 'Saved');
+            loadProfile(); // Refresh profile to get updated metadata
+        });
+
+        // Forced default view
+        switchTab('profile');
+    };
+
+    if (document.readyState === 'loading') {
+        document.addEventListener('DOMContentLoaded', initPage);
+    } else {
+        initPage();
+    }
+</script>
