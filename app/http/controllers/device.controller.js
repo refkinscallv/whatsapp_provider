@@ -14,7 +14,7 @@ class DeviceController {
      */
     async create({ req, res }) {
         try {
-            const { name } = req.body
+            const { name, provider } = req.body
 
             if (!name) {
                 return res.status(400).json({
@@ -23,7 +23,7 @@ class DeviceController {
                 })
             }
 
-            const result = await deviceService.createDevice(req.user.token, name, true)
+            const result = await deviceService.createDevice(req.user.token, name, provider || 'wwebjs', true)
 
             return res.status(201).json(result)
         } catch (err) {

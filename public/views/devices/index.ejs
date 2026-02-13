@@ -11,6 +11,43 @@
         </div>
     </div>
 
+    <!-- Filters -->
+    <div class="flex flex-col md:flex-row gap-4 items-end bg-base-200/50 p-4 rounded-2xl border border-base-content/5">
+        <div class="form-control flex-1">
+            <label class="label py-1"><span class="label-text text-[10px] uppercase font-bold opacity-60">Search
+                    Device</span></label>
+            <div class="relative">
+                <i class="ri-search-line absolute left-4 top-1/2 -translate-y-1/2 opacity-40"></i>
+                <input type="text" id="filter-search" oninput="applyFilters()"
+                    class="input input-bordered w-full pl-11 rounded-xl h-11" placeholder="Name or phone..." />
+            </div>
+        </div>
+        <div class="form-control w-full md:w-48">
+            <label class="label py-1"><span
+                    class="label-text text-[10px] uppercase font-bold opacity-60">Engine</span></label>
+            <select id="filter-provider" onchange="applyFilters()"
+                class="select select-bordered w-full rounded-xl h-11">
+                <option value="all">All Engines</option>
+                <option value="wwebjs">WWebJS</option>
+                <option value="baileys">Baileys</option>
+            </select>
+        </div>
+        <div class="form-control w-full md:w-48">
+            <label class="label py-1"><span
+                    class="label-text text-[10px] uppercase font-bold opacity-60">Status</span></label>
+            <select id="filter-status" onchange="applyFilters()" class="select select-bordered w-full rounded-xl h-11">
+                <option value="all">All Status</option>
+                <option value="ready">Ready</option>
+                <option value="qr">Waiting QR</option>
+                <option value="authenticated">Authenticated</option>
+                <option value="disconnected">Disconnected</option>
+            </select>
+        </div>
+        <button onclick="resetFilters()" class="btn btn-ghost btn-square h-11 w-11 rounded-xl" title="Reset Filters">
+            <i class="ri-refresh-line"></i>
+        </button>
+    </div>
+
     <!-- Device Grid -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="device-grid">
         <!-- Skeleton Loading -->
@@ -32,13 +69,26 @@
         <div class="p-6 border-b border-base-content/5">
             <h3 class="font-bold text-xl text-base-content">Connect New Device</h3>
         </div>
-        <div class="p-6">
+        <div class="p-6 space-y-4">
             <div class="form-control">
                 <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Device Name
                     (e.g.
                     Marketing Phone)</label>
                 <input type="text" id="deviceName" class="input input-bordered w-full rounded-2xl"
                     placeholder="Enter name..." />
+            </div>
+
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">WhatsApp Engine
+                    (Provider)</label>
+                <select id="deviceProvider" class="select select-bordered w-full rounded-2xl">
+                    <option value="wwebjs" selected>WhatsApp-Web.js (WWebJS) - Stable</option>
+                    <option value="baileys">Baileys (WebSockets) - Fast & Low RAM</option>
+                </select>
+                <div class="mt-2 text-[10px] text-base-content/50 px-1">
+                    <p><b>WWebJS:</b> Uses headless browser, very stable but high RAM.</p>
+                    <p><b>Baileys:</b> Direct connection, very fast and very low RAM.</p>
+                </div>
             </div>
         </div>
         <div class="modal-action p-6 border-t border-base-content/5 mt-0">
@@ -169,6 +219,31 @@
     const currentUserToken = '<%= userToken %>';
     let activeDeviceToken = null;
     let qrSocket = null;
+    let allDevices = []; // Store all devices for local filtering
+
+    function resetFilters() {
+        $('#filter-search').val('');
+        $('#filter-provider').val('all');
+        $('#filter-status').val('all');
+        applyFilters();
+    }
+
+    function applyFilters() {
+        const search = $('#filter-search').val().toLowerCase();
+        const provider = $('#filter-provider').val();
+        const status = $('#filter-status').val();
+
+        const filtered = allDevices.filter(dev => {
+            const matchesSearch = dev.name.toLowerCase().includes(search) ||
+                (dev.data?.wid && dev.data.wid.toLowerCase().includes(search));
+            const matchesProvider = provider === 'all' || (dev.provider || 'wwebjs') === provider;
+            const matchesStatus = status === 'all' || dev.status === status;
+
+            return matchesSearch && matchesProvider && matchesStatus;
+        });
+
+        renderDeviceGrid(filtered);
+    }
 
     function openInviteModal(token) {
         activeDeviceToken = token;
@@ -302,12 +377,19 @@
             const res = await axios.get('/api/devices');
             const grid = $('#device-grid');
 
-            console.log(res)
-
             if (res.data.success) {
-                const devices = res.data.devices;
-                if (devices.length === 0) {
-                    grid.html(`
+                allDevices = res.data.devices;
+                applyFilters();
+            }
+        } catch (err) {
+            console.error('Failed to load devices', err);
+        }
+    }
+
+    function renderDeviceGrid(devices) {
+        const grid = $('#device-grid');
+        if (devices.length === 0) {
+            grid.html(`
                         <div class="col-span-full py-20 text-center">
                             <div class="w-20 h-20 bg-base-content/5 rounded-full flex items-center justify-center mx-auto mb-4 text-base-content/30">
                                 <i class="ri-smartphone-line text-4xl"></i>
@@ -316,8 +398,8 @@
                             <p class="text-base-content/40 mb-6">Start by adding your first WhatsApp device.</p>
                         </div>
                     `);
-                } else {
-                    grid.html(devices.map(dev => `
+        } else {
+            grid.html(devices.map(dev => `
                         <div class="card glass hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
                             <div class="card-body">
                                 <div class="flex justify-between items-start mb-4">
@@ -330,6 +412,8 @@
                                             <div class="flex items-center gap-1.5">
                                                 <div class="w-2 h-2 rounded-full ${getStatusDot(dev.status)}"></div>
                                                 <span class="text-[10px] uppercase font-bold tracking-widest text-slate-500">${dev.status}</span>
+                                                <span class="mx-1 opacity-20">|</span>
+                                                <span class="text-[10px] uppercase font-bold tracking-widest text-primary/70">${dev.provider || 'wwebjs'}</span>
                                             </div>
                                         </div>
                                     </div>
@@ -337,14 +421,14 @@
                                         <div tabindex="0" role="button" class="btn btn-ghost btn-xs rounded-lg"><i class="ri-more-2-fill text-xl"></i></div>
                                          <ul tabindex="0" class="dropdown-content z-[20] menu p-2 shadow-2xl bg-base-100 border border-base-content/5 rounded-xl w-44">
                                              ${dev.users?.find(u => u.token === currentUserToken)?.UserDevice?.is_host
-                            ? `<li><a onclick="openManageUsersModal('${dev.token}')" class="text-primary font-bold"><i class="ri-team-line"></i> Manage Users</a></li>
+                    ? `<li><a onclick="openManageUsersModal('${dev.token}')" class="text-primary font-bold"><i class="ri-team-line"></i> Manage Users</a></li>
                                <li><a onclick="openInviteModal('${dev.token}')" class="text-primary"><i class="ri-user-add-line"></i> Invite User</a></li>
                                <li><a onclick="reconnect('${dev.token}')"><i class="ri-refresh-line"></i> Reconnect</a></li>
                                <li><a onclick="syncContacts('${dev.token}')"><i class="ri-refresh-line text-success"></i> Sync Contacts</a></li>
                                <li><a onclick="logoutDevice('${dev.token}')" class="text-warning"><i class="ri-logout-box-r-line"></i> Logout</a></li>
                                <li><a onclick="deleteDevice('${dev.token}')" class="text-error font-bold text-xs"><i class="ri-delete-bin-line"></i> DELETE DEVICE</a></li>`
-                            : `<li><a class="opacity-30 pointer-events-none italic text-[10px]">Restricted to Host</a></li>`
-                        }
+                    : `<li><a class="opacity-30 pointer-events-none italic text-[10px]">Restricted to Host</a></li>`
+                }
                                         </ul>
                                     </div>
                                 </div>
@@ -395,17 +479,13 @@
 
                                 <div class="card-actions mt-6">
                                     ${dev.status === 'ready'
-                            ? `<a href="/messaging?device=${dev.token}" class="btn btn-primary btn-sm btn-block rounded-xl">Open Messenger</a>`
-                            : `<button onclick="showQR('${dev.token}')" class="btn btn-primary btn-sm btn-block rounded-xl">Connect / Sync</button>`
-                        }
+                    ? `<a href="/messaging?device=${dev.token}" class="btn btn-primary btn-sm btn-block rounded-xl">Open Messenger</a>`
+                    : `<button onclick="showQR('${dev.token}')" class="btn btn-primary btn-sm btn-block rounded-xl">Connect / Sync</button>`
+                }
                                 </div>
                             </div>
                         </div>
                     `).join(''));
-                }
-            }
-        } catch (err) {
-            console.error('Failed to load devices', err);
         }
     }
 
@@ -440,10 +520,11 @@
 
     async function createDevice() {
         const name = $('#deviceName').val();
+        const provider = $('#deviceProvider').val();
         if (!name) return;
 
         try {
-            const res = await axios.post('/api/devices', { name });
+            const res = await axios.post('/api/devices', { name, provider });
             if (res.data.success) {
                 $('#modal_create')[0].close();
                 $('#deviceName').val('');

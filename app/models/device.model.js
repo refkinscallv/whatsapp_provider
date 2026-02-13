@@ -67,6 +67,12 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
             },
 
+            provider: {
+                type: DataTypes.STRING(20),
+                allowNull: false,
+                defaultValue: 'wwebjs',
+            },
+
             authenticated_at: {
                 type: DataTypes.DATE,
                 allowNull: true,

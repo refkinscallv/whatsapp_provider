@@ -56,6 +56,7 @@ class DataTableController extends BaseController {
 
             // Parse custom filters
             if (params.device_token) customFilters.device_token = params.device_token
+            if (params.provider) customFilters['device.provider'] = params.provider
             if (params.status) customFilters.status = params.status
             if (params.type) customFilters.type = params.type
             if (params.sent_from) customFilters.createdAt_from = params.sent_from
@@ -117,6 +118,9 @@ class DataTableController extends BaseController {
             } else {
                 customFilters.device_token = { [db.Op.in]: deviceTokens }
             }
+
+            if (params.provider) customFilters['device.provider'] = params.provider
+
             if (params.has_name === 'yes') {
                 customFilters.name = { [db.Op.ne]: null }
             } else if (params.has_name === 'no') {
@@ -159,6 +163,7 @@ class DataTableController extends BaseController {
 
             // Parse custom filters
             if (params.device_token) customFilters.device_token = params.device_token
+            if (params.provider) customFilters['device.provider'] = params.provider
             if (params.status) customFilters.status = params.status
             if (params.has_media === 'yes') {
                 customFilters.media_url = { [db.Op.ne]: null }
@@ -208,6 +213,7 @@ class DataTableController extends BaseController {
 
             // Parse custom filters
             if (params.device_token) customFilters.device_token = params.device_token
+            if (params.provider) customFilters['device.provider'] = params.provider
             if (params.status) customFilters.status = params.status
             if (params.has_media === 'yes') {
                 customFilters.media_url = { [db.Op.ne]: null }
@@ -448,6 +454,7 @@ class DataTableController extends BaseController {
 
             // Parse custom filters
             if (params.device_token) customFilters.device_token = params.device_token
+            if (params.provider) customFilters['device.provider'] = params.provider
             if (params.batch_id) customFilters.batch_id = params.batch_id
             if (params.exists === 'yes') customFilters.exists = true
             if (params.exists === 'no') customFilters.exists = false

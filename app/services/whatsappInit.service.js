@@ -1,6 +1,6 @@
 'use strict'
 
-const { Client, LocalAuth } = require('whatsapp-web.js')
+const ProviderFactory = require('../providers/provider.factory')
 const Logger = require('@core/logger.core')
 const EventEmitter = require('events')
 const path = require('path')
@@ -74,10 +74,12 @@ class WhatsAppInit extends EventEmitter {
         // Core properties
         this.initialized = false
         this.io = null
+        this.eventsInstance = null // Store WhatsAppEvents instance
 
         // Client management
         this.clients = new Map()
         this.clientStates = new Map()
+        this.providerTypes = new Map() // Track provider type for each client
         this.reconnectAttempts = new Map()
         this.clientTimers = new Map()
         this.activeReconnections = new Map() // Track active reconnection promises
@@ -88,10 +90,6 @@ class WhatsAppInit extends EventEmitter {
         this.REINIT_DELAY = parseInt(process.env.WHATSAPP_REINIT_DELAY) || 5000
         this.MAX_RECONNECT_ATTEMPTS = parseInt(process.env.WHATSAPP_MAX_RECONNECT_ATTEMPTS) || 5
         this.chromePath = process.env.WHATSAPP_CHROME_PATH || undefined
-        // this.webVersionCache = {
-        //     type: process.env.WHATSAPP_WEB_VERSION_CACHE_TYPE || 'remote',
-        //     remotePath: 'https://raw.githubusercontent.com/wppconnect-team/wa-version/main/html/2.2412.54.html',
-        // }
         this.qrMaxRetries = parseInt(process.env.WHATSAPP_QR_MAX_RETRIES) || 5
 
         // Metrics tracking
@@ -108,8 +106,9 @@ class WhatsAppInit extends EventEmitter {
     /**
      * Initialize WhatsApp service
      * @param {SocketIO} io - Socket.IO instance
+     * @param {WhatsAppEvents} eventsInstance - WhatsAppEvents instance
      */
-    init(io) {
+    init(io, eventsInstance = null) {
         if (this.initialized) {
             Logger.warn('WhatsApp service already initialized')
             return
@@ -117,6 +116,7 @@ class WhatsAppInit extends EventEmitter {
 
         try {
             this.io = io
+            this.eventsInstance = eventsInstance // Store the events instance
             this.ensureSessionsDirectory()
             this.setupProcessHandlers()
             this.initialized = true
@@ -124,7 +124,7 @@ class WhatsAppInit extends EventEmitter {
             // Start background watchdog
             this.watchdog.start()
 
-            Logger.info('WhatsApp Initialization Service ready', {
+            Logger.info('WhatsApp Initialization Service ready (Multi-Provider)', {
                 sessionsDir: this.sessionsDir,
                 maxReconnectAttempts: this.MAX_RECONNECT_ATTEMPTS,
             })
@@ -179,12 +179,22 @@ class WhatsAppInit extends EventEmitter {
     }
 
     /**
+     * Get provider type for a client
+     * @param {string} clientId - Client identifier
+     * @returns {string} Provider type ('wwebjs' or 'baileys')
+     */
+    getProviderType(clientId) {
+        return this.providerTypes.get(clientId) || 'wwebjs'
+    }
+
+    /**
      * Get all clients information
      * @returns {Array<object>}
      */
     getAllClients() {
         return Array.from(this.clients.entries()).map(([id, client]) => ({
             clientId: id,
+            provider: this.providerTypes.get(id) || 'unknown',
             state: this.clientStates.get(id) || 'unknown',
             info: client?.info || null,
             reconnectAttempts: this.reconnectAttempts.get(id) || 0,
@@ -203,6 +213,7 @@ class WhatsAppInit extends EventEmitter {
         try {
             return {
                 clientId,
+                provider: this.providerTypes.get(clientId) || 'unknown',
                 state: this.clientStates.get(clientId) || 'unknown',
                 info: client.info || null,
                 reconnectAttempts: this.reconnectAttempts.get(clientId) || 0,
@@ -249,72 +260,52 @@ class WhatsAppInit extends EventEmitter {
             await this.destroyClient(clientId, false)
         }
 
+        const providerType = options.provider || process.env.WHATSAPP_DEFAULT_PROVIDER || 'wwebjs'
+
         try {
             // Get randomized fingerprint
             const userAgent = getModernUserAgent()
             const viewport = getRandomViewport()
             const timezone = getTimezone()
 
-            Logger.debug(`Creating client ${clientId} with UA: ${userAgent.substring(0, 50)}... Viewport: ${viewport.width}x${viewport.height} TZ: ${timezone}`)
+            Logger.debug(`Creating ${providerType} client ${clientId} with UA: ${userAgent.substring(0, 50)}...`)
 
-            const defaultOptions = {
-                authStrategy: new LocalAuth({
-                    clientId,
-                    dataPath: this.sessionsDir,
-                }),
-                puppeteer: {
-                    executablePath: this.chromePath,
-                    headless: true,
-                    args: [
-                        '--no-sandbox',
-                        '--disable-setuid-sandbox',
-                        '--disable-extensions',
-                        '--disable-dev-shm-usage',
-                        '--disable-accelerated-2d-canvas',
-                        '--no-first-run',
-                        '--no-zygote',
-                        '--disable-gpu',
-                        '--disable-web-security',
-                        '--disable-features=IsolateOrigins,site-per-process',
-                        '--disable-software-rasterizer',
-                        '--disable-background-timer-throttling',
-                        '--disable-backgrounding-occluded-windows',
-                        '--disable-renderer-backgrounding',
-                        '--disable-infobars',
-                        `--window-size=${viewport.width},${viewport.height}`,
-                        '--disable-blink-features=AutomationControlled',
-                        `--user-agent=${userAgent}`,
-                        `--lang=en-US,en`,
-                    ],
-                    executablePath: this.chromePath,
-                },
-                webVersionCache: this.webVersionCache,
-                qrMaxRetries: this.qrMaxRetries,
-                // Set user agent at client level as well
+            const providerOptions = {
+                sessionsDir: this.sessionsDir,
+                chromePath: this.chromePath,
                 userAgent: userAgent,
+                viewport: viewport,
+                timezone: timezone,
+                qrMaxRetries: this.qrMaxRetries,
+                ...options
             }
 
-            const client = new Client({ ...defaultOptions, ...options })
+            const client = ProviderFactory.create(providerType, clientId, providerOptions)
 
             this.clients.set(clientId, client)
             this.clientStates.set(clientId, 'initializing')
+            this.providerTypes.set(clientId, providerType)
 
-            Logger.info(`Initializing client ${clientId}...`, {
-                options: Object.keys(options),
-            })
+            // Register events via WhatsAppEvents service (if available)
+            if (this.eventsInstance) {
+                this.eventsInstance.register(clientId, client)
+            }
+
+            Logger.info(`Initializing ${providerType} client ${clientId}...`)
 
             await client.initialize()
             this.metrics.clientsCreated++
 
             return client
         } catch (err) {
-            Logger.error(`Failed to create client ${clientId}`, err)
+            Logger.error(`Failed to create ${providerType} client ${clientId}`, err)
 
             // Force cleanup on failure to release locks
             await this.destroyClient(clientId, false).catch(() => { })
 
             this.clients.delete(clientId)
             this.clientStates.delete(clientId)
+            this.providerTypes.delete(clientId)
             this.metrics.errors++
 
             const attempts = this.reconnectAttempts.get(clientId) || 0
@@ -323,9 +314,7 @@ class WhatsAppInit extends EventEmitter {
                 this.reconnectAttempts.set(clientId, attempts + 1)
                 this.metrics.reconnections++
 
-                Logger.warn(`Retrying client ${clientId} (${attempts + 1}/${this.MAX_RECONNECT_ATTEMPTS}) in ${this.REINIT_DELAY / 1000}s`, {
-                    error: err.message,
-                })
+                Logger.warn(`Retrying client ${clientId} (${attempts + 1}/${this.MAX_RECONNECT_ATTEMPTS}) in ${this.REINIT_DELAY / 1000}s`)
 
                 const timer = setTimeout(() => {
                     this.clientTimers.delete(clientId)

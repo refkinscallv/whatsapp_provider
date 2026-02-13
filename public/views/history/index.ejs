@@ -118,6 +118,17 @@
             <%- include('../layouts/partials/device_selector', { name: 'device_token' , label: 'Device' , showAllOption:
                 true, extraClass: 'bg-base-200/50' }) %>
 
+                <!-- Engine Filter -->
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">WhatsApp
+                        Engine</label>
+                    <select name="provider" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All Engines</option>
+                        <option value="wwebjs">WhatsApp-Web.js (WWebJS)</option>
+                        <option value="baileys">Baileys (WebSockets)</option>
+                    </select>
+                </div>
+
                 <!-- Status Filter -->
                 <div class="form-control">
                     <label

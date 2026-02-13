@@ -34,10 +34,12 @@ class WhatsAppActions {
         }
 
         try {
-            const chatId = to.includes('@') ? to : `${to}@c.us`
+            // Normalize ID
+            const isBaileys = this.whatsappInit.providerTypes.get(clientId) === 'baileys'
+            const chatId = to.includes('@') ? to : (isBaileys ? `${to}@s.whatsapp.net` : `${to}@c.us`)
 
             // Parse placeholders
-            const contact = await this.getRecipientContact(client, chatId)
+            const contact = await client.getContactById(chatId)
             let finalMessage = templateService.parseTemplate(message, contact)
 
             // Invisible Jitter: Automatically append a random zero-width space (\u200B)
@@ -77,7 +79,7 @@ class WhatsAppActions {
             // Save failed message to history
             await this.saveMessageHistory(clientId, {
                 user_token: options.user_token || null,
-                to: to.includes('@') ? to : `${to}@c.us`,
+                to: to.includes('@') ? to : (this.whatsappInit.providerTypes.get(clientId) === 'baileys' ? `${to}@s.whatsapp.net` : `${to}@c.us`),
                 message,
                 type: 'text',
                 status: 'failed',
@@ -108,29 +110,20 @@ class WhatsAppActions {
         }
 
         try {
-            const { MessageMedia } = require('whatsapp-web.js')
-            const chatId = to.includes('@') ? to : `${to}@c.us`
+            const isBaileys = this.whatsappInit.providerTypes.get(clientId) === 'baileys'
+            const chatId = to.includes('@') ? to : (isBaileys ? `${to}@s.whatsapp.net` : `${to}@c.us`)
 
             // Parse placeholders in caption
-            const contact = await this.getRecipientContact(client, chatId)
+            const contact = await client.getContactById(chatId)
             const finalCaption = templateService.parseTemplate(caption, contact)
-
-            let messageMedia
-            if (media.url) {
-                messageMedia = await MessageMedia.fromUrl(media.url)
-            } else if (media.data) {
-                messageMedia = new MessageMedia(media.mimetype, media.data, media.filename)
-            } else {
-                throw new Error('Media data or URL is required')
-            }
 
             Logger.debug(`Sending media to ${to} with caption: ${finalCaption}`)
 
-            // Send with retry logic to handle "detached Frame" or "getChat of undefined"
-            const response = await this.safeSendMessage(clientId, client, chatId, messageMedia, { caption: finalCaption })
+            // Send with retry logic
+            const response = await this.safeSendMessage(clientId, client, chatId, media, { ...media, caption: finalCaption })
 
             // Determine media type
-            const mediaType = this.getMediaType(media.mimetype || messageMedia.mimetype)
+            const mediaType = this.getMediaType(media.mimetype)
 
             // Save to message history
             await this.saveMessageHistory(clientId, {
@@ -175,11 +168,6 @@ class WhatsAppActions {
     async safeSendMessage(clientId, client, chatId, content, options = {}, retries = 2) {
         for (let i = 0; i <= retries; i++) {
             try {
-                // Perform quick health check on the page
-                if (client.pupPage && client.pupPage.isClosed()) {
-                    throw new Error('Puppeteer page is closed')
-                }
-
                 // If not ready but initializing, wait a bit for it to complete
                 if (!this.whatsappInit.isClientReady(clientId)) {
                     const info = this.whatsappInit.getClientInfo(clientId)
@@ -197,13 +185,16 @@ class WhatsAppActions {
                 }
 
                 // ANTI-BAN: Simulate presence before the first attempt to send
-                // Especially important for new contacts/broadcasts
                 if (i === 0 && !options.skip_simulation) {
                     const simulationText = typeof content === 'string' ? content : (options.caption || '')
                     await this.simulatePresence(clientId, chatId, simulationText)
                 }
 
-                return await client.sendMessage(chatId, content, options)
+                if (content && (content.url || content.data)) {
+                    return await client.sendMedia(chatId, content, options)
+                } else {
+                    return await client.sendMessage(chatId, content, options)
+                }
             } catch (err) {
                 const isTransient = err.message.includes('detached Frame') ||
                     err.message.includes('Execution context was destroyed') ||
@@ -219,8 +210,8 @@ class WhatsAppActions {
                         await new Promise(resolve => setTimeout(resolve, delay))
                         continue
                     } else {
-                        // Persistent browser error after all retries - trigger background recovery
-                        Logger.error(`Persistent browser error for ${clientId}. Triggering recovery...`, { error: err.message })
+                        // Persistent error after all retries - trigger background recovery
+                        Logger.error(`Persistent error for ${clientId}. Triggering recovery...`, { error: err.message })
                         this.whatsappInit.reconnect(clientId).catch(recErr => {
                             Logger.error(`Auto-recovery failed for ${clientId}`, recErr)
                         })
@@ -242,77 +233,23 @@ class WhatsAppActions {
         if (!client) return
 
         try {
-            const chat = await client.getChatById(chatId)
-
-            // 1. Mark as seen
-            await chat.sendSeen()
-
-            // 2. Start typing
-            await chat.sendStateTyping()
-
-            // 3. Fluid typing delay
-            // Calculate typing time based on message length: length * (30ms to 70ms) with a baseline of 1s
+            // Some providers might not support all presence states yet
+            // We just add a human-like delay for now to be engine agnostic
             const msgLength = content ? content.length : 0
 
             if (msgLength > 0) {
                 const charDelay = 30 + Math.floor(Math.random() * 40) // 30ms to 70ms per char
-                const totalTypingTime = 1000 + (msgLength * charDelay)
+                const totalTypingTime = Math.min(1000 + (msgLength * charDelay), 5000) // Caps at 5s
 
-                // Thinking Pauses: For messages > 50 characters, insert a 1-3s "pause" midway
-                if (msgLength > 50) {
-                    const splitPoint = Math.floor(totalTypingTime / 2)
-                    const pauseDuration = 1000 + Math.floor(Math.random() * 2000) // 1-3s pause
-
-                    Logger.debug(`Simulating long typing for ${chatId}: ${totalTypingTime}ms with ${pauseDuration}ms pause`)
-
-                    // Type first half
-                    await new Promise(resolve => setTimeout(resolve, splitPoint))
-
-                    // Pause (stop typing)
-                    await chat.clearState()
-                    await new Promise(resolve => setTimeout(resolve, pauseDuration))
-
-                    // Resume typing second half
-                    await chat.sendStateTyping()
-                    await new Promise(resolve => setTimeout(resolve, splitPoint))
-                } else {
-                    Logger.debug(`Simulating typing for ${chatId}: ${totalTypingTime}ms`)
-                    await new Promise(resolve => setTimeout(resolve, totalTypingTime))
-                }
+                Logger.debug(`Simulating typing for ${chatId}: ${totalTypingTime}ms`)
+                await new Promise(resolve => setTimeout(resolve, totalTypingTime))
             } else {
                 // Fallback for empty/media messages without caption
                 const randomDelay = Math.floor(Math.random() * 2000) + 2000
                 await new Promise(resolve => setTimeout(resolve, randomDelay))
             }
-
-            // 4. Stop typing
-            await chat.clearState()
         } catch (err) {
-            // It might fail if chat doesn't exist (new contact), which is expected
-            // In that case, we can't do much, but the attempt itself is recorded by WPP
             Logger.debug(`simulatePresence skipped/failed for ${chatId}: ${err.message}`)
-        }
-    }
-
-    /**
-     * Get recipient contact info for placeholders
-     * @param {Client} client 
-     * @param {string} chatId 
-     * @returns {Promise<object>}
-     */
-    async getRecipientContact(client, chatId) {
-        try {
-            const contact = await client.getContactById(chatId)
-            return {
-                name: contact.name || contact.pushname || chatId.split('@')[0],
-                pushname: contact.pushname || '',
-                phone: chatId.split('@')[0]
-            }
-        } catch (err) {
-            return {
-                name: chatId.split('@')[0],
-                phone: chatId.split('@')[0]
-            }
         }
     }
 

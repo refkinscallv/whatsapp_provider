@@ -18,13 +18,14 @@ class DeviceService {
      * @param {boolean} isHost - Is user the host/owner
      * @returns {Promise<object>}
      */
-    async createDevice(userToken, name, isHost = true) {
+    async createDevice(userToken, name, provider = 'wwebjs', isHost = true) {
         const deviceToken = Hash.token()
 
         // Create device record
         const device = await db.models.Device.create({
             token: deviceToken,
             name,
+            provider,
             status: 'prepare',
             is_admin: false,
             is_auth: false,
@@ -42,7 +43,7 @@ class DeviceService {
         // Decrement subscription usage
         await subscriptionService.decrementUsage(userToken, 'devices')
 
-        Logger.info(`Device created: ${deviceToken} for user ${userToken}`)
+        Logger.info(`Device created: ${deviceToken} (${provider}) for user ${userToken}`)
 
         return {
             success: true,
@@ -50,6 +51,7 @@ class DeviceService {
             device: {
                 token: device.token,
                 name: device.name,
+                provider: device.provider,
                 status: device.status,
                 is_auth: device.is_auth,
             },
@@ -75,10 +77,12 @@ class DeviceService {
         }
 
         try {
-            // Create WhatsApp client
-            await whatsappService.createClient(deviceToken)
+            // Create WhatsApp client with the stored provider
+            await whatsappService.createClient(deviceToken, {
+                provider: device.provider || 'wwebjs'
+            })
 
-            Logger.info(`WhatsApp client initialized for device ${deviceToken}`)
+            Logger.info(`WhatsApp client initialized for device ${deviceToken} using ${device.provider || 'wwebjs'}`)
 
             return {
                 success: true,
@@ -86,6 +90,7 @@ class DeviceService {
                 device: {
                     token: device.token,
                     name: device.name,
+                    provider: device.provider,
                     status: device.status,
                 },
             }

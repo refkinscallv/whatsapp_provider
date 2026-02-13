@@ -317,8 +317,20 @@ class WhatsAppEvents {
                 // 2. AUTO-READ (Anti-Ban Measure)
                 // Simulates a user reading their phone
                 try {
-                    const chat = await message.getChat()
-                    await chat.sendSeen()
+                    // Get the provider type for this client
+                    const providerType = this.whatsappInit.getProviderType(clientId)
+
+                    if (providerType === 'wwebjs') {
+                        // WWebJS approach
+                        const chat = await message.getChat()
+                        await chat.sendSeen()
+                    } else if (providerType === 'baileys') {
+                        // Baileys approach - use the client directly
+                        const client = this.whatsappInit.getClient(clientId)
+                        if (client && client.client) {
+                            await client.client.readMessages([message._raw.key])
+                        }
+                    }
                     Logger.debug(`Auto-read triggered for ${message.from} on ${clientId}`)
                 } catch (readErr) {
                     Logger.warn(`Failed to trigger auto-read for ${message.from}: ${readErr.message}`)
@@ -584,12 +596,7 @@ class WhatsAppEvents {
                                 // Fetch contact for placeholders
                                 let contact = {}
                                 try {
-                                    const waContact = await message.getContact()
-                                    contact = {
-                                        name: waContact.name || waContact.pushname || message.from.split('@')[0],
-                                        pushname: waContact.pushname || '',
-                                        phone: message.from.split('@')[0]
-                                    }
+                                    contact = await client.getContactById(message.from)
                                 } catch (cErr) {
                                     Logger.warn(`Failed to fetch contact for auto-reply placeholders: ${cErr.message}`)
                                     contact = {

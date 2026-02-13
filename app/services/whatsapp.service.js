@@ -25,12 +25,12 @@ class WhatsAppService {
             return
         }
 
-        // Initialize core service
-        this.init.init(io)
-
-        // Initialize events and actions
+        // Initialize events and actions instances first
         this.events = new WhatsAppEvents(this.init, io)
         this.actions = new WhatsAppActions(this.init)
+
+        // Initialize core service with events instance
+        this.init.init(io, this.events)
 
         this.initialized = true
     }
