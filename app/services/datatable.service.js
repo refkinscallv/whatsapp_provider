@@ -106,8 +106,12 @@ class DataTableService {
      */
     parseFilters(filters, model) {
         const where = {}
+        const modelAlias = model.options.name.singular
 
-        Object.keys(filters).forEach(key => {
+        // Get all keys including symbols for Op.or, Op.and etc
+        const keys = [...Object.keys(filters), ...Object.getOwnPropertySymbols(filters)]
+
+        keys.forEach(key => {
             const value = filters[key]
 
             // Skip empty values
@@ -115,29 +119,40 @@ class DataTableService {
                 return
             }
 
+            // Handle Symbols (Op.or, Op.and)
+            if (typeof key === 'symbol') {
+                if (Array.isArray(value)) {
+                    where[key] = value.map(v => this.parseFilters(v, model))
+                } else {
+                    where[key] = this.parseFilters(value, model)
+                }
+                return
+            }
+
             // Handle different filter types
             if (key.endsWith('_from') || key.endsWith('_to')) {
                 // Date range filters
                 const fieldName = key.replace(/_from$|_to$/, '')
-                // Wrap in $ to ensure qualification
-                const qualifiedKey = `$${fieldName}$`
+                // Qualify the key
+                const qualifiedKey = fieldName.includes('.') ? fieldName : `${modelAlias}.${fieldName}`
+
                 if (!where[qualifiedKey]) {
                     where[qualifiedKey] = {}
                 }
                 if (key.endsWith('_from')) {
                     where[qualifiedKey][Op.gte] = new Date(value)
                 } else {
-                    where[qualifiedKey][Op.lte] = new Date(value)
+                    const toDate = new Date(value)
+                    if (toDate.getHours() === 0 && toDate.getMinutes() === 0) {
+                        toDate.setHours(23, 59, 59, 999)
+                    }
+                    where[qualifiedKey][Op.lte] = toDate
                 }
             } else if (key.includes('->')) {
-                // Handling JSON path filters (e.g., 'metadata->token' or 'MessageHistory.metadata->token')
-                // MySQL requires JSON_EXTRACT + JSON_UNQUOTE for reliable string comparison
+                // ... same logic as before for JSON paths ...
                 const parts = key.split('->')
                 const fullField = parts[0]
-                const path = parts.slice(1).join('.') // Support nested paths
-
-                // Use literal for the JSON expression to avoid double-escaping issues with $ in Sequelize
-                // We resolve the column name manually to ensure compatibility with dots (Table.Column)
+                const path = parts.slice(1).join('.')
                 const columnRef = fullField.includes('.')
                     ? `\`${fullField.split('.').join('`.`')}\``
                     : `\`${fullField}\``
@@ -149,11 +164,12 @@ class DataTableService {
                 ))
             } else if (Array.isArray(value)) {
                 // Array filters (multiple select)
-                where[`$${key}$`] = { [Op.in]: value }
+                const qualifiedKey = key.includes('.') ? key : `${modelAlias}.${key}`
+                where[qualifiedKey] = { [Op.in]: value }
             } else {
                 // Exact match
-                // Wrap in $ to ensure qualification, unless it already contains dots or $
-                const qualifiedKey = (key.includes('.') || key.includes('$')) ? key : `$${key}$`
+                // Qualify the key
+                const qualifiedKey = key.includes('.') ? key : `${modelAlias}.${key}`
                 where[qualifiedKey] = value
             }
         })

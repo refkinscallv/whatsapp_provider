@@ -165,7 +165,7 @@
                         <div class="relative z-10 flex items-center justify-between gap-2">
                             <div class="flex items-center gap-5">
                                 <div
-                                    class="w-14 h-14 bg-primary text-primary-content rounded-2xl flex items-center justify-center text-2xl shadow-xl shadow-primary/30">
+                                    class="w-14 h-14 bg-primary text-primary-content rounded-2xl flex items-center justify-center text-2xl shadow shadow-primary/30">
                                     <i class="ri-vip-diamond-fill"></i>
                                 </div>
                                 <div>
@@ -218,6 +218,7 @@
             const res = await axios.get('/api/dashboard');
             if (res.data.success) {
                 const { stats, recent } = res.data;
+                console.log(stats)
 
                 // Update stats
                 $('#stat-devices').text(stats.devices.total);

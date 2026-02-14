@@ -54,6 +54,12 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
             },
 
+            media_mimetype: {
+                type: DataTypes.STRING(100),
+                allowNull: true,
+                comment: 'MIME type of media file',
+            },
+
             metadata: {
                 type: DataTypes.JSON,
                 allowNull: true,

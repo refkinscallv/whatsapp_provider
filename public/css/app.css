@@ -1,0 +1,129 @@
+@import url('https://fonts.googleapis.com/css2?family=Roboto:ital,wght@0,100..900;1,100..900&display=swap');
+@import url('https://fonts.googleapis.com/css2?family=Quicksand:wght@300..700&display=swap');
+
+html, body {
+    font-family: "Quicksand", sans-serif !important;
+    font-optical-sizing: auto;
+    font-size: 15px !important;
+    width: 100%;
+    margin: auto
+}
+
+*,
+*:after,
+*:before {
+    -webkit-box-sizing: border-box;
+    box-sizing: border-box;
+    scrollbar-width: none;
+    scrollbar-color: rgba(175, 184, 196, 0.8) transparent;
+    -webkit-user-select: none;
+    -moz-user-select: none;
+    -ms-user-select: none;
+    user-select: none;
+}
+
+*::-webkit-scrollbar {
+    width: 6px;
+    height: 6px;
+    transition: all 0.2s ease-in-out;
+}
+
+*::-webkit-scrollbar-track {
+    background: transparent;
+    border-radius: 10px;
+    margin: 4px;
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: rgba(175, 184, 196, 0.8);
+    border-radius: 10px;
+    border: 2px solid transparent;
+    background-clip: padding-box;
+}
+
+*::-webkit-scrollbar-thumb:hover {
+    background-color: rgba(150, 160, 180, 0.9);
+}
+
+* {
+    transition: all 0.2s;
+}
+
+a {
+    text-decoration: underline;
+    transition: all 0.2s;
+    cursor: pointer;
+}
+
+a:hover,
+a:focus,
+a:active {
+    color: var(--color-primary);
+}
+
+label {
+    text-transform: uppercase;
+    opacity: 0.7;
+    display: block;
+    font-size: .8rem;
+    margin-bottom: 5px;
+    font-weight: 600;
+}
+
+label[required]::after,
+label.required::after {
+    content: "*";
+    color: var(--color-error);
+    margin-left: 4px;
+    font-size: 1.4em;
+    font-weight: bold;
+    vertical-align: baseline;
+    line-height: 1;
+}
+
+.btn-accent {
+    color: var(--color-white) !important
+}
+
+.filepond--drop-label,
+.filepond--drop-label label {
+    cursor: pointer !important;
+}
+
+.dt-container .dt-layout-row,
+.dt-container .dt-layout-row .dt-length,
+.dt-container .dt-layout-row .dt-search {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.dt-paging,
+.dt-paging > button {
+    color: var(--color-base-content) !important;
+}
+
+img[data-preview] {
+    cursor: pointer;
+}
+
+dialog .modal-box {
+    max-height: 90vh !important;
+    overflow: hidden !important;
+}
+
+dialog .modal-title {
+    margin-bottom: 20px !important;
+}
+
+.ts-dropdown {
+    width: auto !important;
+    min-width: 30% !important;
+    max-width: 30% !important;
+}
+
+@media screen and (max-width: 1024px) {
+    .ts-dropdown {
+        width: 100 !important;
+    }
+}

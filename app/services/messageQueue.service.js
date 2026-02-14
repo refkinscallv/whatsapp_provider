@@ -41,6 +41,7 @@ class MessageQueueService {
             message,
             type = 'text',
             media_url = null,
+            media_mimetype = null,
             priority = 'normal',
             metadata = {},
             scheduled_at = new Date(),
@@ -54,6 +55,7 @@ class MessageQueueService {
             message,
             type,
             media_url,
+            media_mimetype,
             status: 'queued',
             priority,
             scheduled_at,
@@ -206,6 +208,7 @@ class MessageQueueService {
                             msg.to,
                             {
                                 url: msg.media_url,
+                                mimetype: msg.media_mimetype,
                                 user_token: msg.user_token,
                                 metadata: msg.metadata
                             },
@@ -387,6 +390,7 @@ class MessageQueueService {
                     msg.to,
                     {
                         url: msg.media_url,
+                        mimetype: msg.media_mimetype,
                         user_token: msg.user_token,
                         metadata: msg.metadata
                     },
@@ -588,6 +592,7 @@ class MessageQueueService {
                         message: msg.message,
                         type: msg.type,
                         media_url: msg.media_url,
+                        media_mimetype: msg.media_mimetype,
                         priority: 'normal',
                         metadata: { ...msg.metadata, scheduled_msg_token: msg.token }
                     })

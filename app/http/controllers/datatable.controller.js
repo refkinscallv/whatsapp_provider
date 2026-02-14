@@ -100,6 +100,12 @@ class DataTableController extends BaseController {
             // Contacts don't have user_token, but devices are linked to users via UserDevice
             const userDevices = await db.models.UserDevice.findAll({
                 where: { user_token: req.user.token },
+                include: [{
+                    model: db.models.Device,
+                    as: 'device',
+                    where: { is_deleted: false },
+                    required: true
+                }],
                 attributes: ['device_token']
             })
             const deviceTokens = userDevices.map(ud => ud.device_token)
@@ -481,6 +487,128 @@ class DataTableController extends BaseController {
         } catch (error) {
             console.error('[DataTableController] getNumberCheckDataTable error:', error)
             return BaseController.error(res, 'Failed to fetch number check data', 500)
+        }
+    }
+
+    /**
+     * Get subscriptions datatable (Admin)
+     */
+    async getSubscriptionsDataTable({ req, res }) {
+        try {
+            const params = req.body
+            const customFilters = {}
+            const { Op } = db
+
+            // Handle filter parameter (all, active, expiring, expired)
+            if (params.filter) {
+                const now = new Date()
+                const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+
+                switch (params.filter) {
+                    case 'active':
+                        customFilters.status = 'ACTIVE'
+                        customFilters.expired_at_from = sevenDaysFromNow
+                        break
+                    case 'expiring':
+                        customFilters.status = 'ACTIVE'
+                        customFilters.expired_at_from = now
+                        customFilters.expired_at_to = sevenDaysFromNow
+                        break
+                    case 'expired':
+                        customFilters[Op.or] = [
+                            { status: 'EXPIRED' },
+                            {
+                                status: 'ACTIVE',
+                                expired_at_to: now
+                            }
+                        ]
+                        break
+                    // 'all' or default - no additional filters
+                }
+            }
+
+            // Parse other custom filters
+            if (params.status) customFilters.status = params.status
+            if (params.package_token) customFilters.package_token = params.package_token
+            if (params.is_auto_renew !== undefined) customFilters.is_auto_renew = params.is_auto_renew === 'true'
+            if (params.started_from) customFilters.started_at_from = params.started_from
+            if (params.started_to) customFilters.started_at_to = params.started_to
+            if (params.expires_from) customFilters.expired_at_from = params.expires_from
+            if (params.expires_to) customFilters.expired_at_to = params.expires_to
+
+            const options = {
+                include: [
+                    {
+                        model: db.models.User,
+                        as: 'user',
+                        attributes: ['name', 'email', 'token'],
+                        required: false
+                    },
+                    {
+                        model: db.models.Package,
+                        as: 'package',
+                        attributes: ['name', 'price', 'period'],
+                        required: false
+                    }
+                ],
+                searchableColumns: ['user.name', 'user.email', 'package.name'],
+                customFilters,
+                defaultOrder: [['createdAt', 'DESC']]
+            }
+
+            const result = await datatableService.buildDataTableQuery(db.models.UserSubscription, params, options)
+            return BaseController.json(res, true, 200, 'Subscriptions data fetched', {}, result)
+        } catch (error) {
+            console.error('[DataTableController] getSubscriptionsDataTable error:', error)
+            return BaseController.error(res, 'Failed to fetch subscriptions data', 500)
+        }
+    }
+
+    /**
+     * Get billing history datatable (Admin)
+     */
+    async getBillingHistoryDataTable({ req, res }) {
+        try {
+            const params = req.body
+            const customFilters = {}
+
+            // Parse custom filters
+            if (params.filter_month) {
+                const months = parseInt(params.filter_month)
+                if (months > 0) {
+                    const date = new Date()
+                    date.setMonth(date.getMonth() - months)
+                    customFilters.created_at_from = date
+                }
+            }
+            if (params.status) customFilters.status = params.status
+            if (params.package_token) customFilters.package_token = params.package_token
+
+            const options = {
+                include: [
+                    {
+                        model: db.models.User,
+                        as: 'user',
+                        attributes: ['name', 'email', 'token'],
+                        required: false
+                    },
+                    {
+                        model: db.models.Package,
+                        as: 'package',
+                        attributes: ['name', 'price', 'period'],
+                        required: false
+                    }
+                ],
+                searchableColumns: ['user.name', 'user.email', 'package.name'],
+                customFilters,
+                defaultOrder: [['createdAt', 'DESC']]
+            }
+
+            const result = await datatableService.buildDataTableQuery(db.models.UserSubscription, params, options)
+            return BaseController.json(res, true, 200, 'Billing history data fetched', {}, result)
+        } catch (error) {
+            console.error('[DataTableController] getBillingHistoryDataTable error:', error)
+            return BaseController.error(res, 'Failed to fetch billing history data', 500)
         }
     }
 }

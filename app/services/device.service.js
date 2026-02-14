@@ -399,7 +399,8 @@ class DeviceService {
             const activeDevices = await db.models.Device.findAll({
                 where: {
                     is_auth: true,
-                    is_logged_out: false
+                    is_logged_out: false,
+                    is_deleted: false
                 }
             })
 

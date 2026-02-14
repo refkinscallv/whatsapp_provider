@@ -18,7 +18,6 @@
         href="https://cdn.datatables.net/v/dt/jszip-3.10.1/dt-2.3.7/b-3.2.6/b-colvis-3.2.6/b-html5-3.2.6/b-print-3.2.6/datatables.min.css"
         rel="stylesheet" integrity="sha384-8MkqxZ7SptGSLxfK7hls0KcK9vWdhyxmybI/d+wUELT5KSpbZ42jr3YhVxGlSVme"
         crossorigin="anonymous">
-
     <%- style %>
 
         <style>
@@ -137,7 +136,7 @@
         <!-- Sidebar -->
         <div class="drawer-side z-40">
             <label for="main-drawer" aria-label="close sidebar" class="drawer-overlay"></label>
-            <ul class="menu p-4 w-72 min-h-screen bg-base-200 border-r border-base-content/5 text-base-content/70">
+            <ul class="menu p-4 w-72 min-h-screen bg-base-200 shadow-lg text-base-content/70">
                 <div class="mb-10 px-4">
                     <h1 class="text-3xl font-bold text-base-content italic tracking-tighter">
                         <%= config.app.name %>
@@ -184,6 +183,11 @@
                     <% if (req.user && req.user.role==='SUPER_ADMIN' ) { %>
                         <li><a href="/admin/users" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
                                     class="ri-group-fill text-lg"></i> User Management</a></li>
+                        <li><a href="/admin/packages"
+                                class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                                    class="ri-vip-diamond-fill text-lg"></i> Packages</a></li>
+                        <li><a href="/admin/billing" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                                    class="ri-money-dollar-circle-fill text-lg"></i> Billing</a></li>
                         <li><a href="/admin/settings"
                                 class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
                                     class="ri-settings-5-fill text-lg"></i> Admin Settings</a></li>
@@ -206,7 +210,7 @@
 
                                     <div class="px-4 py-4 mt-4">
                                         <div
-                                            class="bg-base-300/50 rounded-2xl p-4 flex items-center justify-between border border-base-content/5">
+                                            class="bg-base-300/50 rounded-2xl p-4 flex items-center justify-between border border-base-content/50">
                                             <i class="ri-sun-fill text-warning"></i>
                                             <input type="checkbox" id="theme-toggle"
                                                 class="toggle toggle-primary theme-controller" />
@@ -331,7 +335,7 @@
                     toast.addEventListener('mouseleave', Swal.resumeTimer);
                 },
                 customClass: {
-                    popup: 'rounded-2xl shadow-xl border border-base-content/10'
+                    popup: 'rounded-2xl shadow border border-base-content/10'
                 }
             });
 
@@ -381,7 +385,7 @@
                             Swal.showLoading();
                         },
                         customClass: {
-                            popup: 'rounded-2xl shadow-xl border border-base-content/10'
+                            popup: 'rounded-2xl shadow border border-base-content/10'
                         }
                     });
                 },
@@ -406,7 +410,7 @@
                     color: colors.text,
                     iconColor: colors.warning,
                     customClass: {
-                        popup: 'rounded-2xl shadow-xl border border-base-content/10',
+                        popup: 'rounded-2xl shadow border border-base-content/10',
                         confirmButton: 'btn btn-primary rounded-xl',
                         cancelButton: 'btn btn-error rounded-xl'
                     },

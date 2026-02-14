@@ -1,0 +1,466 @@
+<div class="space-y-8">
+    <!-- Header -->
+    <div class="flex justify-between items-center">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content flex items-center gap-3">
+                <i class="ri-money-dollar-circle-fill text-primary"></i> Billing & Subscriptions
+            </h1>
+            <p class="text-base-content/60">Monitor user subscriptions, billing history, and revenue analytics.</p>
+        </div>
+        <div class="flex gap-2">
+            <!-- <button onclick="exportBillingReport()" class="btn btn-ghost btn-sm rounded-lg">
+                <i class="ri-file-excel-line"></i> Export Report
+            </button> -->
+            <a href="/admin" class="btn btn-ghost btn-sm rounded-lg">
+                <i class="ri-arrow-left-line"></i> Back to Dashboard
+            </a>
+        </div>
+    </div>
+
+    <!-- Stats Cards -->
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+        <div class="card glass hover:border-success/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Active
+                            Subscriptions</p>
+                        <h2 class="text-3xl font-black mt-1 text-success">
+                            <%= stats.active_subscriptions || 0 %>
+                        </h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center text-success group-hover:scale-110 transition-transform">
+                        <i class="ri-vip-crown-fill text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card glass hover:border-primary/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Monthly
+                            Revenue</p>
+                        <h2 class="text-3xl font-black mt-1 text-primary">
+                            Rp <%= (stats.monthly_revenue || 0).toLocaleString() %>
+                        </h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <i class="ri-money-dollar-circle-fill text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card glass hover:border-warning/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Expiring Soon
+                        </p>
+                        <h2 class="text-3xl font-black mt-1 text-warning">
+                            <%= stats.expiring_soon || 0 %>
+                        </h2>
+                        <p class="text-[10px] opacity-40 mt-1 uppercase tracking-widest font-black italic">Within 7 days
+                        </p>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-warning/10 rounded-xl flex items-center justify-center text-warning group-hover:scale-110 transition-transform">
+                        <i class="ri-alarm-warning-fill text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <div class="card glass hover:border-error/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Expired</p>
+                        <h2 class="text-3xl font-black mt-1 text-error">
+                            <%= stats.expired || 0 %>
+                        </h2>
+                    </div>
+                    <div
+                        class="w-12 h-12 bg-error/10 rounded-xl flex items-center justify-center text-error group-hover:scale-110 transition-transform">
+                        <i class="ri-error-warning-fill text-xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Subscription History Section -->
+    <div class="space-y-4">
+        <div class="flex justify-between items-center">
+            <h2 class="text-xl font-bold text-base-content flex items-center gap-2">
+                <i class="ri-history-line text-primary"></i> Subscription History
+            </h2>
+            <!-- <div class="flex gap-2">
+                <button onclick="filterSubscriptions('all')" id="filter-all" class="btn btn-sm btn-primary rounded-lg">
+                    All
+                </button>
+                <button onclick="filterSubscriptions('active')" id="filter-active"
+                    class="btn btn-sm btn-ghost rounded-lg">
+                    Active
+                </button>
+                <button onclick="filterSubscriptions('expiring')" id="filter-expiring"
+                    class="btn btn-sm btn-ghost rounded-lg">
+                    Expiring Soon
+                </button>
+                <button onclick="filterSubscriptions('expired')" id="filter-expired"
+                    class="btn btn-sm btn-ghost rounded-lg">
+                    Expired
+                </button>
+            </div> -->
+        </div>
+        <div class="card glass shadow-sm overflow-hidden">
+            <div class="overflow-x-auto p-4">
+                <table class="table table-lg w-full" id="subscriptions-table">
+                    <thead>
+                        <tr
+                            class="text-base-content/60 uppercase text-[10px] tracking-widest border-b border-base-content/10">
+                            <th>User</th>
+                            <th>Package</th>
+                            <th>Started</th>
+                            <th>Expires</th>
+                            <th>Status</th>
+                            <th>Auto Renew</th>
+                            <th class="text-right">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by DataTable -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+
+    <!-- Usage Remaining Section -->
+    <div class="space-y-4">
+        <h2 class="text-xl font-bold text-base-content flex items-center gap-2">
+            <i class="ri-pie-chart-line text-primary"></i> Usage Remaining / User
+        </h2>
+        <div class="card glass shadow-sm overflow-hidden">
+            <div class="overflow-x-auto p-4">
+                <table class="table table-lg w-full" id="usage-table">
+                    <thead>
+                        <tr
+                            class="text-base-content/60 uppercase text-[10px] tracking-widest border-b border-base-content/10">
+                            <th>User</th>
+                            <th>Package</th>
+                            <th>Devices Used / Limit</th>
+                            <th>Messages Today</th>
+                            <th>API Calls Today</th>
+                            <th>Usage %</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Populated by DataTable -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Subscription Management Modal -->
+<dialog id="modal_subscription" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/50 rounded-3xl max-w-md p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/50">
+            <h3 class="font-bold text-xl text-base-content flex items-center gap-2">
+                <i class="ri-edit-line text-primary"></i> Manage Subscription
+            </h3>
+        </div>
+
+        <form id="saveSubscriptionForm" class="p-8 space-y-6">
+            <input type="hidden" id="subToken" />
+
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Status</label>
+                <select id="subStatus"
+                    class="select select-bordered w-full rounded-2xl bg-base-200/50 uppercase font-bold text-xs">
+                    <option value="ACTIVE text-success">Active</option>
+                    <option value="EXPIRED text-error">Expired</option>
+                    <option value="CANCELLED text-base-content/40">Cancelled</option>
+                </select>
+            </div>
+
+            <div class="form-control">
+                <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Expiry
+                    Date</label>
+                <input type="date" id="subExpiry"
+                    class="input input-bordered w-full rounded-2xl bg-base-200/50 font-bold" />
+            </div>
+
+            <div class="form-control">
+                <label class="label cursor-pointer justify-start gap-4">
+                    <input type="checkbox" id="subAutoRenew" class="checkbox checkbox-primary" />
+                    <span class="label-text font-bold opacity-70">Auto-renew subscription</span>
+                </label>
+            </div>
+
+            <div class="modal-action border-t border-base-content/50 pt-6 mt-0">
+                <button type="button" onclick="modal_subscription.close()"
+                    class="btn btn-ghost rounded-xl">Cancel</button>
+                <button type="button" onclick="saveSubscription()" class="btn btn-primary rounded-xl px-10">
+                    <i class="ri-check-line"></i> Save Changes
+                </button>
+            </div>
+        </form>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+    let subscriptionsTable;
+    let usageTable;
+    let currentFilter = 'all';
+
+    $(document).ready(function () {
+        initPage();
+    });
+
+    async function initPage() {
+        await loadStats();
+        initTables();
+    }
+
+    async function loadStats() {
+        try {
+            const res = await axios.get('/api/admin/billing/stats');
+            if (res.data.success) {
+                const s = res.data.stats;
+                // Stats are already rendered server-side, but we can update them if needed
+                // This ensures fresh data on page load
+            }
+        } catch (err) {
+            console.error('Error loading billing stats:', err);
+        }
+    }
+
+    function filterSubscriptions(status) {
+        currentFilter = status;
+
+        // Update button states
+        $('.btn[id^="filter-"]').removeClass('btn-primary').addClass('btn-ghost');
+        $(`#filter-${status}`).removeClass('btn-ghost').addClass('btn-primary');
+
+        // Apply filter to datatable
+        if (subscriptionsTable) {
+            subscriptionsTable.ajax.reload();
+        }
+    }
+
+    function initTables() {
+        // Subscriptions Table with filter support
+        const subColumns = [
+            {
+                data: 'user',
+                render: (data) => {
+                    if (!data) return '<span class="text-error italic">Deleted User</span>';
+                    const initial = (data.name || 'U').charAt(0).toUpperCase();
+                    return `
+<div class="flex items-center gap-3">
+    <div class="avatar avatar-placeholder">
+        <div class="bg-neutral text-neutral-content w-10 rounded-full">
+            <span class="text-xl">${initial}</span>
+        </div>
+    </div>
+    <div>
+        <div class="font-bold text-base-content">${data.name}</div>
+        <div class="text-xs opacity-50">${data.email}</div>
+    </div>
+</div>
+`;
+                }
+            },
+            {
+                data: 'package',
+                render: (data) => data ? `<span
+    class="badge badge-outline badge-sm rounded-lg py-3 px-4 font-bold tracking-widest text-[10px] uppercase">${data.name}</span>`
+                    : '-'
+            },
+            {
+                data: 'started_at',
+                render: (data) => data ? `<span class="font-mono text-xs opacity-60">${new
+                    Date(data).toLocaleDateString('id-ID')}</span>` : '-'
+            },
+            {
+                data: 'expired_at',
+                render: (data) => {
+                    if (!data) return '-';
+                    const expiry = new Date(data);
+                    const now = new Date();
+                    const daysLeft = Math.ceil((expiry - now) / (1000 * 60 * 60 * 24));
+                    let color = 'text-success';
+                    if (daysLeft < 7) color = 'text-warning'; if (daysLeft < 0) color = 'text-error'; return ` <div class="flex flex-col">
+    <span class="font-mono text-xs font-bold text-base-content">${expiry.toLocaleDateString('id-ID')}</span>
+    <span class="text-[10px] font-black uppercase tracking-widest ${color}">${daysLeft} days left</span>
+    </div>
+    `;
+                }
+            },
+            {
+                data: 'status',
+                render: (data) => {
+                    const badges = {
+                        'ACTIVE': 'badge-success',
+                        'EXPIRED': 'badge-error',
+                        'CANCELLED': 'badge-ghost'
+                    };
+                    return `<span
+        class="badge ${badges[data]} badge-sm rounded-lg py-3 px-4 font-bold tracking-widest text-[10px] uppercase">${data}</span>`;
+                }
+            },
+            {
+                data: 'is_auto_renew',
+                className: 'text-center',
+                render: (data) => data ? '<i class="ri-checkbox-circle-fill text-success text-xl"></i>' : '<i class="ri-close-circle-fill text-error text-xl opacity-30"></i>'
+            },
+            {
+                data: null,
+                orderable: false,
+                className: 'text-right',
+                render: (data) => {
+                    const rowData = encodeURIComponent(JSON.stringify(data));
+                    return `
+                        <button onclick="editSubscription(decodeURIComponent('${rowData}'))" class="btn btn-ghost btn-xs text-primary" title="Edit">
+                            <i class="ri-settings-3-line text-lg"></i>
+                        </button>
+                    `;
+                }
+            }
+        ];
+
+        subscriptionsTable = DataTableHelper.initServerSideDataTable(
+            'subscriptions-table',
+            '/api/admin/datatable/subscriptions',
+            subColumns,
+            {
+                order: [[3, 'asc']],
+                pageLength: 25,
+                ajax: {
+                    data: function (d) {
+                        d.filter = currentFilter;
+                        return d;
+                    }
+                }
+            }
+        );
+
+        // Usage Table
+        const usageColumns = [
+            {
+                data: 'user',
+                render: (data) => {
+                    if (!data) return '-';
+                    return `
+    <div>
+        <div class="font-bold">${data.name}</div>
+        <div class="text-[10px] opacity-40 uppercase tracking-widest font-black">${data.email}</div>
+    </div>
+    `;
+                }
+            },
+            {
+                data: 'package',
+                render: (data) => data ? `<span
+        class="badge badge-outline badge-sm rounded-lg py-3 px-4 font-bold tracking-widest text-[10px] uppercase">${data.name}</span>`
+                    : '-'
+            },
+            {
+                data: null,
+                render: (data) => {
+                    const used = data.devices_used || 0;
+                    const limit = data.package?.device_limit || 0;
+                    return `<span class="font-mono text-sm">${used} / ${limit}</span>`;
+                }
+            },
+            {
+                data: 'messages_today',
+                render: (data) => `<span class="font-mono text-sm">${(data || 0).toLocaleString()}</span>`
+            },
+            {
+                data: 'api_calls_today',
+                render: (data) => `<span class="font-mono text-sm">${(data || 0).toLocaleString()}</span>`
+            },
+            {
+                data: null,
+                render: (data) => {
+                    console.log(data)
+                    const usage = data.usage || 0;
+                    const limit = data.limit || 1;
+                    const usagePercent = (usage / limit * 100).toFixed(1);
+                    return `
+    <div class="flex items-center gap-2">
+        <progress class="progress progress-primary w-20" value="${usagePercent}" max="100"></progress>
+        <span class="text-[10px] font-black uppercase tracking-widest">${usagePercent}%</span>
+    </div>
+    `;
+                }
+            }
+        ];
+
+        usageTable = DataTableHelper.initServerSideDataTable(
+            'usage-table',
+            '/api/admin/datatable/usage-remaining',
+            usageColumns,
+            {
+                order: [[5, 'desc']], // Sort by usage percentage
+                pageLength: 25
+            }
+        );
+    }
+
+    function editSubscription(pkgJson) {
+        const sub = typeof pkgJson === 'string' ? JSON.parse(pkgJson) : pkgJson;
+        $('#subToken').val(sub.token);
+        $('#subStatus').val(sub.status);
+        $('#subExpiry').val(new Date(sub.expired_at || sub.expiredAt).toISOString().split('T')[0]);
+        $('#subAutoRenew').prop('checked', sub.is_auto_renew);
+        modal_subscription.showModal();
+    }
+
+    async function saveSubscription() {
+        const token = $('#subToken').val();
+        const data = {
+            status: $('#subStatus').val(),
+            expired_at: $('#subExpiry').val(),
+            is_auto_renew: $('#subAutoRenew').is(':checked')
+        };
+
+        try {
+            await axios.put(`/api/admin/subscriptions/${token}`, data);
+            showToast.success('Subscription updated successfully');
+            modal_subscription.close();
+            DataTableHelper.reloadTable('subscriptions-table');
+        } catch (err) {
+            showToast.error('Failed to update subscription');
+        }
+    }
+
+    async function exportBillingReport() {
+        try {
+            const response = await axios.get('/api/admin/billing/export', {
+                params: { filter: currentFilter },
+                responseType: 'blob'
+            });
+            const url = window.URL.createObjectURL(new Blob([response.data]));
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `billing-report-${new Date().toISOString().split('T')[0]}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            link.remove();
+        } catch (err) {
+            showToast.error('Failed to export report');
+        }
+    }
+</script>

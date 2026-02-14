@@ -264,6 +264,22 @@ class MessageController {
             // Determine if queue should be used based on role and plan
             const shouldQueue = await this.#checkShouldQueue(req.user, use_queue)
 
+            // Detect mimetype from file or URL
+            let media_mimetype = null
+            if (file && file.mimetype) {
+                media_mimetype = file.mimetype
+            } else {
+                // Infer from URL extension
+                const ext = media_url.split('.').pop()?.toLowerCase()
+                const mimeMap = {
+                    'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp',
+                    'mp4': 'video/mp4', 'avi': 'video/x-msvideo', 'mov': 'video/quicktime', 'webm': 'video/webm',
+                    'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4',
+                    'pdf': 'application/pdf', 'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document'
+                }
+                media_mimetype = mimeMap[ext] || 'application/octet-stream'
+            }
+
             if (shouldQueue) {
                 // Add to queue
                 const result = await messageQueueService.addToQueue({
@@ -273,13 +289,14 @@ class MessageController {
                     message: caption,
                     type: 'image',
                     media_url,
+                    media_mimetype,
                     priority: 'normal',
                 })
 
                 return res.status(200).json(result)
             } else {
                 // Send immediately
-                const result = await whatsappService.sendMediaMessage(device_token, to, { url: media_url, user_token: req.user.token }, caption)
+                const result = await whatsappService.sendMediaMessage(device_token, to, { url: media_url, mimetype: media_mimetype, user_token: req.user.token }, caption)
 
                 // Decrement usage
                 await subscriptionService.decrementUsage(req.user.token, 'messages')

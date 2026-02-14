@@ -95,28 +95,7 @@ async function seed() {
             console.log(`Super Admin updated/exists: ${adminWhatsapp}`)
         }
 
-        // 3. Ensure Admin has a Subscription (Pro/Enterprise)
-        const activeSub = await db.models.UserSubscription.findOne({
-            where: { user_token: admin.token, status: 'ACTIVE' }
-        })
-
-        if (!activeSub) {
-            const enterprisePkg = await db.models.Package.findOne({ where: { name: 'Enterprise' } })
-            if (enterprisePkg) {
-                const expiresAt = new Date()
-                expiresAt.setFullYear(expiresAt.getFullYear() + 10) // 10 years for admin
-
-                await db.models.UserSubscription.create({
-                    token: Hash.token(),
-                    user_token: admin.token,
-                    package_token: enterprisePkg.token,
-                    status: 'ACTIVE',
-                    started_at: new Date(),
-                    expired_at: expiresAt
-                })
-                console.log('Admin subscription (Enterprise) created.')
-            }
-        }
+        console.log('Note: Super Admin does not require a subscription.')
 
         // 4. Self-healing: Initialize usage for any user missing it
         const subsWithoutUsage = await db.models.UserSubscription.findAll({

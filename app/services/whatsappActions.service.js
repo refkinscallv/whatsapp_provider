@@ -400,8 +400,8 @@ class WhatsAppActions {
                     // Skip LID and Broadcast
                     if (c.id.endsWith('@lid') || c.id.includes('@broadcast')) return false;
 
-                    // Ensure individual contact
-                    if (!c.id.endsWith('@c.us')) return false;
+                    // Ensure individual contact (@c.us for wwebjs, @s.whatsapp.net for baileys)
+                    if (!c.id.endsWith('@c.us') && !c.id.endsWith('@s.whatsapp.net')) return false;
 
                     // Skip unidentified non-contacts
                     if (!c.name && !c.pushname && !c.isMyContact) return false;

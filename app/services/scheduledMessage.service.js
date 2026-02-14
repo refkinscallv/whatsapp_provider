@@ -86,13 +86,19 @@ class ScheduledMessageService {
             throw new Error('Scheduled time must be in the future')
         }
 
-        // Verify user has access to device
+        // Verify user has access to device and device is not deleted
         const userDevice = await db.models.UserDevice.findOne({
-            where: { user_token: userToken, device_token }
+            where: { user_token: userToken, device_token },
+            include: [{
+                model: db.models.Device,
+                as: 'device',
+                where: { is_deleted: false },
+                required: true
+            }]
         })
 
         if (!userDevice) {
-            throw new Error('You do not have access to this device')
+            throw new Error('You do not have access to this device or it has been deleted')
         }
 
         const scheduledMessage = await db.models.ScheduledMessage.create({
@@ -242,11 +248,18 @@ class ScheduledMessageService {
     async getStats(userToken) {
         const stats = await db.models.ScheduledMessage.findAll({
             where: { user_token: userToken },
+            include: [{
+                model: db.models.Device,
+                as: 'device',
+                where: { is_deleted: false },
+                required: true,
+                attributes: [] // Don't select any columns from device to avoid ONLY_FULL_GROUP_BY error
+            }],
             attributes: [
                 'status',
-                [db.Sequelize.fn('COUNT', db.Sequelize.col('id')), 'count']
+                [db.Sequelize.fn('COUNT', db.Sequelize.col('ScheduledMessage.id')), 'count']
             ],
-            group: ['status'],
+            group: ['ScheduledMessage.status'],
             raw: true
         })
 

@@ -49,7 +49,7 @@ const DaisyUIClasses = {
     // Cards
     card: {
         base: 'card glass shadow-sm',
-        hover: 'card glass hover:shadow-xl transition-all border border-base-content/10 group',
+        hover: 'card glass hover:shadow transition-all border border-base-content/10 group',
     },
 
     // Tables
@@ -57,16 +57,16 @@ const DaisyUIClasses = {
         base: 'table table-lg w-full',
         small: 'table table-sm w-full',
         medium: 'table table-md w-full',
-        header: 'text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5',
-        headerSticky: 'text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5 sticky top-0 bg-base-100 z-10',
+        header: 'text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/50',
+        headerSticky: 'text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/50 sticky top-0 bg-base-100 z-10',
         row: 'hover:bg-base-200/50',
     },
 
     // Modal
     modal: {
-        box: 'modal-box bg-base-100 border border-base-content/5',
-        boxLarge: 'modal-box w-11/12 max-w-4xl bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden',
-        boxScroll: 'modal-box bg-base-100 border border-base-content/5 max-w-4xl h-[80vh] flex flex-col',
+        box: 'modal-box bg-base-100 border border-base-content/50',
+        boxLarge: 'modal-box w-11/12 max-w-4xl bg-base-100 border border-base-content/50 rounded-3xl p-0 overflow-hidden',
+        boxScroll: 'modal-box bg-base-100 border border-base-content/50 max-w-4xl h-[80vh] flex flex-col',
         title: 'font-bold text-lg mb-4 text-base-content',
     },
 

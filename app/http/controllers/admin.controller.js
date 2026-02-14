@@ -109,7 +109,12 @@ class AdminController {
      */
     async savePackage({ req, res }) {
         try {
-            const pkg = await db.models.Package.create(req.body)
+            const crypto = require('crypto')
+            const data = {
+                ...req.body,
+                token: crypto.randomBytes(16).toString('hex')
+            }
+            const pkg = await db.models.Package.create(data)
             return res.status(200).json({ success: true, pkg })
         } catch (err) {
             return res.status(400).json({ success: false, message: err.message })
@@ -381,6 +386,392 @@ class AdminController {
                 },
                 packages
             })
+        } catch (err) {
+            return res.status(500).json({ success: false, message: err.message })
+        }
+    }
+
+    /**
+     * Render Billing & Subscriptions Page
+     * GET /admin/billing
+     */
+    async billing({ req, res }) {
+        const stats = await this.getBillingStats()
+
+        return res.render('admin/billing', {
+            layout: 'layouts/main',
+            title: 'Billing & Subscriptions',
+            stats,
+            user: req.user,
+            config: require('@app/config'),
+            script: ''
+        })
+    }
+
+    /**
+     * Get billing statistics API endpoint
+     * GET /api/admin/billing/stats
+     */
+    async getBillingStatsAPI({ req, res }) {
+        try {
+            const stats = await this.getBillingStats()
+            return res.status(200).json({
+                success: true,
+                stats
+            })
+        } catch (err) {
+            return res.status(500).json({ success: false, message: err.message })
+        }
+    }
+
+    /**
+     * Get billing statistics
+     */
+    async getBillingStats() {
+        const { Op } = db
+        const now = new Date()
+        const sevenDaysFromNow = new Date(now.getTime() + 7 * 24 * 60 * 60 * 1000)
+        const firstDayOfMonth = new Date(now.getFullYear(), now.getMonth(), 1)
+
+        const [activeSubscriptions, expiringSoon, expired, monthlyRevenue] = await Promise.all([
+            db.models.UserSubscription.count({
+                where: { status: 'ACTIVE' }
+            }),
+            db.models.UserSubscription.count({
+                where: {
+                    status: 'ACTIVE',
+                    expired_at: {
+                        [Op.between]: [now, sevenDaysFromNow]
+                    }
+                }
+            }),
+            db.models.UserSubscription.count({
+                where: { status: 'EXPIRED' }
+            }),
+            db.models.UserSubscription.sum('package.price', {
+                where: {
+                    status: 'ACTIVE',
+                    started_at: { [Op.gte]: firstDayOfMonth }
+                },
+                include: [{
+                    model: db.models.Package,
+                    as: 'package',
+                    attributes: []
+                }]
+            })
+        ])
+
+        return {
+            active_subscriptions: activeSubscriptions || 0,
+            expiring_soon: expiringSoon || 0,
+            expired: expired || 0,
+            monthly_revenue: monthlyRevenue || 0
+        }
+    }
+
+    /**
+     * Update subscription
+     * PUT /api/admin/subscriptions/:token
+     */
+    async updateSubscription({ req, res }) {
+        try {
+            const { token } = req.params
+            const { status, expired_at, is_auto_renew } = req.body
+
+            const subscription = await db.models.UserSubscription.findOne({
+                where: { token }
+            })
+
+            if (!subscription) throw new Error('Subscription not found')
+
+            await subscription.update({
+                status,
+                expired_at: expired_at ? new Date(expired_at) : subscription.expired_at,
+                is_auto_renew: is_auto_renew !== undefined ? is_auto_renew : subscription.is_auto_renew
+            })
+
+            return res.status(200).json({
+                success: true,
+                message: 'Subscription updated successfully'
+            })
+        } catch (err) {
+            return res.status(400).json({ success: false, message: err.message })
+        }
+    }
+
+    /**
+     * Get billing analytics data
+     * GET /api/admin/billing/analytics
+     */
+    async getBillingAnalytics({ req, res }) {
+        try {
+            // Package distribution
+            const packageDistribution = await db.models.UserSubscription.findAll({
+                attributes: [
+                    [db.Sequelize.fn('COUNT', db.Sequelize.col('UserSubscription.id')), 'count']
+                ],
+                include: [{
+                    model: db.models.Package,
+                    as: 'package',
+                    attributes: ['name']
+                }],
+                where: { status: 'ACTIVE' },
+                group: ['package.id'],
+                raw: true
+            })
+
+            // Revenue by package
+            const revenueByPackage = await db.models.UserSubscription.findAll({
+                attributes: [
+                    [db.Sequelize.fn('SUM', db.Sequelize.col('package.price')), 'revenue']
+                ],
+                include: [{
+                    model: db.models.Package,
+                    as: 'package',
+                    attributes: ['name']
+                }],
+                where: { status: 'ACTIVE' },
+                group: ['package.id'],
+                raw: true
+            })
+
+            return res.status(200).json({
+                success: true,
+                package_distribution: packageDistribution.map(p => ({
+                    name: p['package.name'],
+                    count: parseInt(p.count)
+                })),
+                revenue_by_package: revenueByPackage.map(p => ({
+                    name: p['package.name'],
+                    revenue: parseFloat(p.revenue || 0)
+                }))
+            })
+        } catch (err) {
+            return res.status(500).json({ success: false, message: err.message })
+        }
+    }
+
+    /**
+     * Get top usage data
+     * GET /api/admin/billing/top-usage
+     */
+    async getTopUsage({ req, res }) {
+        try {
+            const users = await db.models.User.findAll({
+                attributes: ['name', 'email', 'token'],
+                include: [
+                    {
+                        model: db.models.UserSubscription,
+                        as: 'subscriptions',
+                        where: { status: 'ACTIVE' },
+                        required: true,
+                        include: [
+                            {
+                                model: db.models.Package,
+                                as: 'package',
+                                attributes: ['name', 'limit_device', 'limit_message']
+                            },
+                            {
+                                model: db.models.UserSubscriptionUsage,
+                                as: 'usage',
+                                attributes: ['remaining_device', 'remaining_message']
+                            }
+                        ]
+                    }
+                ],
+                limit: 20
+            })
+
+            const usageData = await Promise.all(users.map(async user => {
+                const sub = user.subscriptions[0]
+                const pkg = sub.package
+                const usage = sub.usage
+
+                // Count devices
+                const deviceCount = await db.models.UserDevice.count({
+                    where: { user_token: user.token }
+                })
+
+                // Count today's messages
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+                const messagesToday = await db.models.MessageHistory.count({
+                    where: {
+                        user_token: user.token,
+                        sent_at: { [db.Sequelize.Op.gte]: today }
+                    }
+                })
+
+                return {
+                    name: user.name,
+                    email: user.email,
+                    package: pkg.name,
+                    devices: deviceCount,
+                    messages_today: messagesToday,
+                    api_calls_today: 0, // Placeholder
+                    usage: messagesToday,
+                    limit: pkg.limit_message === -1 ? 999999 : pkg.limit_message
+                }
+            }))
+
+            return res.status(200).json(usageData)
+        } catch (err) {
+            return res.status(500).json({ success: false, message: err.message })
+        }
+    }
+
+    /**
+     * Get usage remaining datatable (Admin)
+     * POST /api/admin/datatable/usage-remaining
+     */
+    async getUsageRemainingDataTable({ req, res }) {
+        try {
+            const { Op } = db
+            
+            // Get all users with active subscriptions
+            const users = await db.models.User.findAll({
+                attributes: ['name', 'email', 'token'],
+                include: [
+                    {
+                        model: db.models.UserSubscription,
+                        as: 'subscriptions',
+                        where: { status: 'ACTIVE' },
+                        required: true,
+                        include: [
+                            {
+                                model: db.models.Package,
+                                as: 'package',
+                                attributes: ['name', 'limit_device', 'limit_message', 'limit_generate_api_key', 'limit_domain_whitelist']
+                            },
+                            {
+                                model: db.models.UserSubscriptionUsage,
+                                as: 'usage',
+                                attributes: ['remaining_device', 'remaining_message', 'remaining_api_key', 'remaining_domain']
+                            }
+                        ]
+                    }
+                ]
+            })
+
+            // Build usage data for each user
+            const usageData = await Promise.all(users.map(async user => {
+                const sub = user.subscriptions[0]
+                const pkg = sub.package
+                const usage = sub.usage
+
+                // Count devices
+                const deviceCount = await db.models.UserDevice.count({
+                    where: { user_token: user.token },
+                    include: [{
+                        model: db.models.Device,
+                        as: 'device',
+                        where: { is_deleted: false },
+                        required: true
+                    }]
+                })
+
+                // Count today's messages
+                const today = new Date()
+                today.setHours(0, 0, 0, 0)
+                const messagesToday = await db.models.MessageHistory.count({
+                    where: {
+                        user_token: user.token,
+                        sent_at: { [Op.gte]: today }
+                    }
+                })
+
+                // Calculate usage percentage (based on devices)
+                const deviceLimit = pkg.limit_device === -1 ? 999999 : pkg.limit_device
+                const usagePercent = deviceLimit > 0 ? (deviceCount / deviceLimit * 100) : 0
+
+                return {
+                    user: {
+                        name: user.name,
+                        email: user.email
+                    },
+                    package: {
+                        name: pkg.name,
+                        device_limit: pkg.limit_device
+                    },
+                    devices_used: deviceCount,
+                    messages_today: messagesToday,
+                    api_calls_today: 0, // Placeholder - implement if you have API call tracking
+                    usage: deviceCount,
+                    limit: deviceLimit,
+                    usage_percent: usagePercent.toFixed(1)
+                }
+            }))
+
+            // Sort by usage percentage descending
+            usageData.sort((a, b) => parseFloat(b.usage_percent) - parseFloat(a.usage_percent))
+
+            // Apply DataTables pagination manually
+            const params = req.body
+            const start = parseInt(params.start) || 0
+            const length = parseInt(params.length) || 25
+            const pagedData = usageData.slice(start, start + length)
+
+            return res.status(200).json({
+                draw: parseInt(params.draw) || 1,
+                recordsTotal: usageData.length,
+                recordsFiltered: usageData.length,
+                data: pagedData
+            })
+        } catch (error) {
+            console.error('[AdminController] getUsageRemainingDataTable error:', error)
+            return res.status(500).json({ success: false, message: error.message })
+        }
+    }
+
+    /**
+     * Export billing report
+     * GET /api/admin/billing/export
+     */
+    async exportBillingReport({ req, res }) {
+        try {
+            const subscriptions = await db.models.UserSubscription.findAll({
+                include: [
+                    {
+                        model: db.models.User,
+                        as: 'user',
+                        attributes: ['name', 'email'],
+                        required: false
+                    },
+                    {
+                        model: db.models.Package,
+                        as: 'package',
+                        attributes: ['name', 'price', 'period'],
+                        required: false
+                    }
+                ],
+                searchableColumns: ['user.name', 'user.email', 'package.name'],
+                customFilters,
+                order: [['createdAt', 'DESC']]
+            })
+
+            // Create CSV
+            let csv = 'Date,User,Email,Package,Period,Price,Status,Started,Expires\n'
+            subscriptions.forEach(sub => {
+                const userName = sub.user ? sub.user.name : 'N/A'
+                const userEmail = sub.user ? sub.user.email : 'N/A'
+                const packageName = sub.package ? sub.package.name : 'N/A'
+                const packagePeriod = sub.package ? sub.package.period : 'N/A'
+                const packagePrice = sub.package ? sub.package.price : 0
+
+                csv += `${new Date(sub.createdAt).toISOString().split('T')[0]},`
+                csv += `"${userName}",`
+                csv += `${userEmail},`
+                csv += `"${packageName}",`
+                csv += `${packagePeriod},`
+                csv += `${packagePrice},`
+                csv += `${sub.status},`
+                csv += `${new Date(sub.started_at).toISOString().split('T')[0]},`
+                csv += `${new Date(sub.expired_at).toISOString().split('T')[0]}\n`
+            })
+
+            res.setHeader('Content-Type', 'text/csv')
+            res.setHeader('Content-Disposition', 'attachment; filename=billing-report.csv')
+            return res.send(csv)
         } catch (err) {
             return res.status(500).json({ success: false, message: err.message })
         }

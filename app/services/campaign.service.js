@@ -17,7 +17,7 @@ class CampaignService {
      * @returns {Promise<object>}
      */
     async createCampaign(userToken, data) {
-        let { device_token, name, receivers, message, type = 'text', media_url, scheduled_at, book_id, min_delay, max_delay, delay } = data
+        let { device_token, name, receivers, message, type = 'text', media_url, media_mimetype, scheduled_at, book_id, min_delay, max_delay, delay } = data
 
         // If delay is provided but not min/max, use it for both
         if (delay && !min_delay && !max_delay) {
@@ -69,6 +69,7 @@ class CampaignService {
             message,
             type,
             media_url,
+            media_mimetype,
             total_recipients: receiverList.length,
             sent_count: 0,
             failed_count: 0,
@@ -83,7 +84,7 @@ class CampaignService {
 
         // If not scheduled, start processing immediately
         if (!scheduled_at) {
-            this.processCampaign(campaign, receiverList, message, type, media_url)
+            this.processCampaign(campaign, receiverList, message, type, media_url, media_mimetype)
         }
 
         return {
@@ -100,7 +101,7 @@ class CampaignService {
      * @param {string} type - Message type
      * @param {string} media_url - Media URL
      */
-    async processCampaign(campaign, receivers, message, type, media_url) {
+    async processCampaign(campaign, receivers, message, type, media_url, media_mimetype = null) {
         try {
             Logger.info(`Processing campaign: ${campaign.name} (${campaign.token})`)
             const { min_delay, max_delay } = campaign.settings || {}
@@ -117,6 +118,7 @@ class CampaignService {
                     message,
                     type,
                     media_url,
+                    media_mimetype,
                     priority: 'low', // Campaigns are usually low priority
                     metadata: {
                         campaign_token: campaign.token,
@@ -243,7 +245,7 @@ class CampaignService {
                 for (const campaign of pendingCampaigns) {
                     const receivers = campaign.target_audience
                     if (receivers && Array.isArray(receivers)) {
-                        await this.processCampaign(campaign, receivers, campaign.message, campaign.type, campaign.media_url)
+                        await this.processCampaign(campaign, receivers, campaign.message, campaign.type, campaign.media_url, campaign.media_mimetype)
                     } else {
                         Logger.warn(`Campaign ${campaign.token} is scheduled but has no recipient data in target_audience.`)
                         await campaign.update({ status: 'failed' })

@@ -85,7 +85,7 @@
                         </div>
 
                         <% if (showQueueToggle) { %>
-                            <div class="form-control bg-base-200/50 p-4 rounded-2xl border border-base-content/5">
+                            <div class="form-control bg-base-200/50 p-4 rounded-2xl border border-base-content/50">
                                 <label class="label cursor-pointer justify-start gap-4">
                                     <input type="checkbox" id="useQueue" class="checkbox checkbox-primary" checked />
                                     <span class="flex flex-col">
@@ -168,7 +168,7 @@
 
 <!-- Template Modal -->
 <dialog id="modal_templates" class="modal">
-    <div class="modal-box bg-base-100 border border-base-content/5 max-w-2xl">
+    <div class="modal-box bg-base-100 border border-base-content/50 max-w-2xl">
         <h3 class="font-bold text-lg mb-6 text-base-content">Select Template</h3>
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4" id="template-list">
             <p class="text-slate-500 text-center col-span-2 py-10">Loading templates...</p>
@@ -316,7 +316,7 @@
                     list.html(res.data.templates.map(t => {
                         const content = t.content || '';
                         return `
-                            <div class="card bg-base-200 hover:bg-base-300 cursor-pointer transition-colors border border-base-content/5" onclick="useTemplate('${t.token}')">
+                            <div class="card bg-base-200 hover:bg-base-300 cursor-pointer transition-colors border border-base-content/50" onclick="useTemplate('${t.token}')">
                                 <div class="card-body p-4">
                                     <h4 class="font-bold text-base-content text-sm">${t.name || 'Unnamed Template'}</h4>
                                     <p class="text-xs text-base-content/50 line-clamp-2 mt-1">${content}</p>

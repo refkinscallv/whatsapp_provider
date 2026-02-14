@@ -88,7 +88,8 @@
                                                         <i class="ri-check-line text-sm"></i>
                                                     </div>
                                                     <span class="font-medium text-base-content/80">
-                                                        <%= pkg.limit_device %> Active Session
+                                                        <%= (pkg.limit_device===-1 || pkg.limit_device==='-1' )
+                                                            ? 'Unlimited' : pkg.limit_device %> Active Sessions
                                                     </span>
                                                 </li>
                                                 <li class="flex items-center gap-4">
@@ -97,20 +98,50 @@
                                                         <i class="ri-check-line text-sm"></i>
                                                     </div>
                                                     <span class="font-medium text-base-content/80">
-                                                        <%= pkg.limit_message %> Monthly Messages
+                                                        <%= (pkg.limit_message===-1 || pkg.limit_message==='-1' )
+                                                            ? 'Unlimited' : pkg.limit_message %> Monthly Messages
                                                     </span>
                                                 </li>
-                                                <% (pkg.features || []).forEach(feature=> { %>
+                                                <% if (pkg.limit_generate_api_key && pkg.limit_generate_api_key !=0) {
+                                                    %>
                                                     <li class="flex items-center gap-4">
                                                         <div
                                                             class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
                                                             <i class="ri-check-line text-sm"></i>
                                                         </div>
                                                         <span class="font-medium text-base-content/80">
-                                                            <%= feature %>
+                                                            <%= (pkg.limit_generate_api_key===-1 ||
+                                                                pkg.limit_generate_api_key==='-1' ) ? 'Unlimited' :
+                                                                pkg.limit_generate_api_key %> API Keys
                                                         </span>
                                                     </li>
-                                                    <% }) %>
+                                                    <% } %>
+                                                        <% if (pkg.limit_domain_whitelist && pkg.limit_domain_whitelist
+                                                            !=0) { %>
+                                                            <li class="flex items-center gap-4">
+                                                                <div
+                                                                    class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
+                                                                    <i class="ri-check-line text-sm"></i>
+                                                                </div>
+                                                                <span class="font-medium text-base-content/80">
+                                                                    <%= (pkg.limit_domain_whitelist===-1 ||
+                                                                        pkg.limit_domain_whitelist==='-1' )
+                                                                        ? 'Unlimited' : pkg.limit_domain_whitelist %>
+                                                                        Domain Whitelist
+                                                                </span>
+                                                            </li>
+                                                            <% } %>
+                                                                <% (pkg.features || []).forEach(feature=> { %>
+                                                                    <li class="flex items-center gap-4">
+                                                                        <div
+                                                                            class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
+                                                                            <i class="ri-check-line text-sm"></i>
+                                                                        </div>
+                                                                        <span class="font-medium text-base-content/80">
+                                                                            <%= feature %>
+                                                                        </span>
+                                                                    </li>
+                                                                    <% }) %>
                                             </ul>
                                         </div>
                                         <div class="p-10 pt-0">

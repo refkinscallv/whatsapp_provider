@@ -12,7 +12,7 @@
     </div>
 
     <!-- Filters -->
-    <div class="flex flex-col md:flex-row gap-4 items-end bg-base-200/50 p-4 rounded-2xl border border-base-content/5">
+    <div class="flex flex-col md:flex-row gap-4 items-end bg-base-200/50 p-4 rounded-2xl border border-base-content/50">
         <div class="form-control flex-1">
             <label class="label py-1"><span class="label-text text-[10px] uppercase font-bold opacity-60">Search
                     Device</span></label>
@@ -65,8 +65,8 @@
 
 <!-- Create Modal -->
 <dialog id="modal_create" class="modal">
-    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden">
-        <div class="p-6 border-b border-base-content/5">
+    <div class="modal-box bg-base-100 border border-base-content/50 rounded-3xl p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/50">
             <h3 class="font-bold text-xl text-base-content">Connect New Device</h3>
         </div>
         <div class="p-6 space-y-4">
@@ -91,7 +91,7 @@
                 </div>
             </div>
         </div>
-        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+        <div class="modal-action p-6 border-t border-base-content/50 mt-0">
             <form method="dialog"><button class="btn btn-ghost rounded-xl">Cancel</button></form>
             <button onclick="createDevice()" class="btn btn-primary rounded-xl px-8">Create Device</button>
         </div>
@@ -101,15 +101,15 @@
 <!-- QR Modal -->
 <dialog id="modal_qr" class="modal">
     <div
-        class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden text-center max-w-lg">
-        <div class="p-6 border-b border-base-content/5">
+        class="modal-box bg-base-100 border border-base-content/50 rounded-3xl p-0 overflow-hidden text-center max-w-lg">
+        <div class="p-6 border-b border-base-content/50">
             <h3 class="font-bold text-xl text-base-content">Scan QR Code</h3>
             <p class="text-xs text-base-content/60 mt-1">Open WhatsApp on your phone and scan the code below.</p>
         </div>
 
         <div class="p-6">
             <div id="qr-container"
-                class="bg-white p-4 rounded-2xl inline-block mx-auto mb-6 shadow-xl border-4 border-primary/20">
+                class="bg-white p-4 rounded-2xl inline-block mx-auto mb-6 shadow border-4 border-primary/20">
                 <div id="qr-placeholder"
                     class="w-64 h-64 flex flex-col items-center justify-center text-slate-800 gap-4">
                     <span class="loading loading-spinner loading-lg text-primary"></span>
@@ -123,7 +123,7 @@
                 Waiting for connection...</div>
 
             <!-- Troubleshooting Guide -->
-            <div class="collapse collapse-arrow bg-base-200/50 rounded-xl mb-6 text-left border border-base-content/5">
+            <div class="collapse collapse-arrow bg-base-200/50 rounded-xl mb-6 text-left border border-base-content/50">
                 <input type="checkbox" />
                 <div class="collapse-title text-xs font-bold flex items-center gap-2">
                     <i class="ri-question-line text-primary"></i> Can't scan? Read these tips
@@ -150,7 +150,7 @@
             </button>
         </div>
 
-        <div class="modal-action p-6 border-t border-base-content/5 mt-0 justify-center">
+        <div class="modal-action p-6 border-t border-base-content/50 mt-0 justify-center">
             <form method="dialog"><button class="btn btn-ghost w-full btn-sm rounded-xl">Close & Background
                     Connect</button>
             </form>
@@ -160,8 +160,8 @@
 
 <!-- Invite Modal -->
 <dialog id="modal_invite" class="modal">
-    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden">
-        <div class="p-6 border-b border-base-content/5">
+    <div class="modal-box bg-base-100 border border-base-content/50 rounded-3xl p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/50">
             <h3 class="font-bold text-xl text-base-content">Share Device Access</h3>
             <p class="text-xs text-base-content/60 mt-1">Invite another member to manage this device.</p>
         </div>
@@ -178,7 +178,7 @@
             </div>
         </div>
 
-        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+        <div class="modal-action p-6 border-t border-base-content/50 mt-0">
             <form method="dialog"><button class="btn btn-ghost rounded-xl">Cancel</button></form>
             <button onclick="sendInvite()" class="btn btn-primary rounded-xl px-10">Send Invite</button>
         </div>
@@ -187,8 +187,8 @@
 
 <!-- Manage Users Modal -->
 <dialog id="modal_manage_users" class="modal">
-    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden max-w-2xl">
-        <div class="p-6 border-b border-base-content/5 flex justify-between items-center">
+    <div class="modal-box bg-base-100 border border-base-content/50 rounded-3xl p-0 overflow-hidden max-w-2xl">
+        <div class="p-6 border-b border-base-content/50 flex justify-between items-center">
             <h3 class="font-bold text-xl text-base-content">Manage Device Users</h3>
             <form method="dialog"><button class="btn btn-ghost btn-sm btn-circle">✕</button></form>
         </div>
@@ -197,7 +197,7 @@
             <table id="device-users-table" class="table table-zebra w-full text-xs">
                 <thead>
                     <tr
-                        class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                        class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/50">
                         <th class="rounded-l-xl">User</th>
                         <th>Phone / Email</th>
                         <th>Role</th>
@@ -400,7 +400,7 @@
                     `);
         } else {
             grid.html(devices.map(dev => `
-                        <div class="card glass hover:shadow-xl hover:shadow-primary/5 transition-all duration-300">
+                        <div class="card glass hover:shadow  transition-all duration-300">
                             <div class="card-body">
                                 <div class="flex justify-between items-start mb-4">
                                     <div class="flex gap-3 items-center">
@@ -419,7 +419,7 @@
                                     </div>
                                     <div class="dropdown dropdown-end">
                                         <div tabindex="0" role="button" class="btn btn-ghost btn-xs rounded-lg"><i class="ri-more-2-fill text-xl"></i></div>
-                                         <ul tabindex="0" class="dropdown-content z-[20] menu p-2 shadow-2xl bg-base-100 border border-base-content/5 rounded-xl w-44">
+                                         <ul tabindex="0" class="dropdown-content z-[20] menu p-2 shadow-2xl bg-base-100 border border-base-content/50 rounded-xl w-44">
                                              ${dev.users?.find(u => u.token === currentUserToken)?.UserDevice?.is_host
                     ? `<li><a onclick="openManageUsersModal('${dev.token}')" class="text-primary font-bold"><i class="ri-team-line"></i> Manage Users</a></li>
                                <li><a onclick="openInviteModal('${dev.token}')" class="text-primary"><i class="ri-user-add-line"></i> Invite User</a></li>

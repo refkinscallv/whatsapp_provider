@@ -192,14 +192,33 @@ class BaileysProvider extends BaseProvider {
 
         const mediaSource = media.url ? { url: media.url } : { buffer: Buffer.from(media.data, 'base64') }
 
-        if (media.mimetype.startsWith('image/')) {
+        // Ensure mimetype exists, try to infer from URL/filename or use default
+        let mimetype = media.mimetype
+        if (!mimetype) {
+            // Try to infer from URL or filename
+            const path = media.url || media.filename || ''
+            const ext = path.split('.').pop()?.toLowerCase()
+
+            const mimeMap = {
+                'jpg': 'image/jpeg', 'jpeg': 'image/jpeg', 'png': 'image/png', 'gif': 'image/gif', 'webp': 'image/webp',
+                'mp4': 'video/mp4', 'avi': 'video/x-msvideo', 'mov': 'video/quicktime', 'webm': 'video/webm',
+                'mp3': 'audio/mpeg', 'wav': 'audio/wav', 'ogg': 'audio/ogg', 'm4a': 'audio/mp4',
+                'pdf': 'application/pdf', 'doc': 'application/msword', 'docx': 'application/vnd.openxmlformats-officedocument.wordprocessingml.document',
+                'xls': 'application/vnd.ms-excel', 'xlsx': 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+            }
+
+            mimetype = mimeMap[ext] || 'application/octet-stream'
+            Logger.warn(`Missing mimetype for media, inferred as: ${mimetype}`)
+        }
+
+        if (mimetype.startsWith('image/')) {
             content = { image: mediaSource, caption: options.caption }
-        } else if (media.mimetype.startsWith('video/')) {
+        } else if (mimetype.startsWith('video/')) {
             content = { video: mediaSource, caption: options.caption }
-        } else if (media.mimetype.startsWith('audio/')) {
-            content = { audio: mediaSource, mimetype: media.mimetype, ptt: options.ptt }
+        } else if (mimetype.startsWith('audio/')) {
+            content = { audio: mediaSource, mimetype: mimetype, ptt: options.ptt }
         } else {
-            content = { document: mediaSource, mimetype: media.mimetype, fileName: media.filename, caption: options.caption }
+            content = { document: mediaSource, mimetype: mimetype, fileName: media.filename, caption: options.caption }
         }
 
         const result = await this.client.sendMessage(jid, content)
@@ -226,7 +245,10 @@ class BaileysProvider extends BaseProvider {
             id: c.id,
             number: c.id.split('@')[0],
             name: c.name || c.verifiedName || '',
-            pushname: c.notify || ''
+            pushname: c.notify || '',
+            isBusiness: !!c.verifiedName,
+            isEnterprise: false, // Baileys doesn't easily distinguish enterprise in basic contact info
+            isMyContact: !!(c.name || c.verifiedName)
         }))
     }
 
@@ -234,9 +256,10 @@ class BaileysProvider extends BaseProvider {
         const contact = this.store.contacts[id]
         if (!contact) return { name: id.split('@')[0], phone: id.split('@')[0] }
         return {
-            name: contact.name || contact.notify || id.split('@')[0],
+            name: contact.name || contact.verifiedName || contact.notify || id.split('@')[0],
             pushname: contact.notify || '',
-            phone: id.split('@')[0]
+            phone: id.split('@')[0],
+            isBusiness: !!contact.verifiedName
         }
     }
 

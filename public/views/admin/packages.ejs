@@ -1,61 +1,103 @@
-<div class="flex flex-col gap-8">
-    <!-- Header -->
-    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+<div class="space-y-8">
+    <div class="flex justify-between items-center">
         <div>
             <h1 class="text-3xl font-bold text-base-content flex items-center gap-3">
-                <i class="ri-vip-diamond-fill text-secondary"></i> Package Management
+                <i class="ri-vip-diamond-fill text-primary"></i> Package Management
             </h1>
             <p class="text-base-content/60">Manage subscription plans, pricing, and resource limits.</p>
         </div>
-        <div>
-            <button onclick="openPackageModal()" class="btn btn-primary rounded-xl"><i class="ri-add-line"></i> New
-                Package</button>
+        <div class="flex gap-2">
+            <button onclick="openPackageModal()" class="btn btn-primary btn-sm rounded-lg">
+                <i class="ri-add-line"></i> New Package
+            </button>
+            <a href="/admin" class="btn btn-ghost btn-sm rounded-lg">
+                <i class="ri-arrow-left-line"></i> Back to Dashboard
+            </a>
         </div>
     </div>
 
     <!-- Packages List -->
     <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6" id="package-grid">
         <% packages.forEach(pkg=> { %>
-            <div class="card glass shadow-sm border border-base-content/5 group">
+            <div class="card glass hover:border-primary/30 transition-all duration-300 group">
                 <div class="card-body p-6">
                     <div class="flex justify-between items-start">
                         <div>
-                            <h3 class="font-bold text-xl text-base-content">
+                            <h3 class="font-black text-2xl text-base-content">
                                 <%= pkg.name %>
                             </h3>
-                            <p class="text-xs text-base-content/40 uppercase tracking-widest font-bold mt-1">
+                            <p class="text-[10px] uppercase tracking-[0.2em] font-black text-primary mt-1">
                                 <%= pkg.period %>
                             </p>
                         </div>
                         <div class="flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
                             <button onclick="editPackage('<%= JSON.stringify(pkg) %>')"
-                                class="btn btn-ghost btn-xs text-primary"><i class="ri-edit-line"></i></button>
-                            <button onclick="deletePackage('<%= pkg.id %>')" class="btn btn-ghost btn-xs text-error"><i
-                                    class="ri-delete-bin-line"></i></button>
+                                class="btn btn-ghost btn-xs text-primary" title="Edit">
+                                <i class="ri-edit-line"></i>
+                            </button>
+                            <button onclick="deletePackage('<%= pkg.id %>')" class="btn btn-ghost btn-xs text-error"
+                                title="Delete">
+                                <i class="ri-delete-bin-line"></i>
+                            </button>
                         </div>
                     </div>
 
-                    <div class="mt-6 space-y-3">
-                        <div class="flex justify-between text-sm">
-                            <span class="text-base-content/60">Price</span>
-                            <span class="font-bold text-success font-mono">Rp <%= pkg.price.toLocaleString() %></span>
+                    <div class="mt-8 space-y-6">
+                        <div class="flex items-center justify-between">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Price
+                                </p>
+                                <h4 class="text-2xl font-black text-success font-mono mt-1">Rp <%=
+                                        pkg.price.toLocaleString() %>
+                                </h4>
+                            </div>
+                            <div
+                                class="w-12 h-12 bg-success/10 rounded-xl flex items-center justify-center text-success">
+                                <i class="ri-price-tag-3-line text-xl"></i>
+                            </div>
                         </div>
-                        <div class="flex justify-between text-sm border-t border-base-content/5 pt-3">
-                            <span class="text-base-content/60">Device Limit</span>
-                            <span class="font-bold">
-                                <%= pkg.limit_device===-1 ? '∞' : pkg.limit_device %>
-                            </span>
+
+                        <div class="grid grid-cols-2 gap-4 border-t border-base-content/10 pt-6">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">
+                                    Devices</p>
+                                <p class="font-black text-lg text-base-content">
+                                    <%= pkg.limit_device===-1 || pkg.limit_device=='-1' ? '∞' : pkg.limit_device %>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">
+                                    Messages</p>
+                                <p class="font-black text-lg text-base-content">
+                                    <%= pkg.limit_message===-1 || pkg.limit_message=='-1' ? '∞' : pkg.limit_message %>
+                                </p>
+                            </div>
                         </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-base-content/60">Message Limit</span>
-                            <span class="font-bold">
-                                <%= pkg.limit_message===-1 ? '∞' : pkg.limit_message %>
-                            </span>
+
+                        <div class="grid grid-cols-2 gap-4 border-t border-base-content/10 pt-6">
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">
+                                    API Keys</p>
+                                <p class="font-black text-lg text-base-content">
+                                    <%= pkg.limit_generate_api_key===-1 || pkg.limit_generate_api_key=='-1' ? '∞' :
+                                        pkg.limit_generate_api_key || 0 %>
+                                </p>
+                            </div>
+                            <div>
+                                <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">
+                                    Domains</p>
+                                <p class="font-black text-lg text-base-content">
+                                    <%= pkg.limit_domain_whitelist===-1 || pkg.limit_domain_whitelist=='-1' ? '∞' :
+                                        pkg.limit_domain_whitelist || 0 %>
+                                </p>
+                            </div>
                         </div>
-                        <div class="flex justify-between text-sm">
-                            <span class="text-base-content/60">Status</span>
+
+                        <div class="flex items-center justify-between border-t border-base-content/10 pt-6">
+                            <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Visibility
+                            </p>
                             <span
-                                class="badge <%= pkg.is_active ? 'badge-success' : 'badge-ghost' %> badge-xs uppercase px-2 font-bold">
+                                class="badge <%= pkg.is_active ? 'badge-success' : 'badge-ghost' %> badge-sm rounded-lg py-3 px-4 font-bold tracking-widest text-[10px] uppercase">
                                 <%= pkg.is_active ? 'Active' : 'Hidden' %>
                             </span>
                         </div>
@@ -67,24 +109,35 @@
 </div>
 
 <!-- Modal -->
-<dialog id="modal_package" class="modal text-base-content">
-    <div class="modal-box bg-base-100 border border-base-content/5 max-w-2xl">
-        <h3 class="font-bold text-lg mb-6" id="modal-title">New Subscription Package</h3>
-        <input type="hidden" id="pkgId" />
+<dialog id="modal_package" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/50 rounded-3xl max-w-2xl p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/50">
+            <h3 class="font-bold text-xl text-base-content flex items-center gap-2">
+                <i class="ri-vip-diamond-fill text-primary"></i> <span id="modal-title">New Package</span>
+            </h3>
+        </div>
 
-        <form id="packageForm" class="space-y-6">
+        <form id="packageForm" class="p-8 space-y-6">
+            <input type="hidden" id="pkgId" />
+
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div class="form-control">
                     <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Package
                         Name</label>
-                    <input type="text" id="pkgName" class="input input-bordered w-full rounded-2xl"
+                    <input type="text" id="pkgName" class="input input-bordered w-full rounded-2xl bg-base-200/50"
                         placeholder="e.g. Pro Plan" required />
                 </div>
                 <div class="form-control">
-                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Price
-                        (IDR)</label>
-                    <input type="number" id="pkgPrice" class="input input-bordered w-full rounded-2xl" placeholder="0"
-                        required />
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Price</label>
+                    <div class="join w-full">
+                        <input type="text" id="pkgCurrency"
+                            class="input input-bordered join-item w-24 rounded-l-2xl bg-base-200/50" placeholder="IDR"
+                            value="IDR" required />
+                        <input type="number" id="pkgPrice"
+                            class="input input-bordered join-item flex-1 rounded-r-2xl bg-base-200/50" placeholder="0"
+                            required />
+                    </div>
                 </div>
             </div>
 
@@ -92,53 +145,97 @@
                 <div class="form-control">
                     <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Billing
                         Period</label>
-                    <select id="pkgPeriod" class="select select-bordered w-full rounded-2xl">
-                        <option value="MONTHLY">Monthly</option>
-                        <option value="YEARLY">Yearly</option>
-                        <option value="LIFETIME">Lifetime</option>
-                        <option value="ENTERPRISE">Enterprise</option>
-                    </select>
+                    <div class="join w-full">
+                        <input type="number" id="pkgPeriodAmount"
+                            class="input input-bordered join-item w-20 rounded-l-2xl bg-base-200/50" value="1"
+                            required />
+                        <select id="pkgPeriod"
+                            class="select select-bordered join-item flex-1 rounded-r-2xl bg-base-200/50">
+                            <option value="DAILY">Daily</option>
+                            <option value="MONTHLY">Monthly</option>
+                            <option value="YEARLY">Yearly</option>
+                            <option value="ENTERPRISE">Enterprise</option>
+                        </select>
+                    </div>
                 </div>
                 <div class="form-control">
                     <label
-                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Description</label>
-                    <input type="text" id="pkgDesc" class="input input-bordered w-full rounded-2xl"
-                        placeholder="Brief tagline..." />
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Status</label>
+                    <div class="flex items-center h-full">
+                        <label class="label cursor-pointer justify-start gap-4">
+                            <input type="checkbox" id="pkgIsActive" class="checkbox checkbox-primary" checked />
+                            <span class="label-text font-bold opacity-70">Plan is active and visible to users</span>
+                        </label>
+                    </div>
                 </div>
             </div>
 
-            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 py-4 border-y border-base-content/5">
-                <div class="form-control">
-                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Device
-                        Limit</label>
-                    <input type="number" id="pkgLimitDevice" class="input input-bordered w-full rounded-2xl font-bold"
-                        value="-1" />
-                    <label class="label"><span class="label-text-alt text-base-content/40 italic">-1 for
-                            unlimited</span></label>
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6 py-6 border-y border-base-content/10">
+                <div class="space-y-4">
+                    <div class="form-control">
+                        <label
+                            class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60 text-primary">Resource
+                            Limits</label>
+                        <div class="space-y-4">
+                            <div>
+                                <label class="label py-1"><span
+                                        class="label-text-alt uppercase font-bold opacity-50">Device
+                                        Limit</span></label>
+                                <input type="number" id="pkgLimitDevice"
+                                    class="input input-bordered input-sm w-full rounded-xl bg-base-200/50 font-bold"
+                                    value="-1" />
+                            </div>
+                            <div>
+                                <label class="label py-1"><span
+                                        class="label-text-alt uppercase font-bold opacity-50">Message
+                                        Limit</span></label>
+                                <input type="number" id="pkgLimitMessage"
+                                    class="input input-bordered input-sm w-full rounded-xl bg-base-200/50 font-bold"
+                                    value="-1" />
+                            </div>
+                            <div>
+                                <label class="label py-1"><span
+                                        class="label-text-alt uppercase font-bold opacity-50">API Key
+                                        Limit</span></label>
+                                <input type="number" id="pkgLimitApiKey"
+                                    class="input input-bordered input-sm w-full rounded-xl bg-base-200/50 font-bold"
+                                    value="-1" />
+                            </div>
+                            <div>
+                                <label class="label py-1"><span
+                                        class="label-text-alt uppercase font-bold opacity-50">Domain
+                                        Limit</span></label>
+                                <input type="number" id="pkgLimitDomain"
+                                    class="input input-bordered input-sm w-full rounded-xl bg-base-200/50 font-bold"
+                                    value="-1" />
+                            </div>
+                            <p class="text-[10px] text-base-content/40 italic mt-2 text-center">-1 for unlimited</p>
+                        </div>
+                    </div>
                 </div>
-                <div class="form-control">
-                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Message
-                        Limit</label>
-                    <input type="number" id="pkgLimitMessage" class="input input-bordered w-full rounded-2xl font-bold"
-                        value="-1" />
-                    <label class="label"><span class="label-text-alt text-base-content/40 italic">-1 for
-                            unlimited</span></label>
+                <div class="form-control flex flex-col h-full">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60 text-primary">Features
+                        List</label>
+                    <textarea id="pkgFeatures"
+                        class="textarea textarea-bordered flex-1 rounded-2xl bg-base-200/50 font-medium"
+                        placeholder="Enter features one per line..." rows="8"></textarea>
+                    <label class="label pb-0"><span class="label-text-alt text-base-content/40 italic">One feature per
+                            line</span></label>
                 </div>
             </div>
 
-            <div class="form-control">
-                <label class="label cursor-pointer justify-start gap-4">
-                    <input type="checkbox" id="pkgIsActive" class="checkbox checkbox-primary" checked />
-                    <span class="label-text">Plan is active and visible to users</span>
-                </label>
-            </div>
-
-            <div class="modal-action">
-                <form method="dialog"><button class="btn btn-ghost">Cancel</button></form>
-                <button type="submit" class="btn btn-primary rounded-xl px-10">Save Package</button>
+            <div class="modal-action border-t border-base-content/50 pt-6 mt-0">
+                <button type="button" onclick="modal_package.close()" class="btn btn-ghost rounded-xl">Cancel</button>
+                <button type="submit" class="btn btn-primary rounded-xl px-10">
+                    <i class="ri-check-line"></i> Save Package
+                </button>
             </div>
         </form>
     </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
 </dialog>
 
 <script>
@@ -146,8 +243,14 @@
         $('#modal-title').text('New Subscription Package');
         $('#pkgId').val('');
         $('#packageForm')[0].reset();
+        $('#pkgCurrency').val('IDR');
+        $('#pkgPeriodAmount').val(1);
+        $('#pkgPeriod').val('MONTHLY');
         $('#pkgLimitDevice').val(-1);
         $('#pkgLimitMessage').val(-1);
+        $('#pkgLimitApiKey').val(-1);
+        $('#pkgLimitDomain').val(-1);
+        $('#pkgFeatures').val('');
         $('#modal_package')[0].showModal();
     }
 
@@ -156,25 +259,44 @@
         $('#modal-title').text('Edit Package: ' + pkg.name);
         $('#pkgId').val(pkg.id);
         $('#pkgName').val(pkg.name);
+        $('#pkgCurrency').val(pkg.currency || 'IDR');
         $('#pkgPrice').val(pkg.price);
-        $('#pkgPeriod').val(pkg.period);
-        $('#pkgDesc').val(pkg.description);
+        $('#pkgPeriodAmount').val(pkg.period_amount || 1);
+        $('#pkgPeriod').val(pkg.period || 'MONTHLY');
         $('#pkgLimitDevice').val(pkg.limit_device);
         $('#pkgLimitMessage').val(pkg.limit_message);
+        $('#pkgLimitApiKey').val(pkg.limit_generate_api_key || -1);
+        $('#pkgLimitDomain').val(pkg.limit_domain_whitelist || -1);
         $('#pkgIsActive').prop('checked', !!pkg.is_active);
+
+        // Handle features (array to line-separated text)
+        const features = Array.isArray(pkg.features) ? pkg.features.join('\n') : '';
+        $('#pkgFeatures').val(features);
+
         $('#modal_package')[0].showModal();
     }
 
     $('#packageForm').on('submit', async (e) => {
         e.preventDefault();
         const id = $('#pkgId').val();
+
+        // Convert features text to array
+        const features = $('#pkgFeatures').val()
+            .split('\n')
+            .map(f => f.trim())
+            .filter(f => f.length > 0);
+
         const data = {
             name: $('#pkgName').val(),
+            currency: $('#pkgCurrency').val(),
             price: $('#pkgPrice').val(),
+            period_amount: $('#pkgPeriodAmount').val(),
             period: $('#pkgPeriod').val(),
-            description: $('#pkgDesc').val(),
             limit_device: $('#pkgLimitDevice').val(),
             limit_message: $('#pkgLimitMessage').val(),
+            limit_generate_api_key: $('#pkgLimitApiKey').val(),
+            limit_domain_whitelist: $('#pkgLimitDomain').val(),
+            features: features,
             is_active: $('#pkgIsActive').is(':checked')
         };
 
@@ -186,7 +308,7 @@
             }
             location.reload();
         } catch (err) {
-            showToast.error('Failed to save package', 'Error');
+            showToast.error(err.response?.data?.message || 'Failed to save package', 'Error');
         }
     });
 

@@ -106,7 +106,7 @@ const DataTableHelper = {
         $('.dataTables_info').addClass('text-xs opacity-50 mt-4');
 
         // Style processing indicator
-        $('.dataTables_processing').addClass('bg-base-100/90 backdrop-blur-sm rounded-xl p-6 shadow-xl border border-base-content/10');
+        $('.dataTables_processing').addClass('bg-base-100/90 backdrop-blur-sm rounded-xl p-6 shadow border border-base-content/10');
     },
 
     /**

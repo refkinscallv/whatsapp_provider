@@ -11,7 +11,7 @@
     <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
         <!-- Input Form -->
         <div class="lg:col-span-1 space-y-6">
-            <div class="card glass shadow-xl border border-base-content/5">
+            <div class="card glass shadow border border-base-content/50">
                 <div class="card-body p-6">
                     <h3 class="font-bold text-lg mb-4 text-base-content flex items-center gap-2">
                         <i class="ri-phone-find-line text-primary"></i> Check Numbers
@@ -55,7 +55,7 @@
             </div>
 
             <!-- Guidelines -->
-            <div class="card glass bg-base-200/50 border border-base-content/5">
+            <div class="card glass bg-base-200/50 border border-base-content/50">
                 <div class="card-body p-6">
                     <h4 class="font-bold text-sm text-base-content mb-3 italic tracking-tight opacity-70">Information &
                         Rules</h4>
@@ -80,10 +80,10 @@
 
         <!-- Results Section -->
         <div class="lg:col-span-2 space-y-6">
-            <div class="card glass shadow-xl border border-base-content/5 min-h-[500px]">
-                <div class="card-body p-0">
+            <div class="card glass shadow border border-base-content/50 min-h-[500px]">
+                <div class="card-body">
                     <!-- Tabs -->
-                    <div class="tabs tabs-boxed bg-transparent p-4 gap-2">
+                    <div class="tabs tabs-boxed bg-transparent gap-2">
                         <button class="tab tab-lg active gap-2 rounded-xl transition-all"
                             onclick="switchTab('current')">
                             <i class="ri-flashlight-line"></i> Current Batch
@@ -106,11 +106,9 @@
                     </div>
 
                     <!-- Filter Area (Hidden by default, shown for History) -->
-                    <div id="filter-container" class="hidden px-6 py-4 bg-base-200/30 border-b border-base-content/5">
+                    <div id="filter-container" class="hidden px-6 py-4 bg-base-200/30 border-b border-base-content/50">
                         <form id="filter_form_history" class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
                             <div class="form-control">
-                                <label class="label p-1"><span
-                                        class="label-text text-[10px] uppercase font-bold opacity-50">Device</span></label>
                                 <%- include('../layouts/partials/device_selector', { id: 'filter_device_token' ,
                                     name: 'device_token' , showAll: true }) %>
                             </div>
@@ -150,7 +148,7 @@
 
                     <!-- Table Actions -->
                     <div
-                        class="px-6 py-3 border-b border-base-content/5 flex justify-between items-center bg-base-200/20">
+                        class="px-6 py-3 border-b border-base-content/50 flex justify-between items-center bg-base-200/20">
                         <div id="current-batch-info" class="text-[11px] font-bold opacity-40 uppercase tracking-wider">
                             <span id="batchIdDisplay">No Active Batch</span>
                         </div>
@@ -387,12 +385,13 @@
             const res = await axios.post(`/api/datatable/number-checker`, params);
             showToast.close();
 
-            if (res.data.success && res.data.data.data) {
-                const numbers = res.data.data.data.map(row => row.number).join('\n');
+            if (res.data.status && res.data.data) {
+                const dataArray = Array.isArray(res.data.data) ? res.data.data : [];
+                const numbers = dataArray.map(row => row.number).join('\n');
                 if (!numbers) return showToast.info('No numbers found with current filters');
 
                 navigator.clipboard.writeText(numbers);
-                showToast.success(`Copied ${res.data.data.data.length} numbers (all filtered)`, 'Copied');
+                showToast.success(`Copied ${dataArray.length} numbers (all filtered)`, 'Copied');
             }
         } catch (err) {
             showToast.close();
@@ -421,8 +420,8 @@
             const res = await axios.post(`/api/datatable/number-checker`, params);
             showToast.close();
 
-            if (res.data.success && res.data.data.data) {
-                const data = res.data.data.data;
+            if (res.data.status && res.data.data) {
+                const data = Array.isArray(res.data.data) ? res.data.data : [];
                 const csvContent = "data:text/csv;charset=utf-8,"
                     + "Number,Status,Device,Date\n"
                     + data.map(r => `${r.number},${r.exists ? 'Registered' : 'Not Registered'},${r.device?.name || '-'},${r.createdAt}`).join("\n");

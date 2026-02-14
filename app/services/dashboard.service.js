@@ -24,12 +24,20 @@ class DashboardService {
 
         if (isAdmin) {
             // System-wide stats for admin
-            deviceCount = await db.models.Device.count()
+            deviceCount = await db.models.Device.count({
+                where: { is_deleted: false }
+            })
             campaignCount = await db.models.Campaign.count({ where: { status: 'running' } })
         } else {
             // User-specific stats
             const userDevices = await db.models.UserDevice.findAll({
                 where: { user_token: user.token },
+                include: [{
+                    model: db.models.Device,
+                    as: 'device',
+                    where: { is_deleted: false }, // Crucial: Only active devices
+                    required: true
+                }],
                 attributes: ['device_token']
             })
             deviceTokens = userDevices.map(ud => ud.device_token)
@@ -113,6 +121,12 @@ class DashboardService {
         if (!isAdmin) {
             const userDevices = await db.models.UserDevice.findAll({
                 where: { user_token: user.token },
+                include: [{
+                    model: db.models.Device,
+                    as: 'device',
+                    where: { is_deleted: false },
+                    required: true
+                }],
                 attributes: ['device_token']
             })
             const deviceTokens = userDevices.map(ud => ud.device_token)

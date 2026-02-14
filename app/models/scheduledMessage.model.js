@@ -53,6 +53,12 @@ module.exports = (sequelize, DataTypes) => {
                 allowNull: true,
             },
 
+            media_mimetype: {
+                type: DataTypes.STRING(100),
+                allowNull: true,
+                comment: 'MIME type of media file',
+            },
+
             scheduled_at: {
                 type: DataTypes.DATE,
                 allowNull: false,

@@ -136,6 +136,12 @@ class StatusMonitorService {
         try {
             const userDevices = await db.models.UserDevice.findAll({
                 where: { user_token: userToken },
+                include: [{
+                    model: db.models.Device,
+                    as: 'device',
+                    where: { is_deleted: false },
+                    required: true
+                }],
                 attributes: ['device_token']
             })
             const deviceTokens = userDevices.map(ud => ud.device_token)

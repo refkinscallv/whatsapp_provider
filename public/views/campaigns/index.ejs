@@ -71,7 +71,7 @@
                 <table id="campaigns-table" class="table table-zebra w-full">
                     <thead>
                         <tr
-                            class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/5">
+                            class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/50">
                             <th>Campaign Name</th>
                             <th>Device</th>
                             <th class="text-center">Creator</th>
@@ -92,8 +92,8 @@
 
 <!-- Filter Modal for Campaigns -->
 <dialog id="filter_modal_campaigns" class="modal">
-    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl max-w-md p-0 overflow-hidden">
-        <div class="p-6 border-b border-base-content/5">
+    <div class="modal-box bg-base-100 border border-base-content/50 rounded-3xl max-w-md p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/50">
             <h3 class="font-bold text-xl text-base-content flex items-center gap-2">
                 <i class="ri-filter-3-line text-primary"></i> Filter Campaigns
             </h3>
@@ -156,7 +156,7 @@
                 </div>
         </form>
 
-        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+        <div class="modal-action p-6 border-t border-base-content/50 mt-0">
             <button type="button"
                 onclick="DataTableHelper.resetFilters('filter_form_campaigns', 'campaigns-table', 'filter_modal_campaigns')"
                 class="btn btn-ghost rounded-xl">
@@ -176,7 +176,7 @@
 
 <!-- Modal -->
 <dialog id="modal_campaign" class="modal">
-    <div class="modal-box bg-base-100 border border-base-content/5 max-w-2xl">
+    <div class="modal-box bg-base-100 border border-base-content/50 max-w-2xl">
         <h3 class="font-bold text-lg mb-6 text-base-content">New Broadcast Campaign</h3>
 
         <form id="campaignForm" class="space-y-6">
@@ -283,7 +283,7 @@
 <!-- Campaign Detail Modal -->
 <dialog id="modal_campaign_detail" class="modal">
     <div
-        class="modal-box w-11/12 max-w-4xl bg-base-100 rounded-3xl border border-base-content/5 shadow-2xl p-0 overflow-hidden">
+        class="modal-box w-11/12 max-w-4xl bg-base-100 rounded-3xl border border-base-content/50 shadow-2xl p-0 overflow-hidden">
         <div class="p-6 flex justify-between items-center">
             <div class="flex items-center gap-4">
                 <div class="p-3 bg-white/20 rounded-2xl">
@@ -303,11 +303,11 @@
             <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
                 <!-- Left Column: Info & Message -->
                 <div class="lg:col-span-2 space-y-6">
-                    <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                    <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/50">
                         <label class="block mb-3 uppercase text-[11px] font-bold tracking-widest opacity-60">Message
                             Content</label>
                         <div id="detailMessage"
-                            class="whitespace-pre-wrap text-sm leading-relaxed p-4 bg-base-100 rounded-2xl border border-base-content/5 min-h-[100px]">
+                            class="whitespace-pre-wrap text-sm leading-relaxed p-4 bg-base-100 rounded-2xl border border-base-content/50 min-h-[100px]">
                         </div>
 
                         <div id="detailMedia" class="mt-4 hidden">
@@ -321,7 +321,7 @@
                     </div>
 
                     <div class="grid grid-cols-2 gap-6">
-                        <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                        <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/50">
                             <label
                                 class="block mb-2 uppercase text-[11px] font-bold tracking-widest opacity-60">Schedule</label>
                             <div class="flex items-center gap-3">
@@ -329,7 +329,7 @@
                                 <span id="detailSchedule" class="font-semibold">-</span>
                             </div>
                         </div>
-                        <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                        <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/50">
                             <label
                                 class="block mb-2 uppercase text-[11px] font-bold tracking-widest opacity-60">Delays</label>
                             <div class="flex items-center gap-3">
@@ -342,7 +342,7 @@
 
                 <!-- Right Column: Stats & Actions -->
                 <div class="space-y-6">
-                    <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                    <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/50">
                         <label
                             class="block mb-4 uppercase text-[11px] font-bold tracking-widest opacity-60">Results</label>
                         <div class="space-y-4">
@@ -370,12 +370,12 @@
                         </div>
                     </div>
 
-                    <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/5">
+                    <div class="bg-base-200/30 rounded-3xl p-6 border border-base-content/50">
                         <label class="block mb-3 uppercase text-[11px] font-bold tracking-widest opacity-60">Device &
                             Status</label>
                         <div class="space-y-3">
                             <div
-                                class="flex items-center gap-3 bg-base-100 p-3 rounded-2xl border border-base-content/5">
+                                class="flex items-center gap-3 bg-base-100 p-3 rounded-2xl border border-base-content/50">
                                 <div
                                     class="w-8 h-8 rounded-xl bg-primary/10 flex items-center justify-center text-primary">
                                     <i class="ri-smartphone-line"></i>

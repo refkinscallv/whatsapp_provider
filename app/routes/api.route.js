@@ -213,6 +213,10 @@ Routes.group('api', () => {
     Routes.group('admin', () => {
         // Admin DataTable Routes
         Routes.post('datatable/users', [datatableController, 'getUsersDataTable'])
+        Routes.post('datatable/subscriptions', [datatableController, 'getSubscriptionsDataTable'])
+        Routes.post('datatable/billing-history', [datatableController, 'getBillingHistoryDataTable'])
+        Routes.post('datatable/usage-remaining', [adminController, 'getUsageRemainingDataTable'])
+
         Routes.get('users/stats', [adminController, 'getUserStats'])
 
         Routes.group('users', () => {
@@ -227,6 +231,17 @@ Routes.group('api', () => {
             Routes.post('', [adminController, 'savePackage'])
             Routes.put(':id', [adminController, 'updatePackage'])
             Routes.delete(':id', [adminController, 'deletePackage'])
+        })
+
+        Routes.group('subscriptions', () => {
+            Routes.put(':token', [adminController, 'updateSubscription'])
+        })
+
+        Routes.group('billing', () => {
+            Routes.get('stats', [adminController, 'getBillingStatsAPI'])
+            Routes.get('analytics', [adminController, 'getBillingAnalytics'])
+            Routes.get('top-usage', [adminController, 'getTopUsage'])
+            Routes.get('export', [adminController, 'exportBillingReport'])
         })
 
         Routes.group('settings', () => {

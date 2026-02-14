@@ -19,8 +19,8 @@
 
 <!-- Modal -->
 <dialog id="modal_template" class="modal">
-    <div class="modal-box bg-base-100 border border-base-content/5 rounded-3xl p-0 overflow-hidden">
-        <div class="p-6 border-b border-base-content/5">
+    <div class="modal-box bg-base-100 border border-base-content/50 rounded-3xl p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/50">
             <h3 class="font-bold text-xl text-base-content" id="modal-title">New Template</h3>
         </div>
 
@@ -44,7 +44,7 @@
             </div>
         </div>
 
-        <div class="modal-action p-6 border-t border-base-content/5 mt-0">
+        <div class="modal-action p-6 border-t border-base-content/50 mt-0">
             <form method="dialog"><button class="btn btn-ghost rounded-xl">Cancel</button></form>
             <button onclick="saveTemplate()" class="btn btn-primary rounded-xl px-8">Save Template</button>
         </div>
@@ -71,7 +71,7 @@
                                 </div>
                             </div>
                             <p class="text-xs text-base-content/60 mt-2 line-clamp-4 whitespace-pre-line">${t.content}</p>
-                            <div class="flex justify-between items-center mt-4 pt-4 border-t border-base-content/5">
+                            <div class="flex justify-between items-center mt-4 pt-4 border-t border-base-content/50">
                                 <div class="text-[9px] uppercase tracking-tighter opacity-40">Created by: ${t.user?.name || '-'}</div>
                                 <a href="/messaging" class="btn btn-ghost btn-xs text-primary rounded-lg">Use in Chat</a>
                             </div>

@@ -47,6 +47,7 @@ Routes.group('', () => {
             Routes.get('/', [AdminController, 'dashboard'])
             Routes.get('users', [AdminController, 'users'])
             Routes.get('packages', [AdminController, 'packages'])
+            Routes.get('billing', [AdminController, 'billing'])
             Routes.get('settings', [AdminController, 'settings'])
         }, [adminMiddleware()])
 
