@@ -48,7 +48,19 @@ async function reset() {
             }
         }
 
-        // 2. Clear logs
+        // 2. Clear browser sessions
+        const browserSessionDir = path.join(__dirname, '../browser-sessions')
+        if (fs.existsSync(browserSessionDir)) {
+            console.log('🗑️  Clearing Browser sessions...')
+            const items = fs.readdirSync(browserSessionDir)
+            for (const item of items) {
+                if (item === '.gitkeep') continue
+                const fullPath = path.join(browserSessionDir, item)
+                fs.rmSync(fullPath, { recursive: true, force: true })
+            }
+        }
+
+        // 3. Clear logs
         const logDir = path.join(__dirname, '../logs')
         if (fs.existsSync(logDir)) {
             console.log('🗑️  Clearing logs...')
@@ -60,7 +72,7 @@ async function reset() {
             }
         }
 
-        // 3. Reset Database
+        // 4. Reset Database
         // Bypass automatic sync in db.init() by temporarily changing config
         const config = require('@app/config')
         const originalSync = config.database.sync
