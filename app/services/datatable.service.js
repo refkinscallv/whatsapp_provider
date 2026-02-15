@@ -106,7 +106,6 @@ class DataTableService {
      */
     parseFilters(filters, model) {
         const where = {}
-        const modelAlias = model.options.name.singular
 
         // Get all keys including symbols for Op.or, Op.and etc
         const keys = [...Object.keys(filters), ...Object.getOwnPropertySymbols(filters)]
@@ -133,8 +132,8 @@ class DataTableService {
             if (key.endsWith('_from') || key.endsWith('_to')) {
                 // Date range filters
                 const fieldName = key.replace(/_from$|_to$/, '')
-                // Qualify the key
-                const qualifiedKey = fieldName.includes('.') ? fieldName : `${modelAlias}.${fieldName}`
+                // Wrap in $ to ensure correct qualification by Sequelize
+                const qualifiedKey = `$${fieldName}$`
 
                 if (!where[qualifiedKey]) {
                     where[qualifiedKey] = {}
@@ -143,16 +142,19 @@ class DataTableService {
                     where[qualifiedKey][Op.gte] = new Date(value)
                 } else {
                     const toDate = new Date(value)
+                    // If it's just a date without time, set to end of day
                     if (toDate.getHours() === 0 && toDate.getMinutes() === 0) {
                         toDate.setHours(23, 59, 59, 999)
                     }
                     where[qualifiedKey][Op.lte] = toDate
                 }
             } else if (key.includes('->')) {
-                // ... same logic as before for JSON paths ...
+                // Handling JSON path filters (e.g., 'metadata->token')
                 const parts = key.split('->')
                 const fullField = parts[0]
                 const path = parts.slice(1).join('.')
+
+                // For JSON paths, we still need literal or manual qualification
                 const columnRef = fullField.includes('.')
                     ? `\`${fullField.split('.').join('`.`')}\``
                     : `\`${fullField}\``
@@ -164,12 +166,12 @@ class DataTableService {
                 ))
             } else if (Array.isArray(value)) {
                 // Array filters (multiple select)
-                const qualifiedKey = key.includes('.') ? key : `${modelAlias}.${key}`
+                const qualifiedKey = `$${key}$`
                 where[qualifiedKey] = { [Op.in]: value }
             } else {
                 // Exact match
-                // Qualify the key
-                const qualifiedKey = key.includes('.') ? key : `${modelAlias}.${key}`
+                // Wrap in $ to ensure qualification, unless it already contains $
+                const qualifiedKey = key.includes('$') ? key : `$${key}$`
                 where[qualifiedKey] = value
             }
         })

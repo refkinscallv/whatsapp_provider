@@ -627,7 +627,7 @@ class AdminController {
     async getUsageRemainingDataTable({ req, res }) {
         try {
             const { Op } = db
-            
+
             // Get all users with active subscriptions
             const users = await db.models.User.findAll({
                 attributes: ['name', 'email', 'token'],

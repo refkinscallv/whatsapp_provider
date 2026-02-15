@@ -75,8 +75,10 @@
                                                         (pkg.price / 1000).toFixed(0) + 'k' %>
                                                 </span>
                                                 <% if(pkg.price> 0) { %>
-                                                    <span class="text-base-content/50 font-medium">/<%= (pkg.period
-                                                            || 'Mo' ).toLowerCase() %></span>
+                                                    <span class="text-base-content/50 font-medium lowercase">
+                                                        /<%= (pkg.period_amount> 1 ? pkg.period_amount + ' ' : '') +
+                                                            pkg.period.replace('LY', '').toLowerCase() %>
+                                                    </span>
                                                     <% } %>
                                             </div>
                                         </div>
@@ -87,8 +89,8 @@
                                                         class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
                                                         <i class="ri-check-line text-sm"></i>
                                                     </div>
-                                                    <span class="font-medium text-base-content/80">
-                                                        <%= (pkg.limit_device===-1 || pkg.limit_device==='-1' )
+                                                    <span class="font-medium text-base-content/80 text-sm">
+                                                        <%= (pkg.limit_device==-1 || pkg.limit_device=='-1' )
                                                             ? 'Unlimited' : pkg.limit_device %> Active Sessions
                                                     </span>
                                                 </li>
@@ -97,8 +99,8 @@
                                                         class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
                                                         <i class="ri-check-line text-sm"></i>
                                                     </div>
-                                                    <span class="font-medium text-base-content/80">
-                                                        <%= (pkg.limit_message===-1 || pkg.limit_message==='-1' )
+                                                    <span class="font-medium text-base-content/80 text-sm">
+                                                        <%= (pkg.limit_message==-1 || pkg.limit_message=='-1' )
                                                             ? 'Unlimited' : pkg.limit_message %> Monthly Messages
                                                     </span>
                                                 </li>
@@ -109,9 +111,9 @@
                                                             class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
                                                             <i class="ri-check-line text-sm"></i>
                                                         </div>
-                                                        <span class="font-medium text-base-content/80">
-                                                            <%= (pkg.limit_generate_api_key===-1 ||
-                                                                pkg.limit_generate_api_key==='-1' ) ? 'Unlimited' :
+                                                        <span class="font-medium text-base-content/80 text-sm">
+                                                            <%= (pkg.limit_generate_api_key==-1 ||
+                                                                pkg.limit_generate_api_key=='-1' ) ? 'Unlimited' :
                                                                 pkg.limit_generate_api_key %> API Keys
                                                         </span>
                                                     </li>
@@ -123,11 +125,10 @@
                                                                     class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
                                                                     <i class="ri-check-line text-sm"></i>
                                                                 </div>
-                                                                <span class="font-medium text-base-content/80">
-                                                                    <%= (pkg.limit_domain_whitelist===-1 ||
-                                                                        pkg.limit_domain_whitelist==='-1' )
-                                                                        ? 'Unlimited' : pkg.limit_domain_whitelist %>
-                                                                        Domain Whitelist
+                                                                <span class="font-medium text-base-content/80 text-sm">
+                                                                    <%= (pkg.limit_domain_whitelist==-1 ||
+                                                                        pkg.limit_domain_whitelist=='-1' ) ? 'Unlimited'
+                                                                        : pkg.limit_domain_whitelist %> Domain whitelist
                                                                 </span>
                                                             </li>
                                                             <% } %>
@@ -137,9 +138,18 @@
                                                                             class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
                                                                             <i class="ri-check-line text-sm"></i>
                                                                         </div>
-                                                                        <span class="font-medium text-base-content/80">
+                                                                        <span
+                                                                            class="font-medium text-base-content/80 text-sm">
                                                                             <%= feature %>
                                                                         </span>
+                                                                    </li>
+                                                                    <div
+                                                                        class="w-6 h-6 bg-success/20 rounded-full flex items-center justify-center text-success">
+                                                                        <i class="ri-check-line text-sm"></i>
+                                                                    </div>
+                                                                    <span class="font-medium text-base-content/80">
+                                                                        <%= feature %>
+                                                                    </span>
                                                                     </li>
                                                                     <% }) %>
                                             </ul>
@@ -151,7 +161,7 @@
                                                     disabled>Current Plan</button>
                                                 <% } else { %>
                                                     <a href="https://wa.me/62895392168277?text=Halo%20Admin,%20saya%20tertarik%20dengan%20paket%20<%= pkg.name %>%20WARF."
-                                                        class="btn btn-primary btn-block rounded-2xl h-14 shadow-lg shadow-primary/20">
+                                                        class="btn btn-primary btn-block rounded-2xl h-14 shadow-md shadow-primary/20">
                                                         <%= isDashboard ? 'Upgrade Now' : 'Get Started' %>
                                                     </a>
                                                     <% } %>
