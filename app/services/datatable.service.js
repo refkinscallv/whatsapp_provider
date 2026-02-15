@@ -132,8 +132,11 @@ class DataTableService {
             if (key.endsWith('_from') || key.endsWith('_to')) {
                 // Date range filters
                 const fieldName = key.replace(/_from$|_to$/, '')
-                // Wrap in $ to ensure correct qualification by Sequelize
-                const qualifiedKey = `$${fieldName}$`
+                // Use fully qualified key to avoid ambiguity in joins
+                let qualifiedKey = `$${fieldName}$`
+                if (!fieldName.includes('.') && model.rawAttributes[fieldName]) {
+                    qualifiedKey = `$${model.name}.${fieldName}$`
+                }
 
                 if (!where[qualifiedKey]) {
                     where[qualifiedKey] = {}
@@ -154,10 +157,17 @@ class DataTableService {
                 const fullField = parts[0]
                 const path = parts.slice(1).join('.')
 
-                // For JSON paths, we still need literal or manual qualification
-                const columnRef = fullField.includes('.')
-                    ? `\`${fullField.split('.').join('`.`')}\``
-                    : `\`${fullField}\``
+                // For JSON paths, qualify with model name if not already qualified
+                let columnRef
+                if (fullField.includes('.')) {
+                    columnRef = `\`${fullField.split('.').join('`.`')}\``
+                } else if (model.rawAttributes[fullField]) {
+                    // Use model name as alias and map to database field name
+                    const fieldName = model.rawAttributes[fullField].field || fullField
+                    columnRef = `\`${model.name}\`.\`${fieldName}\``
+                } else {
+                    columnRef = `\`${fullField}\``
+                }
 
                 if (!where[Op.and]) where[Op.and] = []
                 where[Op.and].push(model.sequelize.where(
@@ -166,12 +176,19 @@ class DataTableService {
                 ))
             } else if (Array.isArray(value)) {
                 // Array filters (multiple select)
-                const qualifiedKey = `$${key}$`
+                let qualifiedKey = `$${key}$`
+                if (!key.includes('.') && model.rawAttributes[key]) {
+                    qualifiedKey = `$${model.name}.${key}$`
+                }
                 where[qualifiedKey] = { [Op.in]: value }
             } else {
                 // Exact match
-                // Wrap in $ to ensure qualification, unless it already contains $
-                const qualifiedKey = key.includes('$') ? key : `$${key}$`
+                // Wrap in $ to ensure qualification, and prefix with model name if local
+                let qualifiedKey = key.includes('$') ? key : `$${key}$`
+                const baseKey = key.replace(/\$/g, '')
+                if (!baseKey.includes('.') && model.rawAttributes[baseKey]) {
+                    qualifiedKey = `$${model.name}.${baseKey}$`
+                }
                 where[qualifiedKey] = value
             }
         })

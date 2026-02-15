@@ -78,6 +78,7 @@ class AiMessageHandlerService {
                 const aiResponse = await aiAutomationService.queryAI(
                     deviceToken,
                     session.ai_model,
+                    chatId,
                     fullPrompt
                 )
 

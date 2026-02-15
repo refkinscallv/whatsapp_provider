@@ -98,14 +98,16 @@ class BrowserPool {
     }
 
     /**
-     * Get or create page for device and AI model
+     * Get or create page for device, AI model, and specific chat
      * @param {string} deviceId - Device identifier
      * @param {string} aiModel - AI model (chatgpt/gemini)
+     * @param {string} chatId - WhatsApp Chat ID
      * @returns {Promise<Page>}
      */
-    async getPage(deviceId, aiModel) {
+    async getPage(deviceId, aiModel, chatId) {
         const browser = await this.getBrowser(deviceId)
-        const key = `${deviceId}_${aiModel}`
+        // Isolate by chat_id to keep memory per user
+        const key = `${deviceId}_${aiModel}_${chatId}`
 
         if (this.pages.has(key)) {
             const page = this.pages.get(key)
@@ -337,10 +339,11 @@ class AiAutomationService {
      * Query AI (ChatGPT or Gemini)
      * @param {string} deviceId - Device identifier
      * @param {string} aiModel - AI model (chatgpt/gemini)
+     * @param {string} chatId - WhatsApp Chat ID
      * @param {string} fullPrompt - Full prompt with knowledge injected
      * @returns {Promise<string>}
      */
-    async queryAI(deviceId, aiModel, fullPrompt) {
+    async queryAI(deviceId, aiModel, chatId, fullPrompt) {
         const provider = AI_PROVIDERS[aiModel.toLowerCase()]
         if (!provider) {
             throw new Error(`Unknown AI provider: ${aiModel}`)
@@ -349,10 +352,14 @@ class AiAutomationService {
         this.emitStatus(deviceId, 'loading', `Connecting to ${aiModel}...`)
 
         try {
-            const page = await this.browserPool.getPage(deviceId, aiModel)
+            const page = await this.browserPool.getPage(deviceId, aiModel, chatId)
 
-            // Navigate if not already on the page
-            if (page.url() !== provider.url) {
+            // Relaxed navigation: Only goto home if we are not already on the provider's domain
+            // This allows persistent conversations/threads to stay active
+            const currentUrl = page.url()
+            const providerDomain = provider.url.replace('https://', '').split('/')[0]
+
+            if (!currentUrl.includes(providerDomain)) {
                 this.emitStatus(deviceId, 'loading', `Navigating to ${provider.url}...`)
                 await page.goto(provider.url, {
                     waitUntil: 'domcontentloaded',
