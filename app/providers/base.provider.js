@@ -44,6 +44,15 @@ class BaseProvider extends EventEmitter {
     }
 
     /**
+     * Send presence (typing, recording, etc)
+     * @param {string} to - Recipient ID
+     * @param {string} presence - Presence type (composing, recording, paused)
+     */
+    async sendPresence(to, presence) {
+        throw new Error('Method sendPresence() must be implemented')
+    }
+
+    /**
      * Get chats
      */
     async getChats() {
@@ -90,7 +99,8 @@ class BaseProvider extends EventEmitter {
      */
     updateState(state) {
         this.state = state
-        this.emit('state_change', state)
+        this.emit('change_state', state)
+        this.emit('state_change', state) // Keep for backward compatibility if any
     }
 }
 

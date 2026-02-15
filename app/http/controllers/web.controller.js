@@ -163,6 +163,20 @@ class WebController {
     }
 
     /**
+     * Render AI Sessions Page
+     */
+    async aiSessions({ req, res }) {
+        return res.render('ai-sessions/index', {
+            layout: 'layouts/main',
+            title: 'AI Automation',
+            config,
+            userToken: req.user?.token,
+            isSubscriptionEnabled: await appModeService.isSubscriptionEnabled(),
+            script: ''
+        })
+    }
+
+    /**
      * Render Campaigns Page
      */
     async campaigns({ req, res }) {

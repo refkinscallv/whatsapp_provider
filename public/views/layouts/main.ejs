@@ -173,6 +173,8 @@
                             class="ri-layout-grid-fill text-lg"></i> Message Templates</a></li>
                 <li><a href="/auto-replies" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
                             class="ri-robot-fill text-lg"></i> Auto Reply</a></li>
+                <li><a href="/ai-sessions" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
+                            class="ri-brain-fill text-lg"></i> AI Automation</a></li>
                 <li><a href="/tools/number-checker" class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
                             class="ri-user-search-fill text-lg"></i> Number Checker</a></li>
 
@@ -196,7 +198,7 @@
                                     class="ri-vip-crown-fill text-lg"></i> System Dashboard</a></li>
                         <% } %>
 
-                            <% if (isSubscriptionEnabled) { %>
+                            <% if (typeof isSubscriptionEnabled !=='undefined' && isSubscriptionEnabled) { %>
                                 <li><a href="/billing"
                                         class="sidebar-item py-3 rounded-xl transition-all duration-300"><i
                                             class="ri-bank-card-fill text-lg"></i> Billing & Plans</a></li>

@@ -336,8 +336,22 @@ class WhatsAppEvents {
                     Logger.warn(`Failed to trigger auto-read for ${message.from}: ${readErr.message}`)
                 }
 
-                // 3. Process auto-reply if message is not from me
+                // 3. Process AI automation first (if enabled for device)
                 if (!message.fromMe) {
+                    const aiMessageHandler = require('./aiMessageHandler.service')
+
+                    try {
+                        const handledByAI = await aiMessageHandler.handleMessage(client, message, clientId)
+
+                        if (handledByAI) {
+                            Logger.info(`Message from ${message.from} handled by AI automation on ${clientId}`)
+                            return // AI handled the message, skip regular auto-reply
+                        }
+                    } catch (aiErr) {
+                        Logger.warn(`AI automation failed for ${clientId}, falling back to regular auto-reply: ${aiErr.message}`)
+                    }
+
+                    // 4. Fall back to regular auto-reply if AI didn't handle
                     await this.processAutoReply(clientId, message)
                 }
             }),

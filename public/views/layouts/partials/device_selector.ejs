@@ -50,13 +50,17 @@
                         for (var i = 0; i < devs.length; i++) {
                             var d = devs[i];
                             var wid = 'Ready';
+
+                            // More robust WID extraction
                             if (d.clientInfo && d.clientInfo.info) {
-                                if (d.clientInfo.info.wid && d.clientInfo.info.wid._serialized) {
-                                    wid = d.clientInfo.info.wid._serialized;
-                                } else if (d.clientInfo.info.pushname) {
-                                    wid = d.clientInfo.info.pushname;
+                                var info = d.clientInfo.info;
+                                if (info.wid) {
+                                    wid = typeof info.wid === 'string' ? info.wid : (info.wid._serialized || info.wid.user || wid);
+                                } else if (info.pushname) {
+                                    wid = info.pushname;
                                 }
                             }
+
                             html += '<option value="' + d.token + '">' + (d.name || 'Unnamed') + ' (' + wid + ')</option>';
                         }
                         el.innerHTML = html;

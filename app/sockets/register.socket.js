@@ -40,6 +40,13 @@ module.exports = {
                 }
             }
 
+            socket.on('join_room', (room) => {
+                if (room.startsWith('device_')) {
+                    socket.join(room)
+                    Logger.info('socket', `Socket ${socket.id} joined room: ${room}`)
+                }
+            })
+
             socket.on('disconnect', () => {
                 Logger.info('socket', `Socket disconnected: ${socket.id}`)
             })

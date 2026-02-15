@@ -100,6 +100,17 @@ class WWebJSProvider extends BaseProvider {
         return await this.client.sendMessage(to, messageMedia, options)
     }
 
+    async sendPresence(to, presence) {
+        const chat = await this.client.getChatById(to)
+        if (presence === 'composing') {
+            await chat.sendStateTyping()
+        } else if (presence === 'recording') {
+            await chat.sendStateRecording()
+        } else {
+            await chat.clearState()
+        }
+    }
+
     async getChats() {
         return await this.client.getChats()
     }

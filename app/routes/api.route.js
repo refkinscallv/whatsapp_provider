@@ -154,6 +154,17 @@ Routes.group('api', () => {
         Routes.delete(':token', [autoReplyController, 'delete'])
     }, [authMiddleware])
 
+    // AI Sessions Routes
+    Routes.group('ai-sessions', () => {
+        const aiSessionController = require('@app/http/controllers/aiSession.controller')
+        Routes.get('stats', [aiSessionController, 'getStats'])
+        Routes.post('', [aiSessionController, 'create'])
+        Routes.get('', [aiSessionController, 'getAll'])
+        Routes.get(':token', [aiSessionController, 'getOne'])
+        Routes.put(':token', [aiSessionController, 'update'])
+        Routes.delete(':token', [aiSessionController, 'delete'])
+    }, [authMiddleware])
+
     // Campaign Routes
     Routes.group('campaigns', () => {
         Routes.get('stats', [campaignController, 'getStats'])
@@ -207,6 +218,8 @@ Routes.group('api', () => {
         Routes.post('device-users', [datatableController, 'getDeviceUsersDataTable'])
         Routes.post('contacts/book-members', [datatableController, 'getBookMembersDataTable'])
         Routes.post('number-checker', [datatableController, 'getNumberCheckDataTable'])
+        Routes.post('ai-sessions', [datatableController, 'getAiSessionsDataTable'])
+        Routes.post('ai-conversations', [datatableController, 'getAiConversationsDataTable'])
     }, [authMiddleware])
 
     // Admin Routes

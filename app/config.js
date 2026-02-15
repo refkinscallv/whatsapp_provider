@@ -139,6 +139,18 @@ module.exports = {
         expiresIn: Env.get('JWT_EXPIRES_IN', '7d'),
     },
 
+    // AI Automation configuration
+    ai: {
+        headless: Env.getBool('AI_HEADLESS', false),
+        chromeExecutable: Env.get('CHROME_EXECUTABLE_PATH', null),
+        sessionPath: Env.get('AI_SESSION_PATH', path.join(__dirname, '../browser-sessions')),
+        userAgent: Env.get('AI_USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'),
+        stableDuration: Env.getInt('AI_STABLE_DURATION', 3000),
+        checkInterval: Env.getInt('AI_CHECK_INTERVAL', 1000),
+        timeout: Env.getInt('AI_TIMEOUT', 90000),
+        sessionTimeout: Env.getInt('AI_SESSION_TIMEOUT', 3600000), // 1 hour
+    },
+
     // Mailer configuration
     mailer: {
         host: Env.get('MAIL_HOST', 'smtp.gmail.com'),

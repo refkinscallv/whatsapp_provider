@@ -36,6 +36,7 @@ Routes.group('', () => {
         Routes.get('contacts', [WebController, 'contacts'])
         Routes.get('templates', [WebController, 'templates'])
         Routes.get('auto-replies', [WebController, 'autoReplies'])
+        Routes.get('ai-sessions', [WebController, 'aiSessions'])
         Routes.get('settings', [WebController, 'settings'])
         Routes.get('billing', [WebController, 'billing'])
 

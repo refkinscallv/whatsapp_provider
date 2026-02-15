@@ -61,4 +61,5 @@ public/uploads/
 # Test
 test-results/
 whatsapp_sessions/
+browser-sessions/
 .wwebjs_cache

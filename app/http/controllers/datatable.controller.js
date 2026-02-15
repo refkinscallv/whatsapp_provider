@@ -611,6 +611,94 @@ class DataTableController extends BaseController {
             return BaseController.error(res, 'Failed to fetch billing history data', 500)
         }
     }
+
+    /**
+     * Get AI Sessions datatable
+     */
+    async getAiSessionsDataTable({ req, res }) {
+        try {
+            const params = req.body
+            const customFilters = {
+                user_token: req.user.token,
+                '$AiSession.is_deleted$': 0  // Use Sequelize's $alias.column$ syntax
+            }
+
+            // Parse custom filters
+            if (params.device_token) customFilters.device_token = params.device_token
+            if (params.ai_model) customFilters.ai_model = params.ai_model
+            if (params.status) customFilters.status = params.status
+            if (params.language) customFilters.language = params.language
+
+            const options = {
+                include: [
+                    {
+                        model: db.models.Device,
+                        as: 'device',
+                        attributes: ['name', 'token'],
+                        required: false
+                    },
+                    {
+                        model: db.models.AiKnowledge,
+                        as: 'knowledge',
+                        attributes: ['id', 'name'],
+                        required: false
+                    }
+                ],
+                searchableColumns: ['device.name', 'ai_model', 'language'],
+                customFilters,
+                defaultOrder: [['updatedAt', 'DESC']]
+            }
+
+            const result = await datatableService.buildDataTableQuery(db.models.AiSession, params, options)
+            return BaseController.json(res, true, 200, 'AI Sessions data fetched', {}, result)
+        } catch (error) {
+            console.error('[DataTableController] getAiSessionsDataTable error:', error)
+            return BaseController.error(res, 'Failed to fetch AI Sessions data', 500)
+        }
+    }
+
+    /**
+     * Get AI Conversations datatable
+     */
+    async getAiConversationsDataTable({ req, res }) {
+        try {
+            const params = req.body
+            const sessionToken = params.ai_session_token
+
+            if (!sessionToken) {
+                return BaseController.error(res, 'Session token is required', 400)
+            }
+
+            // Get session to verify ownership
+            const session = await db.models.AiSession.findOne({
+                where: { token: sessionToken, user_token: req.user.token, is_deleted: 0 }
+            })
+
+            if (!session) {
+                return BaseController.error(res, 'Access denied', 403)
+            }
+
+            const options = {
+                where: { ai_session_id: session.id },
+                include: [
+                    {
+                        model: db.models.AiSession,
+                        as: 'aiSession',
+                        attributes: ['token', 'ai_model'],
+                        required: false
+                    }
+                ],
+                searchableColumns: ['chat_id', 'user_message', 'ai_response'],
+                defaultOrder: [['createdAt', 'DESC']]
+            }
+
+            const result = await datatableService.buildDataTableQuery(db.models.AiConversation, params, options)
+            return BaseController.json(res, true, 200, 'AI Conversations data fetched', {}, result)
+        } catch (error) {
+            console.error('[DataTableController] getAiConversationsDataTable error:', error)
+            return BaseController.error(res, 'Failed to fetch AI Conversations data', 500)
+        }
+    }
 }
 
 module.exports = DataTableController

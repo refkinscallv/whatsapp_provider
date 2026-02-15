@@ -26,6 +26,7 @@ class BaileysProvider extends BaseProvider {
             chats: {}
         }
         this.client = null
+        this.info = null
         this.qr = null
     }
 
@@ -94,14 +95,18 @@ class BaileysProvider extends BaseProvider {
             } else if (connection === 'open') {
                 Logger.info(`Baileys connection opened for ${this.clientId}`)
                 this.qr = null
-                this.updateState('ready')
-
                 const decodedId = jidDecode(this.client.user.id)
-                this.emit('ready', {
-                    wid: decodedId.user,
+                this.info = {
+                    wid: {
+                        user: decodedId.user,
+                        _serialized: this.client.user.id
+                    },
                     pushname: this.client.user.name || '',
                     platform: 'baileys'
-                })
+                }
+
+                this.updateState('ready')
+                this.emit('ready', this.info)
             }
         })
 
@@ -225,6 +230,15 @@ class BaileysProvider extends BaseProvider {
         return {
             id: { _serialized: result.key.id },
             timestamp: result.messageTimestamp
+        }
+    }
+
+    async sendPresence(to, presence) {
+        const jid = to.includes('@') ? to : `${to}@s.whatsapp.net`
+        const baileysPresence = presence === 'composing' ? 'composing' : (presence === 'recording' ? 'recording' : 'paused')
+
+        if (this.client) {
+            await this.client.sendPresenceUpdate(baileysPresence, jid)
         }
     }
 

@@ -1,0 +1,603 @@
+<div class="flex flex-col gap-8">
+    <!-- Header -->
+    <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div>
+            <h1 class="text-3xl font-bold text-base-content">AI Automation</h1>
+            <p class="text-base-content/60">Manage AI sessions for auto-reply with ChatGPT or Gemini.</p>
+        </div>
+        <div class="flex gap-2">
+            <button onclick="DataTableHelper.openFilterModal('filter_modal_ai_sessions', 'ai-sessions-table')"
+                class="btn btn-ghost glass btn-sm rounded-lg"><i class="ri-filter-3-line"></i> Filter</button>
+            <button onclick="openCreateModal()" class="btn btn-primary btn-sm rounded-lg"><i
+                    class="ri-robot-2-line"></i>
+                Create AI Session</button>
+        </div>
+    </div>
+
+    <!-- Stats -->
+    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+        <div class="card glass hover:border-success/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Active
+                            Sessions</p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-active">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-success/10 rounded-2xl flex items-center justify-center text-success group-hover:scale-110 transition-transform">
+                        <i class="ri-check-double-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-primary/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Total
+                            Conversations (30d)</p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-conversations">0</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-primary/10 rounded-2xl flex items-center justify-center text-primary group-hover:scale-110 transition-transform">
+                        <i class="ri-message-3-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <div class="card glass hover:border-warning/30 transition-all duration-300 group">
+            <div class="card-body p-6">
+                <div class="flex items-center justify-between">
+                    <div>
+                        <p class="text-[10px] uppercase tracking-[0.2em] font-black text-base-content/40">Avg Response
+                            Time</p>
+                        <h2 class="text-4xl font-black mt-2 text-base-content" id="stat-response">-</h2>
+                    </div>
+                    <div
+                        class="w-14 h-14 bg-warning/10 rounded-2xl flex items-center justify-center text-warning group-hover:scale-110 transition-transform">
+                        <i class="ri-time-line text-2xl"></i>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- AI Sessions List -->
+    <div class="card glass">
+        <div class="card-body">
+            <h3 class="font-bold text-lg mb-4 text-base-content">AI Sessions</h3>
+            <div class="overflow-x-auto">
+                <table id="ai-sessions-table" class="table table-zebra w-full">
+                    <thead>
+                        <tr
+                            class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/50">
+                            <th>Device</th>
+                            <th>AI Model</th>
+                            <th>Language</th>
+                            <th>Knowledge Items</th>
+                            <th>Status</th>
+                            <th>Last Activity</th>
+                            <th class="text-center">Actions</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Data loaded via server-side DataTables -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+</div>
+
+<!-- Filter Modal -->
+<dialog id="filter_modal_ai_sessions" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/50 rounded-3xl max-w-md p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/50">
+            <h3 class="font-bold text-xl text-base-content flex items-center gap-2">
+                <i class="ri-filter-3-line text-primary"></i> Filter AI Sessions
+            </h3>
+        </div>
+
+        <form id="filter_form_ai_sessions" class="p-6 space-y-6">
+            <!-- Device Filter -->
+            <%- include('../layouts/partials/device_selector', { id: 'filter-device-token-ai' , name: 'device_token' ,
+                label: 'Device' , showAllOption: true, extraClass: 'bg-base-200/50' }) %>
+
+                <!-- AI Model Filter -->
+                <div class="form-control">
+                    <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">AI
+                        Model</label>
+                    <select name="ai_model" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All Models</option>
+                        <option value="chatgpt">ChatGPT</option>
+                        <option value="gemini">Gemini</option>
+                    </select>
+                </div>
+
+                <!-- Status Filter -->
+                <div class="form-control">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Status</label>
+                    <select name="status" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All Statuses</option>
+                        <option value="active">Active</option>
+                        <option value="inactive">Inactive</option>
+                    </select>
+                </div>
+
+                <!-- Language Filter -->
+                <div class="form-control">
+                    <label
+                        class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Language</label>
+                    <select name="language" class="select select-bordered w-full rounded-2xl bg-base-200/50">
+                        <option value="">All Languages</option>
+                        <option value="id">Indonesian</option>
+                        <option value="en">English</option>
+                    </select>
+                </div>
+        </form>
+
+        <div class="modal-action p-6 border-t border-base-content/50 mt-0">
+            <button type="button"
+                onclick="DataTableHelper.resetFilters('filter_form_ai_sessions', 'ai-sessions-table', 'filter_modal_ai_sessions')"
+                class="btn btn-ghost rounded-xl">
+                <i class="ri-restart-line"></i> Reset
+            </button>
+            <button type="button"
+                onclick="DataTableHelper.applyFilters('ai-sessions-table', 'filter_modal_ai_sessions')"
+                class="btn btn-primary rounded-xl px-8">
+                <i class="ri-check-line"></i> Apply Filter
+            </button>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<!-- Create/Edit Modal -->
+<dialog id="modal_ai_session" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/50 max-w-3xl rounded-3xl p-0 overflow-auto">
+        <div class="p-6 border-b border-base-content/50">
+            <h3 class="font-bold text-xl text-base-content" id="modal-title">Create AI Session</h3>
+            <p class="text-xs text-base-content/60 mt-1">Configure AI automation for a specific device.</p>
+        </div>
+
+        <form id="aiSessionForm" class="p-6 space-y-6">
+            <input type="hidden" id="sessionToken" value="">
+
+            <!-- Device Selection -->
+            <%- include('../layouts/partials/device_selector', { id: 'sessionDevice' , label: 'Select Device' ,
+                required: true }) %>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- AI Model -->
+                    <div class="form-control">
+                        <label class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">AI
+                            Model</label>
+                        <select id="sessionAiModel" class="select select-bordered w-full rounded-2xl" required>
+                            <option value="chatgpt">ChatGPT (Free)</option>
+                            <option value="gemini">Gemini (Free)</option>
+                        </select>
+                    </div>
+
+                    <!-- Language -->
+                    <div class="form-control">
+                        <label
+                            class="block mb-2 uppercase text-[11px] font-semibold tracking-widest opacity-60">Language</label>
+                        <select id="sessionLanguage" class="select select-bordered w-full rounded-2xl" required>
+                            <option value="id">Indonesian</option>
+                            <option value="en">English</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- Status Toggle -->
+                <div class="form-control">
+                    <label class="label cursor-pointer justify-start gap-4">
+                        <input type="checkbox" id="sessionStatus" class="toggle toggle-success" checked />
+                        <div>
+                            <span class="label-text font-bold">Auto-Reply Status</span>
+                            <p class="text-xs opacity-60">Enable automatic AI responses for incoming messages</p>
+                        </div>
+                    </label>
+                </div>
+
+                <!-- Knowledge Base Editor -->
+                <div class="form-control">
+                    <label class="flex items-center justify-between mb-3">
+                        <span class="uppercase text-[11px] font-semibold tracking-widest opacity-60">Knowledge
+                            Base</span>
+                        <button type="button" onclick="addKnowledgeItem()" class="btn btn-ghost btn-xs text-primary">
+                            <i class="ri-add-line"></i> Add Item
+                        </button>
+                    </label>
+                    <div id="knowledge-container" class="space-y-3">
+                        <!-- Main knowledge (non-deletable) -->
+                        <div class="bg-base-200/50 p-4 rounded-2xl border border-base-content/50" data-knowledge="main">
+                            <div class="flex items-center justify-between mb-2">
+                                <span class="badge badge-primary badge-sm">MAIN (Required)</span>
+                            </div>
+                            <textarea class="textarea textarea-bordered w-full h-24 rounded-xl knowledge-content"
+                                placeholder="Main instructions for AI (e.g., You are a customer service bot for Company X...)"
+                                data-name="main" required></textarea>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="modal-action pt-4 border-t border-base-content/50 mt-6">
+                    <form method="dialog"><button type="button" class="btn btn-ghost rounded-xl"
+                            onclick="modal_ai_session.close()">Cancel</button></form>
+                    <button type="submit" class="btn btn-primary rounded-xl px-10">Save Session</button>
+                </div>
+        </form>
+    </div>
+</dialog>
+
+<!-- Conversation History Modal -->
+<dialog id="modal_conversation_history" class="modal">
+    <div class="modal-box bg-base-100 border border-base-content/50 max-w-4xl rounded-3xl p-0 overflow-hidden">
+        <div class="p-6 border-b border-base-content/50 flex justify-between items-center">
+            <div>
+                <h3 class="font-bold text-xl text-base-content">Conversation History</h3>
+                <p class="text-xs text-base-content/60 mt-1" id="history-device-name">-</p>
+            </div>
+            <form method="dialog"><button class="btn btn-sm btn-circle btn-ghost"><i class="ri-close-line"></i></button>
+            </form>
+        </div>
+
+        <div class="p-6">
+            <div class="overflow-x-auto">
+                <table id="conversation-history-table" class="table table-zebra w-full text-xs">
+                    <thead>
+                        <tr
+                            class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/50">
+                            <th>Chat ID</th>
+                            <th>User Message</th>
+                            <th>AI Response</th>
+                            <th>Model</th>
+                            <th>Response Time</th>
+                            <th>Status</th>
+                            <th>Date</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <!-- Loaded via DataTable -->
+                    </tbody>
+                </table>
+            </div>
+        </div>
+    </div>
+    <form method="dialog" class="modal-backdrop">
+        <button>close</button>
+    </form>
+</dialog>
+
+<script>
+    let aiSessionsDataTable = null;
+    let conversationHistoryDataTable = null;
+    let knowledgeItemCounter = 0;
+    let socket = null;
+
+    async function initAiSessions() {
+        initSocket();
+        loadStats();
+        loadAiSessions();
+    }
+
+    function initSocket() {
+        // Use userToken injected by controller
+        const userToken = '<%= userToken %>';
+
+        if (!userToken || userToken === 'undefined') {
+            console.warn('Socket: No valid userToken found for authentication');
+            return;
+        }
+
+        socket = io({
+            query: { userToken }
+        });
+
+        socket.on('connect', () => {
+            console.log('Socket connected for AI status monitoring');
+        });
+
+        socket.on('aiStatus', (data) => {
+            console.log('[AI Status]', data);
+
+            if (data.status === 'cloudflare_detected') {
+                showToast.warning(data.message, 'Cloudflare Detected');
+
+                // Show more intrusive alert for Cloudflare since it requires manual action
+                Swal.fire({
+                    title: 'Cloudflare Challenge Connected',
+                    text: 'Cloudflare detection triggered! Please solve the "Verify you are human" challenge in the browser window on your server.',
+                    icon: 'warning',
+                    confirmButtonText: 'I handled it',
+                    background: getThemeColors().background,
+                    color: getThemeColors().text
+                });
+            } else if (data.status === 'error') {
+                showToast.error(data.message, 'AI Error');
+            } else if (data.status === 'loading') {
+                // We could show a tiny indicator in the table row/badge later
+                console.log('AI working...', data.message);
+            }
+        });
+    }
+
+    async function loadStats() {
+        try {
+            const res = await axios.get('/api/ai-sessions/stats');
+            if (res.data.success) {
+                const s = res.data.stats;
+                document.getElementById('stat-active').innerText = s.active || 0;
+                document.getElementById('stat-conversations').innerText = s.conversations_30d || 0;
+                document.getElementById('stat-response').innerText = s.avg_response_time || '-';
+            }
+        } catch (err) {
+            console.error('Failed to load AI session stats:', err);
+        }
+    }
+
+    async function loadAiSessions() {
+        if (aiSessionsDataTable) {
+            aiSessionsDataTable.ajax.reload(null, false);
+            return;
+        }
+
+        const columns = [
+            {
+                data: 'device.name',
+                render: (data, type, row) => `
+                    <div class="flex items-center gap-3">
+                        <div class="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center text-primary">
+                            <i class="ri-smartphone-line"></i>
+                        </div>
+                        <div class="flex flex-col">
+                            <span class="font-bold text-base-content">${data || 'Unknown'}</span>
+                            <span class="text-[10px] text-base-content/40">${row.device_token.substring(0, 16)}...</span>
+                        </div>
+                    </div>
+                `
+            },
+            {
+                data: 'ai_model',
+                render: (data) => {
+                    const icon = data === 'chatgpt' ? 'ri-openai-line' : 'ri-gemini-line';
+                    const color = data === 'chatgpt' ? 'text-success' : 'text-info';
+                    return `<div class="flex items-center gap-2"><i class="${icon} ${color}"></i> <span class="font-semibold capitalize">${data}</span></div>`;
+                }
+            },
+            {
+                data: 'language',
+                render: (data) => `<span class="badge badge-ghost badge-sm uppercase font-mono">${data}</span>`
+            },
+            {
+                data: 'knowledge',
+                render: (data) => `<span class="badge badge-primary badge-sm">${data?.length || 0} items</span>`
+            },
+            {
+                data: 'status',
+                render: (data) => `<span class="badge ${data === 'active' ? 'badge-success' : 'badge-ghost'} badge-sm uppercase text-[10px] font-bold">${data}</span>`
+            },
+            {
+                data: 'updatedAt',
+                render: (data) => `
+                    <div class="flex flex-col text-xs text-base-content/60">
+                        <span>${new Date(data).toLocaleDateString()}</span>
+                        <span class="text-[10px] opacity-50">${new Date(data).toLocaleTimeString()}</span>
+                    </div>
+                `
+            },
+            {
+                data: 'token',
+                className: 'text-center',
+                orderable: false,
+                render: (data) => `
+                    <div class="flex items-center gap-1 justify-center">
+                        <button onclick="viewConversations('${data}')" class="btn btn-ghost btn-xs text-info hover:bg-info/10" title="View Conversations">
+                            <i class="ri-message-3-line"></i>
+                        </button>
+                        <button onclick="editSession('${data}')" class="btn btn-ghost btn-xs text-primary hover:bg-primary/10">
+                            <i class="ri-edit-line"></i>
+                        </button>
+                        <button onclick="deleteSession('${data}')" class="btn btn-ghost btn-xs text-error hover:bg-error/10">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
+                `
+            }
+        ];
+
+        aiSessionsDataTable = DataTableHelper.init('ai-sessions-table', '/api/datatable/ai-sessions', columns, {
+            order: [[5, 'desc']],
+            pageLength: 10,
+            filterFormId: 'filter_form_ai_sessions',
+            drawCallback: function (settings) {
+                // Join room for each device visible in the table
+                if (socket) {
+                    const rows = aiSessionsDataTable.rows().data();
+                    rows.each(function (row) {
+                        socket.emit('join_room', `device_${row.device_token}`);
+                    });
+                }
+            }
+        });
+    }
+
+    function openCreateModal() {
+        document.getElementById('modal-title').textContent = 'Create AI Session';
+        document.getElementById('aiSessionForm').reset();
+        document.getElementById('sessionToken').value = '';
+        resetKnowledgeEditor();
+        document.getElementById('modal_ai_session').showModal();
+    }
+
+    async function editSession(token) {
+        try {
+            const res = await axios.get(`/api/ai-sessions/${token}`);
+            if (res.data.success) {
+                const session = res.data.session;
+                document.getElementById('modal-title').textContent = 'Edit AI Session';
+                document.getElementById('sessionToken').value = session.token;
+                document.getElementById('sessionDevice').value = session.device_token;
+                document.getElementById('sessionAiModel').value = session.ai_model;
+                document.getElementById('sessionLanguage').value = session.language;
+                document.getElementById('sessionStatus').checked = session.status === 'active';
+
+                // Load knowledge
+                resetKnowledgeEditor();
+                if (session.knowledge && session.knowledge.length > 0) {
+                    session.knowledge.forEach(k => {
+                        if (k.name === 'main') {
+                            document.querySelector('[data-name="main"]').value = k.content;
+                        } else {
+                            addKnowledgeItem(k.name, k.content, k.token);
+                        }
+                    });
+                }
+
+                document.getElementById('modal_ai_session').showModal();
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to load session', 'Error');
+        }
+    }
+
+    function resetKnowledgeEditor() {
+        const container = document.getElementById('knowledge-container');
+        // Keep only main knowledge
+        const mainEl = container.querySelector('[data-knowledge="main"]');
+        container.innerHTML = '';
+        container.appendChild(mainEl);
+        mainEl.querySelector('.knowledge-content').value = '';
+        knowledgeItemCounter = 0;
+    }
+
+    function addKnowledgeItem(name = null, content = '', token = '') {
+        knowledgeItemCounter++;
+        const itemName = name || `item_${knowledgeItemCounter}`;
+        const container = document.getElementById('knowledge-container');
+
+        const div = document.createElement('div');
+        div.className = 'bg-base-200/30 p-4 rounded-2xl border border-base-content/20';
+        div.setAttribute('data-knowledge', itemName);
+        div.innerHTML = `
+            <div class="flex items-center justify-between mb-2">
+                <span class="badge badge-ghost badge-sm font-mono">${itemName}</span>
+                <button type="button" onclick="removeKnowledgeItem(this)" class="btn btn-ghost btn-xs text-error">
+                    <i class="ri-delete-bin-line"></i>
+                </button>
+            </div>
+            <textarea class="textarea textarea-bordered w-full h-20 rounded-xl knowledge-content" 
+                placeholder="Additional context or instructions..." 
+                data-name="${itemName}" 
+                data-token="${token}">${content}</textarea>
+        `;
+        container.appendChild(div);
+    }
+
+    function removeKnowledgeItem(btn) {
+        btn.closest('[data-knowledge]').remove();
+    }
+
+    document.getElementById('aiSessionForm').addEventListener('submit', async (e) => {
+        e.preventDefault();
+
+        const sessionToken = document.getElementById('sessionToken').value;
+        const isEdit = !!sessionToken;
+
+        // Collect knowledge
+        const knowledgeItems = [];
+        document.querySelectorAll('.knowledge-content').forEach(el => {
+            if (el.value.trim()) {
+                knowledgeItems.push({
+                    name: el.getAttribute('data-name'),
+                    content: el.value.trim(),
+                    token: el.getAttribute('data-token') || undefined
+                });
+            }
+        });
+
+        const payload = {
+            device_token: document.getElementById('sessionDevice').value,
+            ai_model: document.getElementById('sessionAiModel').value,
+            language: document.getElementById('sessionLanguage').value,
+            status: document.getElementById('sessionStatus').checked ? 'active' : 'inactive',
+            knowledge: knowledgeItems
+        };
+
+        try {
+            const url = isEdit ? `/api/ai-sessions/${sessionToken}` : '/api/ai-sessions';
+            const method = isEdit ? 'put' : 'post';
+            const res = await axios[method](url, payload);
+
+            if (res.data.success) {
+                document.getElementById('modal_ai_session').close();
+                showToast.success(isEdit ? 'Session updated successfully!' : 'AI session created!', 'Success');
+                loadAiSessions();
+                loadStats();
+            }
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to save session', 'Error');
+        }
+    });
+
+    async function deleteSession(token) {
+        const result = await showConfirm(
+            'Delete AI Session?',
+            'This will permanently delete this AI session and all associated knowledge.',
+            'Yes, delete it!',
+            'Cancel'
+        );
+
+        if (!result.isConfirmed) return;
+
+        try {
+            await axios.delete(`/api/ai-sessions/${token}`);
+            showToast.success('AI session has been deleted.', 'Deleted!');
+            loadAiSessions();
+            loadStats();
+        } catch (err) {
+            showToast.error(err.response?.data?.message || 'Failed to delete', 'Error');
+        }
+    }
+
+    async function viewConversations(sessionToken) {
+        document.getElementById('modal_conversation_history').showModal();
+
+        if (conversationHistoryDataTable) {
+            conversationHistoryDataTable.destroy();
+        }
+
+        const columns = [
+            { data: 'chat_id', render: (data) => `<span class="font-mono text-xs">${data.substring(0, 20)}...</span>` },
+            { data: 'user_message', render: (data) => `<div class="max-w-xs truncate" title="${data}">${data}</div>` },
+            { data: 'ai_response', render: (data) => `<div class="max-w-xs truncate" title="${data || '-'}">${data || '-'}</div>` },
+            { data: 'ai_model_used', render: (data) => `<span class="badge badge-sm capitalize">${data}</span>` },
+            { data: 'response_time_ms', render: (data) => data ? `${data}ms` : '-' },
+            { data: 'status', render: (data) => `<span class="badge badge-${data === 'completed' ? 'success' : data === 'failed' ? 'error' : 'warning'} badge-xs">${data}</span>` },
+            {
+                data: 'createdAt',
+                render: (data) => `<span class="text-xs">${new Date(data).toLocaleString()}</span>`
+            }
+        ];
+
+        conversationHistoryDataTable = DataTableHelper.init('conversation-history-table', '/api/datatable/ai-conversations', columns, {
+            ajax: {
+                url: '/api/datatable/ai-conversations',
+                type: 'POST',
+                data: function (d) {
+                    d.ai_session_token = sessionToken;
+                    return d;
+                }
+            },
+            pageLength: 10,
+            order: [[6, 'desc']]
+        });
+    }
+
+    document.addEventListener('DOMContentLoaded', initAiSessions);
+</script>
