@@ -141,7 +141,7 @@ module.exports = {
 
     // AI Automation configuration
     ai: {
-        headless: Env.getBool('AI_HEADLESS', false),
+        headless: Env.getBool('AI_HEADLESS', true),
         chromeExecutable: Env.get('CHROME_EXECUTABLE_PATH', null),
         sessionPath: Env.get('AI_SESSION_PATH', path.join(__dirname, '../browser-sessions')),
         userAgent: Env.get('AI_USER_AGENT', 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'),

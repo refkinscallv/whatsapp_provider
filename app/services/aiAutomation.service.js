@@ -48,8 +48,16 @@ class BrowserPool {
     async getBrowser(deviceId) {
         // If browser is already running
         if (this.browsers.has(deviceId)) {
-            this.lastActivity.set(deviceId, Date.now())
-            return this.browsers.get(deviceId)
+            const browser = this.browsers.get(deviceId)
+            // Verify browser is still connected
+            if (browser.isConnected()) {
+                this.lastActivity.set(deviceId, Date.now())
+                return browser
+            }
+
+            Logger.warn(`[AI:Device${deviceId}] Browser disconnected, cleaning up...`)
+            this.browsers.delete(deviceId)
+            this.lastActivity.delete(deviceId)
         }
 
         // Check if browser is currently being launched (concurrency lock)
@@ -105,31 +113,50 @@ class BrowserPool {
      * @returns {Promise<Page>}
      */
     async getPage(deviceId, aiModel, chatId) {
-        const browser = await this.getBrowser(deviceId)
-        // Isolate by chat_id to keep memory per user
         const key = `${deviceId}_${aiModel}_${chatId}`
 
-        if (this.pages.has(key)) {
-            const page = this.pages.get(key)
-            // Check if page is still alive
-            if (!page.isClosed()) {
+        // Retries for page creation to handle race conditions with browser closing
+        let retries = 0
+        const maxRetries = 2
+
+        while (retries <= maxRetries) {
+            try {
+                const browser = await this.getBrowser(deviceId)
+
+                if (this.pages.has(key)) {
+                    const page = this.pages.get(key)
+                    // Check if page is still alive
+                    if (!page.isClosed()) {
+                        return page
+                    }
+                    this.pages.delete(key)
+                }
+
+                const page = await browser.newPage()
+                await page.setUserAgent(config.ai.userAgent)
+
+                // Additional stealth measures
+                await page.evaluateOnNewDocument(() => {
+                    Object.defineProperty(navigator, 'webdriver', {
+                        get: () => false
+                    })
+                })
+
+                this.pages.set(key, page)
                 return page
+            } catch (err) {
+                retries++
+                Logger.error(`[AI:Device${deviceId}] Error getting page (attempt ${retries}/${maxRetries + 1}):`, err)
+                if (retries > maxRetries) throw err
+
+                // If it's a connectivity error, clear the browser so getBrowser launches a fresh one next attempt
+                if (err.message.includes('Connection closed') || err.message.includes('Target closed')) {
+                    this.browsers.delete(deviceId)
+                }
+
+                await new Promise(r => setTimeout(r, 1000))
             }
-            this.pages.delete(key)
         }
-
-        const page = await browser.newPage()
-        await page.setUserAgent(config.ai.userAgent)
-
-        // Additional stealth measures
-        await page.evaluateOnNewDocument(() => {
-            Object.defineProperty(navigator, 'webdriver', {
-                get: () => false
-            })
-        })
-
-        this.pages.set(key, page)
-        return page
     }
 
     /**
@@ -485,7 +512,8 @@ class AiAutomationService {
 
             // Fallback screenshot for debugging
             try {
-                const page = await this.browserPool.getPage(deviceId, aiModel)
+                // chatId might be undefined here but getPage handles key isolation
+                const page = await this.browserPool.getPage(deviceId, aiModel, chatId)
                 const screenshotDir = path.join(config.app.log_dir, 'ai-screenshots')
                 if (!fs.existsSync(screenshotDir)) {
                     fs.mkdirSync(screenshotDir, { recursive: true })

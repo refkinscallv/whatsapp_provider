@@ -11,6 +11,7 @@ const aiAutomationService = require('./aiAutomation.service')
 class AiMessageHandlerService {
     constructor() {
         this.processingMessages = new Set()
+        this.typingIntervals = new Map() // chatId -> intervalId
     }
 
     /**
@@ -67,8 +68,8 @@ class AiMessageHandlerService {
 
             const startTime = Date.now()
 
-            // Send typing indicator
-            await this.sendTypingIndicator(whatsappClient, chatId)
+            // START continuous typing indicator
+            await this.startTypingIndicator(whatsappClient, chatId)
 
             // Build prompt with knowledge injection
             const fullPrompt = aiSessionService.buildPromptWithKnowledge(session, userMessage)
@@ -83,6 +84,9 @@ class AiMessageHandlerService {
                 )
 
                 const responseTime = Date.now() - startTime
+
+                // STOP typing indicator before sending
+                await this.stopTypingIndicator(whatsappClient, chatId)
 
                 // Update conversation log
                 await aiSessionService.updateConversation(
@@ -101,6 +105,9 @@ class AiMessageHandlerService {
 
             } catch (aiError) {
                 const responseTime = Date.now() - startTime
+
+                // STOP typing indicator on error
+                await this.stopTypingIndicator(whatsappClient, chatId)
 
                 // Log error
                 Logger.error(`[AI] Error querying AI for ${chatId}:`, aiError)
@@ -128,34 +135,68 @@ class AiMessageHandlerService {
             Logger.error(`[AI] Error in handleMessage:`, error)
             return false
         } finally {
+            // Ensure typing stops even on major handler failure
+            const chatId = message.from || message.chatId
+            await this.stopTypingIndicator(whatsappClient, chatId)
+
             // Remove from processing set after a delay to ensure same event doesn't trigger again
             setTimeout(() => this.processingMessages.delete(messageId), 30000)
         }
     }
 
     /**
-     * Send typing indicator to chat
+     * Start continuous typing indicator
      * @param {object} whatsappClient - WhatsApp client instance
      * @param {string} chatId - Chat ID
      * @returns {Promise<void>}
      */
-    async sendTypingIndicator(whatsappClient, chatId) {
+    async startTypingIndicator(whatsappClient, chatId) {
         try {
+            // Prevent multiple intervals for same chat
+            if (this.typingIntervals.has(chatId)) {
+                return
+            }
+
             if (typeof whatsappClient.sendPresence === 'function') {
+                // Initial composing signal
                 await whatsappClient.sendPresence(chatId, 'composing')
 
-                // Clear typing state after a few seconds
-                setTimeout(async () => {
+                // Refresh every 9 seconds (WhatsApp typing usually expires after 10-25s depending on client)
+                const intervalId = setInterval(async () => {
                     try {
-                        await whatsappClient.sendPresence(chatId, 'paused')
+                        await whatsappClient.sendPresence(chatId, 'composing')
                     } catch (err) {
-                        // Ignore errors clearing state
+                        Logger.warn(`[AI] Failed to refresh typing for ${chatId}:`, err)
+                        this.stopTypingIndicator(whatsappClient, chatId)
                     }
-                }, 10000)
+                }, 9000)
+
+                this.typingIntervals.set(chatId, intervalId)
             }
         } catch (error) {
-            // Typing indicator is non-critical, log but don't throw
-            Logger.warn(`[AI] Failed to send typing indicator:`, error)
+            Logger.warn(`[AI] Failed to start typing indicator for ${chatId}:`, error)
+        }
+    }
+
+    /**
+     * Stop typing indicator
+     * @param {object} whatsappClient - WhatsApp client instance
+     * @param {string} chatId - Chat ID
+     * @returns {Promise<void>}
+     */
+    async stopTypingIndicator(whatsappClient, chatId) {
+        try {
+            const intervalId = this.typingIntervals.get(chatId)
+            if (intervalId) {
+                clearInterval(intervalId)
+                this.typingIntervals.delete(chatId)
+
+                if (typeof whatsappClient.sendPresence === 'function') {
+                    await whatsappClient.sendPresence(chatId, 'paused')
+                }
+            }
+        } catch (error) {
+            Logger.warn(`[AI] Failed to stop typing indicator for ${chatId}:`, error)
         }
     }
 
