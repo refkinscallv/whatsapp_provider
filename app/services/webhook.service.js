@@ -94,19 +94,20 @@ class WebhookService {
      */
     async notify(deviceToken, event, payload) {
         try {
-            // Find active webhooks for this device OR global webhooks for the device owner
-            // First, find the owner of the device
-            const deviceOwner = await db.models.UserDevice.findOne({
-                where: { device_token: deviceToken, is_host: true }
+            // Find all users who have access to this device
+            const authorizedUsers = await db.models.UserDevice.findAll({
+                where: { device_token: deviceToken }
             })
 
-            if (!deviceOwner) return
+            if (!authorizedUsers || authorizedUsers.length === 0) return
 
+            const userTokens = authorizedUsers.map(u => u.user_token)
+
+            // Find all active webhooks for these users
             const webhooks = await db.models.Webhook.findAll({
                 where: {
-                    user_token: deviceOwner.user_token,
-                    is_active: true,
-                    // Either matches device token specifically or is global for that user
+                    user_token: userTokens,
+                    is_active: true
                 }
             })
 

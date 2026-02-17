@@ -275,7 +275,7 @@ class DataTableController extends BaseController {
                 user_token: req.user.token
             }
 
-            if (params.status) customFilters.status = params.status
+            if (params.status) customFilters.is_active = params.status === 'active' || params.status === '1' || params.status === true
 
             const options = {
                 searchableColumns: ['name', 'key'],

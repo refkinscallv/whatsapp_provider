@@ -86,7 +86,7 @@
                                     class="ri-add-line"></i> New Key</button>
                         </div>
                         <div class="overflow-x-auto">
-                            <table id="api-keys-table" class="table w-full">
+                            <table id="api_keys_table" class="table w-full">
                                 <thead>
                                     <tr
                                         class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/50">
@@ -122,7 +122,7 @@
                                     class="ri-add-line"></i> Configure Webhook</button>
                         </div>
                         <div class="overflow-x-auto">
-                            <table id="webhooks-table" class="table w-full">
+                            <table id="webhooks_table" class="table w-full">
                                 <thead>
                                     <tr
                                         class="text-base-content/60 uppercase text-[10px] tracking-widest border-b-2 border-base-content/50">
@@ -244,10 +244,14 @@
             const activeContent = document.getElementById('content-' + tabId);
             if (activeContent) {
                 activeContent.style.setProperty('display', 'block', 'important');
+
+                // 2b. Adjust DataTables columns if visible
+                if (tabId === 'api' && window.dt_api_keys_table) {
+                    window.dt_api_keys_table.columns.adjust().draw();
+                } else if (tabId === 'webhooks' && window.dt_webhooks_table) {
+                    window.dt_webhooks_table.columns.adjust().draw();
+                }
             }
-            // else { // Removed console.error
-            //     console.error('[Settings] Content Element Missing!', 'content-' + tabId);
-            // }
 
             // 3. Reset Nav Buttons
             const buttons = document.getElementsByClassName('nav-tab');
@@ -261,7 +265,7 @@
                 activeBtn.classList.add('sidebar-active');
             }
         } catch (err) {
-            // console.error('[Settings] Tab Switch Error:', err); // Removed console.error
+            // console.error('[Settings] Tab Switch Error:', err);
         }
     };
 
@@ -295,6 +299,11 @@
     let webhooksDataTable = null;
 
     async function loadApiKeys() {
+        if (window.dt_api_keys_table) {
+            DataTableHelper.reloadTable('api_keys_table');
+            return;
+        }
+
         const columns = [
             {
                 data: 'name',
@@ -320,13 +329,18 @@
             }
         ];
 
-        apiKeysDataTable = DataTableHelper.init('api-keys-table', '/api/datatable/api-keys', columns, {
+        DataTableHelper.init('api_keys_table', '/api/datatable/api-keys', columns, {
             order: [[2, 'desc']],
             pageLength: 5
         });
     }
 
     async function loadWebhooks() {
+        if (window.dt_webhooks_table) {
+            DataTableHelper.reloadTable('webhooks_table');
+            return;
+        }
+
         const columns = [
             {
                 data: 'url',
@@ -352,15 +366,20 @@
                 data: 'token',
                 className: 'text-right',
                 orderable: false,
-                render: (data) => `
-                    <button onclick="deleteWebhook('${data}')" class="btn btn-ghost btn-xs text-error">
-                        <i class="ri-delete-bin-line"></i>
-                    </button>
+                render: (data, type, row) => `
+                    <div class="flex justify-end gap-1">
+                        <button onclick='editWebhook(${JSON.stringify(row)})' class="btn btn-ghost btn-xs text-primary">
+                            <i class="ri-edit-line"></i>
+                        </button>
+                        <button onclick="deleteWebhook('${data}')" class="btn btn-ghost btn-xs text-error">
+                            <i class="ri-delete-bin-line"></i>
+                        </button>
+                    </div>
                 `
             }
         ];
 
-        webhooksDataTable = DataTableHelper.init('webhooks-table', '/api/datatable/webhooks', columns, {
+        DataTableHelper.init('webhooks_table', '/api/datatable/webhooks', columns, {
             order: [[0, 'asc']],
             pageLength: 5
         });
@@ -400,11 +419,15 @@
     window.deleteKey = async function (token) {
         if ((await showConfirm('Revoke key?', 'This key will no longer be valid.')).isConfirmed) {
             await axios.delete('/api/keys/' + token);
-            DataTableHelper.reloadTable('api-keys-table');
+            DataTableHelper.reloadTable('api_keys_table');
         }
     };
 
-    window.saveWebhookForm = async function () {
+    window.editWebhook = function (webhook) {
+        window.saveWebhookForm(webhook);
+    };
+
+    window.saveWebhookForm = async function (existingData = null) {
         try {
             // Fetch devices for the selector
             const deviceRes = await axios.get('/api/devices');
@@ -415,26 +438,57 @@
                 return acc;
             }, { '': 'Global (Listen to all devices)' });
 
+            const availableEvents = [
+                { id: 'message', label: 'New Message' },
+                { id: 'message_ack', label: 'Message Ack' },
+                { id: 'qr', label: 'QR Code' },
+                { id: 'ready', label: 'Device Ready' },
+                { id: 'disconnected', label: 'Device Disconnected' },
+                { id: 'authenticated', label: 'Device Authenticated' },
+                { id: 'auth_failure', label: 'Auth Failure' }
+            ];
+
+            const currentEvents = existingData?.events || ['message', 'qr', 'ready'];
+            const currentDevice = existingData?.device_token || '';
+
             const { value: formValues } = await Swal.fire({
-                title: 'Webhook Configuration',
+                title: existingData ? 'Edit Webhook' : 'Configure Webhook',
                 html: `
                     <div class="space-y-4 text-left p-1">
                         <div class="form-control w-full">
                             <label class="label p-0 mb-2">
                                 <span class="text-[10px] font-bold uppercase tracking-widest opacity-60">Endpoint URL</span>
                             </label>
-                            <input id="swal-url" type="url" class="input input-bordered w-full rounded-xl text-sm" placeholder="https://your-server.com/webhook">
+                            <input id="swal-url" type="url" class="input input-bordered w-full rounded-xl text-sm" 
+                                placeholder="https://your-server.com/webhook" value="${existingData?.url || ''}">
                         </div>
                         <div class="form-control w-full">
                             <label class="label p-0 mb-2">
                                 <span class="text-[10px] font-bold uppercase tracking-widest opacity-60">Device Context</span>
                             </label>
                             <select id="swal-device" class="select select-bordered w-full rounded-xl text-sm">
-                                \${Object.entries(deviceOptions).map(([val, text]) => \`<option value="\${val}">\${text}</option>\`).join('')}
+                                ${Object.entries(deviceOptions).map(([val, text]) =>
+                    `<option value="${val}" ${val === currentDevice ? 'selected' : ''}>${text}</option>`
+                ).join('')}
                             </select>
                             <label class="label p-0 mt-1">
                                 <span class="text-[9px] opacity-40">Choose specific device or global listener.</span>
                             </label>
+                        </div>
+                        <div class="form-control w-full">
+                            <label class="label p-0 mb-2">
+                                <span class="text-[10px] font-bold uppercase tracking-widest opacity-60">Subscribed Events</span>
+                            </label>
+                            <div class="grid grid-cols-2 gap-2">
+                                ${availableEvents.map(ev => `
+                                    <label class="flex items-center gap-2 cursor-pointer group">
+                                        <input type="checkbox" name="swal-events" value="${ev.id}" 
+                                            ${currentEvents.includes(ev.id) ? 'checked' : ''} 
+                                            class="checkbox checkbox-primary checkbox-xs rounded">
+                                        <span class="text-xs opacity-70 group-hover:opacity-100 transition-opacity">${ev.label}</span>
+                                    </label>
+                                `).join('')}
+                            </div>
                         </div>
                     </div>
                 `,
@@ -453,6 +507,7 @@
                 preConfirm: () => {
                     const url = document.getElementById('swal-url').value;
                     const device_token = document.getElementById('swal-device').value;
+                    const events = Array.from(document.querySelectorAll('input[name="swal-events"]:checked')).map(el => el.value);
 
                     if (!url) {
                         Swal.showValidationMessage('URL is required');
@@ -462,23 +517,28 @@
                         Swal.showValidationMessage('Please enter a valid URL');
                         return false;
                     }
+                    if (events.length === 0) {
+                        Swal.showValidationMessage('Select at least one event');
+                        return false;
+                    }
 
-                    return { url, device_token };
+                    return { url, device_token, events };
                 }
             });
 
             if (formValues) {
-                showToast.loading('Updating webhook target...', 'Please wait');
+                showToast.loading(existingData ? 'Updating webhook...' : 'Creating webhook...', 'Please wait');
                 const response = await axios.post('/api/webhooks', {
+                    id: existingData?.id,
                     url: formValues.url,
                     device_token: formValues.device_token || null,
-                    events: ['message', 'qr', 'ready'],
+                    events: formValues.events,
                     is_active: true
                 });
 
                 if (response.data.success) {
                     showToast.success('Webhook target saved successfully');
-                    DataTableHelper.reloadTable('webhooks-table');
+                    DataTableHelper.reloadTable('webhooks_table');
                 } else {
                     showToast.error(response.data.message || 'Failed to save webhook');
                 }
@@ -492,7 +552,7 @@
     window.deleteWebhook = async function (token) {
         if ((await showConfirm('Delete Webhook?', 'You will stop receiving real-time event notifications.')).isConfirmed) {
             await axios.delete('/api/webhooks/' + token);
-            DataTableHelper.reloadTable('webhooks-table');
+            DataTableHelper.reloadTable('webhooks_table');
         }
     };
 
