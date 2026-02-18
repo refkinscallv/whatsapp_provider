@@ -1,13 +1,19 @@
-# 📘 Panduan Installasi WARF ke VPS (Ubuntu 22.04/24.04)
+# 📘 Panduan Installasi WARF ke VPS
 
 Panduan lengkap untuk instalasi WhatsApp API Gateway (WARF) ke VPS dari source code lokal.
+
+> **OS yang Didukung:**
+> - Ubuntu 20.04 LTS (Focal Fossa)
+> - Ubuntu 22.04 LTS (Jammy Jellyfish)
+> - Ubuntu 24.04 LTS (Noble Numbat)
+> - AlmaLinux 8 / 9
 
 ---
 
 ## 📋 Prerequisites VPS
 
 ### Spesifikasi Minimum VPS
-- **OS**: Ubuntu 22.04 LTS atau 24.04 LTS
+- **OS**: Ubuntu 20.04 / 22.04 / 24.04 LTS atau AlmaLinux 8/9
 - **RAM**: Minimal 2GB (Rekomendasi: 4GB)
 - **Storage**: Minimal 20GB SSD
 - **CPU**: Minimal 2 vCPU
@@ -26,16 +32,37 @@ Panduan lengkap untuk instalasi WhatsApp API Gateway (WARF) ke VPS dari source c
 ## 🚀 Langkah 1: Persiapan VPS
 
 ### 1.1 Update Sistem
+
+**Ubuntu 20.04 / 22.04 / 24.04:**
 ```bash
 sudo apt update && sudo apt upgrade -y
 ```
 
-### 1.2 Install Dependencies Dasar
+**AlmaLinux 8 / 9:**
 ```bash
-sudo apt install -y curl wget git build-essential software-properties-common
+sudo dnf update -y
+sudo dnf install -y epel-release
 ```
 
+---
+
+### 1.2 Install Dependencies Dasar
+
+**Ubuntu 20.04 / 22.04 / 24.04:**
+```bash
+sudo apt install -y curl wget git build-essential software-properties-common ca-certificates gnupg
+```
+
+**AlmaLinux 8 / 9:**
+```bash
+sudo dnf install -y curl wget git gcc gcc-c++ make ca-certificates
+```
+
+---
+
 ### 1.3 Install Node.js v20.x
+
+**Ubuntu 20.04 / 22.04 / 24.04:**
 ```bash
 # Install Node.js menggunakan NodeSource
 curl -fsSL https://deb.nodesource.com/setup_20.x | sudo -E bash -
@@ -43,13 +70,32 @@ sudo apt install -y nodejs
 
 # Verifikasi instalasi
 node --version  # Harus v20.x atau lebih tinggi
-npm --version   # Harus v11.x atau lebih tinggi
+npm --version
 ```
 
+**AlmaLinux 8 / 9:**
+```bash
+# Install Node.js menggunakan NodeSource
+curl -fsSL https://rpm.nodesource.com/setup_20.x | sudo bash -
+sudo dnf install -y nodejs
+
+# Verifikasi instalasi
+node --version  # Harus v20.x atau lebih tinggi
+npm --version
+```
+
+---
+
 ### 1.4 Install MySQL/MariaDB
+
+**Ubuntu 20.04 / 22.04 / 24.04:**
 ```bash
 # Install MariaDB Server
 sudo apt install -y mariadb-server mariadb-client
+
+# Enable dan start MariaDB
+sudo systemctl enable mariadb
+sudo systemctl start mariadb
 
 # Secure installation
 sudo mysql_secure_installation
@@ -61,9 +107,25 @@ sudo mysql_secure_installation
 # - Reload privilege tables: YES
 ```
 
-### 1.5 Install Redis Server
+**AlmaLinux 8 / 9:**
 ```bash
-# Install Redis
+# Install MariaDB Server
+sudo dnf install -y mariadb-server mariadb
+
+# Enable dan start MariaDB
+sudo systemctl enable mariadb
+sudo systemctl start mariadb
+
+# Secure installation
+sudo mysql_secure_installation
+```
+
+---
+
+### 1.5 Install Redis Server
+
+**Ubuntu 20.04 / 22.04 / 24.04:**
+```bash
 sudo apt install -y redis-server
 
 # Enable dan start Redis
@@ -74,12 +136,28 @@ sudo systemctl start redis-server
 redis-cli ping  # Harus return "PONG"
 ```
 
-### 1.6 Install Dependencies untuk Chromium
+**AlmaLinux 8 / 9:**
 ```bash
-# Install Chromium dan dependencies untuk WhatsApp-Web.js
+sudo dnf install -y redis
+
+# Enable dan start Redis
+sudo systemctl enable redis
+sudo systemctl start redis
+
+# Verifikasi Redis berjalan
+redis-cli ping  # Harus return "PONG"
+```
+
+---
+
+### 1.6 Install Dependencies untuk Chromium (Puppeteer)
+
+> ⚠️ **Penting**: Setiap versi Ubuntu memiliki cara instalasi Chromium yang berbeda.
+
+**Ubuntu 20.04 (Focal):**
+```bash
 sudo apt install -y \
     chromium-browser \
-    chromium-codecs-ffmpeg \
     fonts-liberation \
     libasound2 \
     libatk-bridge2.0-0 \
@@ -100,21 +178,144 @@ sudo apt install -y \
     libxrandr2 \
     xdg-utils
 
-# Verifikasi Chromium
+# Verifikasi
 which chromium-browser
+chromium-browser --version
 ```
 
+**Ubuntu 22.04 (Jammy):**
+```bash
+# Di Ubuntu 22.04, chromium-browser adalah snap wrapper
+# Lebih disarankan install via snap atau gunakan chromium dari apt
+sudo apt install -y chromium-browser
+
+# Jika chromium-browser tidak tersedia via apt, gunakan snap:
+# sudo snap install chromium
+
+# Install library dependencies
+sudo apt install -y \
+    fonts-liberation \
+    libasound2 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0 \
+    libnspr4 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxkbcommon0 \
+    libxrandr2 \
+    xdg-utils
+
+# Verifikasi
+which chromium-browser || which chromium
+```
+
+**Ubuntu 24.04 (Noble):**
+```bash
+# Di Ubuntu 24.04, chromium-browser TIDAK tersedia via apt (hanya snap)
+# Gunakan Google Chrome atau Chromium via cara berikut:
+
+# Opsi A: Install Google Chrome (Direkomendasikan)
+wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install -y /tmp/google-chrome.deb
+
+# Verifikasi
+google-chrome --version
+which google-chrome  # Biasanya: /usr/bin/google-chrome
+
+# Opsi B: Install Chromium via snap
+sudo snap install chromium
+# Path snap: /snap/bin/chromium
+
+# Install library dependencies
+sudo apt install -y \
+    fonts-liberation \
+    libasound2t64 \
+    libatk-bridge2.0-0 \
+    libatk1.0-0 \
+    libcups2 \
+    libdbus-1-3 \
+    libdrm2 \
+    libgbm1 \
+    libgtk-3-0t64 \
+    libnspr4 \
+    libnss3 \
+    libxcomposite1 \
+    libxdamage1 \
+    libxfixes3 \
+    libxkbcommon0 \
+    libxrandr2 \
+    xdg-utils
+```
+
+> ⚠️ **Catatan Ubuntu 24.04**: Package `libasound2` dan `libgtk-3-0` telah diganti menjadi `libasound2t64` dan `libgtk-3-0t64`.
+
+**AlmaLinux 8 / 9:**
+```bash
+# Install Chromium dan dependencies
+sudo dnf install -y chromium
+
+# Install library dependencies
+sudo dnf install -y \
+    alsa-lib \
+    atk \
+    at-spi2-atk \
+    cups-libs \
+    dbus-libs \
+    libdrm \
+    mesa-libgbm \
+    gtk3 \
+    nspr \
+    nss \
+    libwayland-client \
+    libXcomposite \
+    libXdamage \
+    libXfixes \
+    libxkbcommon \
+    libXrandr \
+    xdg-utils \
+    liberation-fonts
+
+# Verifikasi
+which chromium-browser || which chromium
+chromium --version
+```
+
+---
+
 ### 1.7 Install PM2 (Process Manager)
+
+**Semua OS:**
 ```bash
 sudo npm install -g pm2
 
 # Enable PM2 startup script
-sudo pm2 startup systemd
+pm2 startup
+# Jalankan command yang diberikan PM2 (copy-paste output-nya)
 ```
 
+---
+
 ### 1.8 Install Nginx (Reverse Proxy)
+
+**Ubuntu 20.04 / 22.04 / 24.04:**
 ```bash
 sudo apt install -y nginx
+
+# Enable Nginx
+sudo systemctl enable nginx
+sudo systemctl start nginx
+```
+
+**AlmaLinux 8 / 9:**
+```bash
+sudo dnf install -y nginx
 
 # Enable Nginx
 sudo systemctl enable nginx
@@ -125,7 +326,7 @@ sudo systemctl start nginx
 
 ## 💾 Langkah 2: Setup Database
 
-### 2.1 Login ke MySQL
+### 2.1 Login ke MySQL/MariaDB
 ```bash
 sudo mysql -u root -p
 ```
@@ -157,7 +358,10 @@ sudo nano /etc/redis/redis.conf
 # requirepass your_redis_password
 
 # Restart Redis
+# Ubuntu:
 sudo systemctl restart redis-server
+# AlmaLinux:
+sudo systemctl restart redis
 ```
 
 ---
@@ -170,7 +374,8 @@ sudo systemctl restart redis-server
 sudo adduser warf
 
 # Tambahkan ke grup sudo (opsional)
-sudo usermod -aG sudo warf
+sudo usermod -aG sudo warf   # Ubuntu
+# sudo usermod -aG wheel warf  # AlmaLinux
 
 # Beralih ke user warf
 su - warf
@@ -178,7 +383,6 @@ su - warf
 
 ### 3.2 Buat Direktori Aplikasi
 ```bash
-# Buat direktori untuk aplikasi
 mkdir -p ~/apps
 cd ~/apps
 ```
@@ -187,7 +391,6 @@ cd ~/apps
 
 **Opsi A: Menggunakan Git**
 ```bash
-# Clone dari repository (jika source code sudah di Git)
 git clone <repository_url> whatsapp_provider
 cd whatsapp_provider
 ```
@@ -196,7 +399,7 @@ cd whatsapp_provider
 
 Dari komputer lokal Windows Anda (PowerShell):
 ```powershell
-# Kompres source code (dari folder c:\APP\KW\whatsapp\whatsapp_provider)
+# Kompres source code
 cd c:\APP\KW\whatsapp
 tar -czf whatsapp_provider.tar.gz whatsapp_provider --exclude=node_modules --exclude=.wwebjs_cache --exclude=whatsapp_sessions --exclude=tmp --exclude=logs
 
@@ -233,14 +436,14 @@ npm install
 
 ### 4.2 Setup Environment Variables
 ```bash
-# Copy file .env.example
 cp .env.example .env
-
-# Edit file .env
 nano .env
 ```
 
 ### 4.3 Konfigurasi File .env
+
+> ⚠️ **Perhatikan** `WHATSAPP_CHROME_PATH` — berbeda tergantung OS dan cara instalasi Chromium.
+
 ```bash
 # Application
 NODE_ENV=production
@@ -288,7 +491,15 @@ QUEUE_MAX_ATTEMPTS=3
 
 # WhatsApp Configuration
 WHATSAPP_SESSIONS_DIR=./whatsapp_sessions
+
+# ⚠️ Sesuaikan CHROME_PATH dengan OS Anda:
+# Ubuntu 20.04:       /usr/bin/chromium-browser
+# Ubuntu 22.04:       /usr/bin/chromium-browser  (atau /snap/bin/chromium)
+# Ubuntu 24.04 Chrome: /usr/bin/google-chrome
+# Ubuntu 24.04 Snap:   /snap/bin/chromium
+# AlmaLinux:          /usr/bin/chromium
 WHATSAPP_CHROME_PATH=/usr/bin/chromium-browser
+
 WHATSAPP_WEB_VERSION_CACHE_TYPE=remote
 WHATSAPP_QR_MAX_RETRIES=5
 WHATSAPP_MAX_RECONNECT_ATTEMPTS=5
@@ -315,26 +526,20 @@ CRON_CLEANUP=0 2 * * *
 
 **Simpan file dengan**: `Ctrl+O`, `Enter`, `Ctrl+X`
 
-### 4.4 Generate JWT Secret (Strong Random String)
+### 4.4 Generate JWT Secret
 ```bash
-# Generate secure random string untuk JWT_SECRET
 node -e "console.log(require('crypto').randomBytes(64).toString('hex'))"
-
 # Copy output dan paste ke .env file di JWT_SECRET
 ```
 
 ### 4.5 Buat Direktori yang Diperlukan
 ```bash
-# Buat folder untuk sessions, logs, dan tmp
 mkdir -p whatsapp_sessions logs tmp
-
-# Set permissions
 chmod 755 whatsapp_sessions logs tmp
 ```
 
 ### 4.6 Initialize Database
 ```bash
-# Setup database (create tables and seed data)
 npm run setup
 ```
 
@@ -344,7 +549,6 @@ npm run setup
 
 ### 5.1 Buat PM2 Ecosystem File
 ```bash
-# Buat file ecosystem.config.js
 nano ecosystem.config.js
 ```
 
@@ -394,20 +598,11 @@ pm2 logs warf
 
 ### 5.3 PM2 Useful Commands
 ```bash
-# Lihat logs
-pm2 logs warf
-
-# Monitor
-pm2 monit
-
-# Restart
-pm2 restart warf
-
-# Stop
-pm2 stop warf
-
-# Delete
-pm2 delete warf
+pm2 logs warf        # Lihat logs
+pm2 monit            # Monitor
+pm2 restart warf     # Restart
+pm2 stop warf        # Stop
+pm2 delete warf      # Delete
 ```
 
 ---
@@ -415,8 +610,15 @@ pm2 delete warf
 ## 🌐 Langkah 6: Setup Nginx Reverse Proxy
 
 ### 6.1 Buat Nginx Configuration
+
+**Ubuntu 20.04 / 22.04 / 24.04:**
 ```bash
 sudo nano /etc/nginx/sites-available/warf
+```
+
+**AlmaLinux 8 / 9:**
+```bash
+sudo nano /etc/nginx/conf.d/warf.conf
 ```
 
 Paste konfigurasi berikut:
@@ -437,7 +639,7 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_cache_bypass $http_upgrade;
-        
+
         # Timeout settings untuk WhatsApp connections
         proxy_connect_timeout 60s;
         proxy_send_timeout 60s;
@@ -454,7 +656,7 @@ server {
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
-        
+
         # WebSocket timeout
         proxy_read_timeout 86400;
     }
@@ -464,6 +666,8 @@ server {
 Simpan: `Ctrl+O`, `Enter`, `Ctrl+X`
 
 ### 6.2 Enable Nginx Site
+
+**Ubuntu 20.04 / 22.04 / 24.04:**
 ```bash
 # Enable site
 sudo ln -s /etc/nginx/sites-available/warf /etc/nginx/sites-enabled/
@@ -478,13 +682,30 @@ sudo nginx -t
 sudo systemctl reload nginx
 ```
 
+**AlmaLinux 8 / 9:**
+```bash
+# File sudah langsung di conf.d, tidak perlu symlink
+# Test Nginx configuration
+sudo nginx -t
+
+# Reload Nginx
+sudo systemctl reload nginx
+```
+
 ---
 
 ## 🔐 Langkah 7: Setup SSL dengan Let's Encrypt (HTTPS)
 
 ### 7.1 Install Certbot
+
+**Ubuntu 20.04 / 22.04 / 24.04:**
 ```bash
 sudo apt install -y certbot python3-certbot-nginx
+```
+
+**AlmaLinux 8 / 9:**
+```bash
+sudo dnf install -y certbot python3-certbot-nginx
 ```
 
 ### 7.2 Generate SSL Certificate
@@ -500,26 +721,21 @@ sudo certbot --nginx -d yourdomain.com -d www.yourdomain.com
 
 ### 7.3 Test Auto-Renewal
 ```bash
-# Test renewal
 sudo certbot renew --dry-run
-
-# Setup auto-renewal (sudah otomatis dengan systemd timer)
 sudo systemctl status certbot.timer
 ```
 
 ---
 
-## 🔥 Langkah 8: Setup Firewall (UFW)
+## 🔥 Langkah 8: Setup Firewall
 
-### 8.1 Enable UFW
+### Ubuntu 20.04 / 22.04 / 24.04 (UFW)
 ```bash
 # Allow SSH
 sudo ufw allow OpenSSH
 
-# Allow HTTP
+# Allow HTTP dan HTTPS
 sudo ufw allow 80/tcp
-
-# Allow HTTPS
 sudo ufw allow 443/tcp
 
 # Enable UFW
@@ -527,6 +743,24 @@ sudo ufw enable
 
 # Check status
 sudo ufw status
+```
+
+### AlmaLinux 8 / 9 (firewalld)
+```bash
+# Start dan enable firewalld
+sudo systemctl enable firewalld
+sudo systemctl start firewalld
+
+# Allow SSH, HTTP, HTTPS
+sudo firewall-cmd --permanent --add-service=ssh
+sudo firewall-cmd --permanent --add-service=http
+sudo firewall-cmd --permanent --add-service=https
+
+# Reload firewall
+sudo firewall-cmd --reload
+
+# Check status
+sudo firewall-cmd --list-all
 ```
 
 ---
@@ -544,8 +778,9 @@ pm2 logs warf --lines 50
 # Check Redis
 redis-cli ping
 
-# Check MySQL
-sudo systemctl status mysql
+# Check MariaDB/MySQL
+sudo systemctl status mariadb   # Ubuntu
+# sudo systemctl status mariadb  # AlmaLinux (sama)
 
 # Check Nginx
 sudo systemctl status nginx
@@ -561,7 +796,7 @@ Buka browser dan akses:
 # Test health endpoint
 curl http://localhost:3025/health
 
-# Atau dari browser
+# Atau dari luar
 curl https://yourdomain.com/health
 ```
 
@@ -571,68 +806,95 @@ curl https://yourdomain.com/health
 
 ### Error: Port Already in Use
 ```bash
-# Check port 3025
 sudo lsof -i :3025
-
-# Kill process
 sudo kill -9 <PID>
 ```
 
 ### Database Connection Failed
 ```bash
-# Check MySQL status
-sudo systemctl status mysql
+# Check MariaDB status
+sudo systemctl status mariadb
 
-# Check credentials
+# Test credentials
 mysql -u whatsapp_user -p whatsapp
 
 # Check .env DB_* variables
 ```
 
 ### Chromium/Puppeteer Errors
+
+**Ubuntu 20.04:**
 ```bash
-# Install missing dependencies
 sudo apt install -y chromium-browser chromium-codecs-ffmpeg
-
-# Check Chromium path
 which chromium-browser
+# Set di .env: WHATSAPP_CHROME_PATH=/usr/bin/chromium-browser
+```
 
-# Update .env
-WHATSAPP_CHROME_PATH=/usr/bin/chromium-browser
+**Ubuntu 22.04:**
+```bash
+# Cek apakah chromium-browser tersedia
+which chromium-browser
+# Jika tidak ada, install via snap:
+sudo snap install chromium
+# Set di .env: WHATSAPP_CHROME_PATH=/snap/bin/chromium
+```
+
+**Ubuntu 24.04:**
+```bash
+# Gunakan Google Chrome
+wget -q -O /tmp/google-chrome.deb https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb
+sudo apt install -y /tmp/google-chrome.deb
+which google-chrome
+# Set di .env: WHATSAPP_CHROME_PATH=/usr/bin/google-chrome
+```
+
+**AlmaLinux:**
+```bash
+sudo dnf install -y chromium
+which chromium
+# Set di .env: WHATSAPP_CHROME_PATH=/usr/bin/chromium
+```
+
+**Puppeteer sandbox error (semua OS):**
+```bash
+# Jika error "No usable sandbox!", tambahkan args di konfigurasi Puppeteer:
+# '--no-sandbox', '--disable-setuid-sandbox'
 ```
 
 ### PM2 Won't Start
 ```bash
-# Check PM2 logs
 pm2 logs warf --err
-
-# Delete and restart
 pm2 delete warf
 pm2 start ecosystem.config.js
 ```
 
 ### Nginx 502 Bad Gateway
 ```bash
-# Check if app is running
 pm2 status
-
-# Check Nginx error logs
 sudo tail -f /var/log/nginx/error.log
-
-# Check app logs
 pm2 logs warf
 ```
 
 ### Redis Connection Failed
 ```bash
-# Check Redis status
+# Ubuntu
 sudo systemctl status redis-server
-
-# Test connection
-redis-cli ping
-
-# Restart Redis
 sudo systemctl restart redis-server
+
+# AlmaLinux
+sudo systemctl status redis
+sudo systemctl restart redis
+
+redis-cli ping
+```
+
+### SELinux Blocking Nginx (AlmaLinux)
+```bash
+# Jika Nginx tidak bisa proxy ke aplikasi Node.js di AlmaLinux:
+sudo setsebool -P httpd_can_network_connect 1
+
+# Verifikasi
+getsebool httpd_can_network_connect
 ```
 
 ---
@@ -641,48 +903,33 @@ sudo systemctl restart redis-server
 
 ### Application Logs
 ```bash
-# PM2 logs
 pm2 logs warf
-
-# Application logs
 tail -f ~/apps/whatsapp_provider/logs/error-*.log
 tail -f ~/apps/whatsapp_provider/logs/combined-*.log
 ```
 
 ### Nginx Logs
 ```bash
-# Access logs
 sudo tail -f /var/log/nginx/access.log
-
-# Error logs
 sudo tail -f /var/log/nginx/error.log
 ```
 
 ### Database Backup
 ```bash
-# Backup database
+# Backup
 mysqldump -u whatsapp_user -p whatsapp > backup_$(date +%Y%m%d).sql
 
-# Restore database
+# Restore
 mysql -u whatsapp_user -p whatsapp < backup_20260212.sql
 ```
 
 ### Application Update
 ```bash
-# Stop aplikasi
 pm2 stop warf
-
-# Pull latest code (jika menggunakan Git)
 cd ~/apps/whatsapp_provider
 git pull origin main
-
-# Update dependencies
 npm install --production
-
-# Restart aplikasi
 pm2 restart warf
-
-# Check logs
 pm2 logs warf
 ```
 
@@ -706,8 +953,8 @@ Edit `ecosystem.config.js`:
 instances: 'max',  // Atau angka spesifik: 2, 4, dll
 ```
 
-### 3. MySQL Optimization
-Edit `/etc/mysql/my.cnf`:
+### 3. MySQL/MariaDB Optimization
+Edit `/etc/mysql/my.cnf` (Ubuntu) atau `/etc/my.cnf` (AlmaLinux):
 ```ini
 [mysqld]
 max_connections = 200
@@ -720,6 +967,20 @@ Edit `/etc/redis/redis.conf`:
 maxmemory 256mb
 maxmemory-policy allkeys-lru
 ```
+
+---
+
+## 📝 Referensi Path per OS
+
+| Komponen | Ubuntu 20.04 | Ubuntu 22.04 | Ubuntu 24.04 | AlmaLinux |
+|---|---|---|---|---|
+| Chromium | `/usr/bin/chromium-browser` | `/usr/bin/chromium-browser` atau `/snap/bin/chromium` | `/usr/bin/google-chrome` atau `/snap/bin/chromium` | `/usr/bin/chromium` |
+| Redis service | `redis-server` | `redis-server` | `redis-server` | `redis` |
+| MariaDB service | `mariadb` | `mariadb` | `mariadb` | `mariadb` |
+| Nginx config | `/etc/nginx/sites-available/` | `/etc/nginx/sites-available/` | `/etc/nginx/sites-available/` | `/etc/nginx/conf.d/` |
+| Firewall | `ufw` | `ufw` | `ufw` | `firewalld` |
+| User sudo group | `sudo` | `sudo` | `sudo` | `wheel` |
+| MySQL config | `/etc/mysql/my.cnf` | `/etc/mysql/my.cnf` | `/etc/mysql/my.cnf` | `/etc/my.cnf` |
 
 ---
 
@@ -740,7 +1001,7 @@ Setelah `npm run setup`, gunakan kredensial default:
 - [ ] Ganti password database yang kuat
 - [ ] Generate JWT_SECRET yang secure
 - [ ] Ganti default admin password
-- [ ] Enable UFW firewall
+- [ ] Enable Firewall (UFW / firewalld)
 - [ ] Install SSL certificate (Let's Encrypt)
 - [ ] Set Redis password (jika exposed ke internet)
 - [ ] Disable root SSH login
@@ -766,6 +1027,6 @@ Proprietary License - All rights reserved.
 
 ---
 
-**Dibuat pada**: 2026-02-12  
-**Last Updated**: 2026-02-12  
-**Version**: 1.0.0
+**Dibuat pada**: 2026-02-12
+**Last Updated**: 2026-02-18
+**Version**: 2.0.0
