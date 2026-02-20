@@ -99,8 +99,58 @@ class WhatsAppEvents {
                     where: { token: clientId },
                 },
             )
+
+            // Emit state change to Socket.IO for real-time UI updates
+            this.emit(clientId, 'whatsapp:state_change', {
+                state,
+                ...additionalData
+            }, true)
         } catch (err) {
             Logger.error(`Failed to update device state in DB for ${clientId}`, err)
+        }
+    }
+
+    /**
+     * Trigger client re-initialization (to show QR again)
+     */
+    async triggerReinitialization(clientId) {
+        // Prevent double re-initialization if already in progress
+        const currentState = this.whatsappInit.clientStates.get(clientId)
+        if (currentState === 'initializing' || currentState === 'prepare') {
+            Logger.debug(`Re-initialization already in progress for ${clientId}, skipping...`)
+            return
+        }
+
+        Logger.info(`Triggering automatic re-initialization for client ${clientId} to show QR code`)
+
+        try {
+            const Device = db.models.Device
+            const device = await Device.findOne({ where: { token: clientId } })
+
+            if (!device) {
+                Logger.error(`Cannot trigger re-initialization: Device ${clientId} not found`)
+                return
+            }
+
+            // Update status to initializing (must match Device.model.js ENUM)
+            await this.updateDeviceState(clientId, 'initializing', {
+                qr: null,
+                is_auth: false
+            })
+
+            // Small delay to ensure previous instance is fully gone
+            setTimeout(async () => {
+                try {
+                    await this.whatsappInit.createClient(clientId, {
+                        provider: device.provider || 'wwebjs'
+                    })
+                    Logger.info(`Re-initialization started for ${clientId}`)
+                } catch (err) {
+                    Logger.error(`Failed to re-initialize client ${clientId}`, err)
+                }
+            }, 5000)
+        } catch (err) {
+            Logger.error(`Error in triggerReinitialization for ${clientId}`, err)
         }
     }
 
@@ -158,6 +208,9 @@ class WhatsAppEvents {
                 this.emit(clientId, 'whatsapp:auth_failure', { message }, true)
                 await webhookService.notify(clientId, 'auth_failure', { message })
                 await this.whatsappInit.destroyClient(clientId, true)
+
+                // AUTO RE-INIT: Bring back QR code
+                await this.triggerReinitialization(clientId)
             }),
         )
 
@@ -208,7 +261,6 @@ class WhatsAppEvents {
             this.safeHandler(clientId, 'change_state', async (state) => {
                 await this.updateDeviceState(clientId, state)
                 Logger.debug(`Client ${clientId} state changed: ${state}`)
-                this.emit(clientId, 'whatsapp:state_change', { state })
 
                 // Recovery logic for specific states
                 if (state === 'TIMEOUT') {
@@ -231,17 +283,24 @@ class WhatsAppEvents {
         client.on(
             'disconnected',
             this.safeHandler(clientId, 'disconnected', async (reason) => {
+                const isLogout = reason === 'LOGOUT' || reason === 'logged_out'
+                const isNavigation = reason === 'NAVIGATION'
+
                 await this.updateDeviceState(clientId, 'disconnected', {
-                    is_logged_out: reason === 'LOGOUT',
-                    logged_out_at: reason === 'LOGOUT' ? new Date() : null,
+                    is_logged_out: isLogout,
+                    logged_out_at: isLogout ? new Date() : null,
+                    is_auth: isLogout ? false : undefined // Reset auth if it was a logout
                 })
 
                 Logger.warn(`Client ${clientId} disconnected: ${reason}`)
                 this.emit(clientId, 'whatsapp:disconnected', { reason }, true)
                 await webhookService.notify(clientId, 'disconnected', { reason })
 
-                if (reason === 'LOGOUT' || reason === 'NAVIGATION') {
+                if (isLogout || isNavigation) {
                     await this.whatsappInit.destroyClient(clientId, true)
+
+                    // AUTO RE-INIT: Bring back QR code if it was a logout or fatal navigation
+                    await this.triggerReinitialization(clientId)
                 }
             }),
         )

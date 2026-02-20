@@ -11,22 +11,8 @@ const Logger = require('@core/logger.core')
 puppeteer.use(StealthPlugin())
 
 /**
- * AI Provider Configuration
+ * AI Provider Configuration is moved to @app/config.js
  */
-const AI_PROVIDERS = {
-    chatgpt: {
-        url: 'https://chatgpt.com',
-        selectorInput: 'div.ProseMirror#prompt-textarea[contenteditable="true"]',
-        selectorOutput: 'article[data-testid^="conversation-turn-"]:last-child div.markdown',
-        stableDuration: 3000
-    },
-    gemini: {
-        url: 'https://gemini.google.com',
-        selectorInput: 'div.ql-editor.textarea[contenteditable="true"]',
-        selectorOutput: 'message-content:last-of-type div.markdown',
-        stableDuration: 3000
-    }
-}
 
 /**
  * Browser Pool Management
@@ -183,6 +169,28 @@ class BrowserPool {
     }
 
     /**
+     * Delete session directory for specific device
+     * @param {string} deviceId - Device identifier
+     * @returns {Promise<void>}
+     */
+    async deleteSession(deviceId) {
+        await this.closeBrowser(deviceId)
+
+        const sessionDir = path.join(config.ai.sessionPath, `device_${deviceId}`)
+
+        if (fs.existsSync(sessionDir)) {
+            try {
+                // Use a small delay to ensure browser process is fully released
+                await new Promise(resolve => setTimeout(resolve, 1000))
+                fs.rmSync(sessionDir, { recursive: true, force: true })
+                Logger.info(`[AI] Browser session directory deleted for device ${deviceId}`)
+            } catch (err) {
+                Logger.error(`[AI] Failed to delete session directory for device ${deviceId}: `, err)
+            }
+        }
+    }
+
+    /**
      * Cleanup inactive browsers
      * @returns {Promise<number>} - Number of browsers closed
      */
@@ -260,7 +268,7 @@ class AiAutomationService {
             await this.delay(checkInterval)
         }
 
-        throw new Error(`Text did not stabilize within ${timeout}ms`)
+        throw new Error(`Text did not stabilize within ${timeout} ms`)
     }
 
     /**
@@ -274,7 +282,7 @@ class AiAutomationService {
             const Socket = require('@core/socket.core')
             const io = Socket.getInstance()
             if (io) {
-                io.to(`device_${deviceId}`).emit('aiStatus', {
+                io.to(`device_${deviceId} `).emit('aiStatus', {
                     status,
                     message,
                     timestamp: Date.now()
@@ -284,7 +292,7 @@ class AiAutomationService {
             // Socket not available, ignore
         }
 
-        Logger.info(`[AI:Device${deviceId}] ${message}`)
+        Logger.info(`[AI:Device${deviceId}] ${message} `)
     }
 
     /**
@@ -344,7 +352,7 @@ class AiAutomationService {
 
         if (isCloudflare) {
             this.emitStatus(deviceId, 'cloudflare_detected', 'Cloudflare challenge detected! Please solve it in the browser window.')
-            Logger.warn(`[AI:Device${deviceId}] Cloudflare challenge detected. Waiting for manual resolution...`)
+            Logger.warn(`[AI:Device${deviceId}] Cloudflare challenge detected.Waiting for manual resolution...`)
 
             // Wait for cloudflare to disappear or timeout
             try {
@@ -371,9 +379,9 @@ class AiAutomationService {
      * @returns {Promise<string>}
      */
     async queryAI(deviceId, aiModel, chatId, fullPrompt) {
-        const provider = AI_PROVIDERS[aiModel.toLowerCase()]
+        const provider = config.ai.providers[aiModel.toLowerCase()]
         if (!provider) {
-            throw new Error(`Unknown AI provider: ${aiModel}`)
+            throw new Error(`Unknown AI provider: ${aiModel} `)
         }
 
         this.emitStatus(deviceId, 'loading', `Connecting to ${aiModel}...`)
@@ -429,7 +437,7 @@ class AiAutomationService {
                     for (const sel of selectorsToTry) {
                         inputElement = await page.$(sel)
                         if (inputElement) {
-                            Logger.info(`[AI:Device${deviceId}] Found input field with selector: ${sel}`)
+                            Logger.info(`[AI:Device${deviceId}] Found input field with selector: ${sel} `)
                             break
                         }
                     }
@@ -540,6 +548,15 @@ class AiAutomationService {
         for (const [deviceId] of this.browserPool.browsers) {
             await this.browserPool.closeBrowser(deviceId)
         }
+    }
+
+    /**
+     * Delete AI session for a device
+     * @param {string} deviceId - Device identifier
+     * @returns {Promise<void>}
+     */
+    async deleteSession(deviceId) {
+        await this.browserPool.deleteSession(deviceId)
     }
 }
 

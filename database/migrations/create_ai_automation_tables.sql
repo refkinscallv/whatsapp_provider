@@ -4,7 +4,7 @@ CREATE TABLE IF NOT EXISTS `ai_sessions` (
     `token` VARCHAR(32) NOT NULL UNIQUE,
     `device_token` VARCHAR(32) NOT NULL,
     `user_token` VARCHAR(32) NOT NULL,
-    `ai_model` ENUM('chatgpt', 'gemini') NOT NULL DEFAULT 'chatgpt' COMMENT 'AI provider model',
+    `ai_model` ENUM('chatgpt') NOT NULL DEFAULT 'chatgpt' COMMENT 'AI provider model',
     `language` VARCHAR(10) NOT NULL DEFAULT 'id' COMMENT 'Response language (e.g. id, en)',
     `status` ENUM('active', 'inactive') NOT NULL DEFAULT 'active' COMMENT 'Auto-reply status',
     `is_deleted` TINYINT(1) NOT NULL DEFAULT 0,

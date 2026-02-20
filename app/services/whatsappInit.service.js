@@ -351,6 +351,11 @@ class WhatsAppInit extends EventEmitter {
             if (client) {
                 Logger.info(`Destroying client ${clientId}...`, { deleteSession })
 
+                // Remove all events from this client instance to avoid double-firing if re-created
+                if (this.eventsInstance) {
+                    this.eventsInstance.removeAllListeners(client)
+                }
+
                 // Destroy client with timeout
                 try {
                     await Promise.race([client.destroy(), new Promise((_, reject) => setTimeout(() => reject(new Error('Destroy timeout')), 10000))])
@@ -405,13 +410,30 @@ class WhatsAppInit extends EventEmitter {
      * @returns {Promise<boolean>}
      */
     async deleteSession(clientId) {
-        const sessionPath = path.join(this.sessionsDir, `session-${clientId}`)
+        const providerType = this.getProviderType(clientId)
+        const prefix = providerType === 'baileys' ? 'baileys-session-' : 'session-'
+        const sessionPath = path.join(this.sessionsDir, `${prefix}${clientId}`)
 
         if (!fs.existsSync(sessionPath)) {
+            // Also try the other prefix just in case provider info is lost or mismatched
+            const altPrefix = providerType === 'baileys' ? 'session-' : 'baileys-session-'
+            const altPath = path.join(this.sessionsDir, `${altPrefix}${clientId}`)
+            if (fs.existsSync(altPath)) {
+                return await this._doDeleteSession(altPath, clientId)
+            }
+
             Logger.info(`Session folder does not exist: ${sessionPath}`)
             return true
         }
 
+        return await this._doDeleteSession(sessionPath, clientId)
+    }
+
+    /**
+     * Internal helper for physical session deletion
+     * @private
+     */
+    async _doDeleteSession(sessionPath, clientId) {
         // Retry logic for session deletion
         for (let attempt = 1; attempt <= 5; attempt++) {
             try {

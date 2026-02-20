@@ -71,6 +71,16 @@ module.exports = class Database {
             await this.sequelize.authenticate()
             Logger.info('database', 'Database connection established')
 
+            // MIGRATE: Convert any existing Gemini rows to ChatGPT before restricted sync
+            try {
+                await this.sequelize.query("UPDATE ai_sessions SET ai_model = 'chatgpt' WHERE ai_model = 'gemini'")
+                await this.sequelize.query("UPDATE ai_conversations SET ai_model_used = 'chatgpt' WHERE ai_model_used = 'gemini'")
+                Logger.info('database', 'Successfully migrated Gemini data to ChatGPT')
+            } catch (err) {
+                // Ignore if table doesn't exist yet
+                Logger.debug('database', 'Skipping Gemini migration (tables might not exist yet)')
+            }
+
             // Load all models from models directory
             await this.#loadModels()
 

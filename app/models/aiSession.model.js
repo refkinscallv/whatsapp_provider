@@ -27,7 +27,7 @@ module.exports = (sequelize, DataTypes) => {
             },
 
             ai_model: {
-                type: DataTypes.ENUM('chatgpt', 'gemini'),
+                type: DataTypes.ENUM('chatgpt'),
                 allowNull: false,
                 defaultValue: 'chatgpt',
                 comment: 'AI provider model',

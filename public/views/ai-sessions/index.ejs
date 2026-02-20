@@ -3,7 +3,7 @@
     <div class="flex flex-col md:flex-row md:items-center justify-between gap-4">
         <div>
             <h1 class="text-3xl font-bold text-base-content">AI Automation</h1>
-            <p class="text-base-content/60">Manage AI sessions for auto-reply with ChatGPT or Gemini.</p>
+            <p class="text-base-content/60">Manage AI sessions for auto-reply with ChatGPT.</p>
         </div>
         <div class="flex gap-2">
             <button onclick="DataTableHelper.openFilterModal('filter_modal_ai_sessions', 'ai-sessions-table')"
@@ -111,7 +111,6 @@
                     <select name="ai_model" class="select select-bordered w-full rounded-2xl bg-base-200/50">
                         <option value="">All Models</option>
                         <option value="chatgpt">ChatGPT</option>
-                        <option value="gemini">Gemini</option>
                     </select>
                 </div>
 
@@ -178,7 +177,6 @@
                             Model</label>
                         <select id="sessionAiModel" class="select select-bordered w-full rounded-2xl" required>
                             <option value="chatgpt">ChatGPT (Free)</option>
-                            <option value="gemini">Gemini (Free)</option>
                         </select>
                     </div>
 
@@ -365,8 +363,8 @@
             {
                 data: 'ai_model',
                 render: (data) => {
-                    const icon = data === 'chatgpt' ? 'ri-openai-line' : 'ri-gemini-line';
-                    const color = data === 'chatgpt' ? 'text-success' : 'text-info';
+                    const icon = 'ri-openai-line';
+                    const color = 'text-success';
                     return `<div class="flex items-center gap-2"><i class="${icon} ${color}"></i> <span class="font-semibold capitalize">${data}</span></div>`;
                 }
             },

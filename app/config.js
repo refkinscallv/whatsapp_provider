@@ -149,6 +149,14 @@ module.exports = {
         checkInterval: Env.getInt('AI_CHECK_INTERVAL', 1000),
         timeout: Env.getInt('AI_TIMEOUT', 90000),
         sessionTimeout: Env.getInt('AI_SESSION_TIMEOUT', 3600000), // 1 hour
+        providers: {
+            chatgpt: {
+                url: 'https://chatgpt.com',
+                selectorInput: 'div.ProseMirror#prompt-textarea[contenteditable="true"]',
+                selectorOutput: 'article[data-testid^="conversation-turn-"]:last-child div.markdown',
+                stableDuration: 3000
+            }
+        }
     },
 
     // Mailer configuration

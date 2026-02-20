@@ -5,6 +5,8 @@ const whatsappService = require('./whatsapp.service')
 const subscriptionService = require('./subscription.service')
 const Hash = require('@core/helpers/hash.helper')
 const Logger = require('@core/logger.core')
+const aiAutomationService = require('./aiAutomation.service')
+const aiSessionService = require('./aiSession.service')
 
 /**
  * Device Service
@@ -73,7 +75,13 @@ class DeviceService {
         }
 
         if (device.is_logged_out) {
-            throw new Error('Device is logged out. Please create a new device.')
+            Logger.info(`Device ${deviceToken} was logged out. Resetting status for re-initialization.`)
+            await device.update({
+                is_logged_out: false,
+                is_auth: false,
+                status: 'initializing',
+                qr: null
+            })
         }
 
         try {
@@ -193,6 +201,14 @@ class DeviceService {
 
         // Destroy WhatsApp client and delete session
         await whatsappService.destroyClient(deviceToken, true)
+
+        // Delete AI browser session and database session record
+        try {
+            await aiAutomationService.deleteSession(deviceToken)
+            await aiSessionService.deleteByDevice(deviceToken)
+        } catch (aiErr) {
+            Logger.warn(`Failed to cleanup AI sessions for deleted device ${deviceToken}:`, aiErr)
+        }
 
         // Soft delete device
         await device.update({

@@ -168,6 +168,18 @@ class AiSessionService {
     }
 
     /**
+     * Delete all AI sessions for a device (hard delete)
+     * @param {string} deviceToken - Device token
+     * @returns {Promise<void>}
+     */
+    async deleteByDevice(deviceToken) {
+        await db.models.AiSession.update({ is_deleted: 1 }, {
+            where: { device_token: deviceToken, is_deleted: 0 }
+        })
+        Logger.info(`AI sessions marked as deleted for device ${deviceToken}`)
+    }
+
+    /**
      * Create knowledge items for a session
      * @param {number} sessionId - Session ID
      * @param {Array} knowledgeItems - Array of knowledge items
