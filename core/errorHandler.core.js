@@ -13,6 +13,16 @@ module.exports = class ErrorHandler {
      * @param {Object} app - Express application instance
      */
     static init(app) {
+        // Register global process error handlers to prevent app from crashing 
+        // on library-level async errors (like Puppeteer/wwebjs detached frames)
+        process.on('unhandledRejection', (reason, promise) => {
+            Logger.error('GLOBAL', 'Unhandled Rejection at:', promise, 'reason:', reason)
+        })
+
+        process.on('uncaughtException', (err, origin) => {
+            Logger.error('GLOBAL', 'Uncaught Exception:', err, 'origin:', origin)
+        })
+
         // Register 404 handler first
         this.#register404Handler(app)
 

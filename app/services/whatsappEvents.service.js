@@ -297,10 +297,14 @@ class WhatsAppEvents {
                 await webhookService.notify(clientId, 'disconnected', { reason })
 
                 if (isLogout || isNavigation) {
-                    await this.whatsappInit.destroyClient(clientId, true)
+                    // Small delay before destruction to let wwebjs internal state settle
+                    // effectively prevents "Attempted to use detached Frame" errors
+                    setTimeout(async () => {
+                        await this.whatsappInit.destroyClient(clientId, true)
 
-                    // AUTO RE-INIT: Bring back QR code if it was a logout or fatal navigation
-                    await this.triggerReinitialization(clientId)
+                        // AUTO RE-INIT: Bring back QR code if it was a logout or fatal navigation
+                        await this.triggerReinitialization(clientId)
+                    }, 2000)
                 }
             }),
         )
