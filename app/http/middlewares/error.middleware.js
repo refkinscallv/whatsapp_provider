@@ -1,6 +1,6 @@
 'use strict'
 
-const Logger = require('@core/logger.core')
+const config = require('@app/config')
 
 /**
  * Error Middleware
@@ -15,7 +15,7 @@ const errorMiddleware = (err, { req, res, next }) => {
     return res.status(statusCode).json({
         success: false,
         message,
-        stack: process.env.NODE_ENV === 'development' ? err.stack : undefined
+        stack: !config.app.production ? err.stack : undefined
     })
 }
 

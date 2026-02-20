@@ -89,18 +89,26 @@ class Logger {
         })
     }
 
-    static info(context, message) {
+    static info(context, ...args) {
         if (!this.logger) this.init()
-        if (message === undefined) {
+        let message = args.map(arg =>
+            typeof arg === 'object' ? (arg instanceof Error ? arg.stack : JSON.stringify(arg)) : arg
+        ).join(' ')
+
+        if (args.length === 0) {
             message = context
             context = 'SYSTEM'
         }
         this.logger.info(message, { context })
     }
 
-    static error(context, message) {
+    static error(context, ...args) {
         if (!this.logger) this.init()
-        if (message === undefined) {
+        let message = args.map(arg =>
+            typeof arg === 'object' ? (arg instanceof Error ? arg.stack : JSON.stringify(arg)) : arg
+        ).join(' ')
+
+        if (args.length === 0) {
             message = context
             context = 'SYSTEM'
         }
@@ -113,7 +121,7 @@ class Logger {
             if (io) {
                 io.to('admin').emit('system:error', {
                     context,
-                    message: typeof message === 'object' ? message.message : message,
+                    message: message,
                     timestamp: new Date()
                 })
             }
@@ -122,18 +130,26 @@ class Logger {
         }
     }
 
-    static warn(context, message) {
+    static warn(context, ...args) {
         if (!this.logger) this.init()
-        if (message === undefined) {
+        let message = args.map(arg =>
+            typeof arg === 'object' ? (arg instanceof Error ? arg.stack : JSON.stringify(arg)) : arg
+        ).join(' ')
+
+        if (args.length === 0) {
             message = context
             context = 'SYSTEM'
         }
         this.logger.warn(message, { context })
     }
 
-    static debug(context, message) {
+    static debug(context, ...args) {
         if (!this.logger) this.init()
-        if (message === undefined) {
+        let message = args.map(arg =>
+            typeof arg === 'object' ? (arg instanceof Error ? arg.stack : JSON.stringify(arg)) : arg
+        ).join(' ')
+
+        if (args.length === 0) {
             message = context
             context = 'SYSTEM'
         }
@@ -142,7 +158,8 @@ class Logger {
 
     static set(error, context = 'SYSTEM') {
         if (!this.logger) this.init()
-        this.logger.error(error, { context })
+        const message = error instanceof Error ? error.stack : (typeof error === 'object' ? JSON.stringify(error) : error)
+        this.logger.error(message, { context })
 
         // Broadcast to admin socket
         try {

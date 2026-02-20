@@ -67,8 +67,10 @@ module.exports = class Boot {
             // Setup graceful shutdown handlers
             this.#handleShutdown(server)
         } catch (err) {
-            Logger.error('boot', `Failed to start application: ${err.message}`)
-            process.exit(1)
+            Logger.error('boot', `Failed to start application: ${err.message}`, err)
+            if (!config.app.production) {
+                process.exit(1)
+            }
         }
     }
 

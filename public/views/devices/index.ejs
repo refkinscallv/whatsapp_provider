@@ -228,6 +228,27 @@
         applyFilters();
     }
 
+    async function copyToClipboard(text) {
+        try {
+            await navigator.clipboard.writeText(text);
+            showToast.success('Token copied to clipboard!', 'Copied!');
+        } catch (err) {
+            console.error('Failed to copy text: ', err);
+            // Fallback for older browsers
+            const textArea = document.createElement("textarea");
+            textArea.value = text;
+            document.body.appendChild(textArea);
+            textArea.select();
+            try {
+                document.execCommand('copy');
+                showToast.success('Token copied to clipboard!', 'Copied!');
+            } catch (err) {
+                showToast.error('Failed to copy token', 'Error');
+            }
+            document.body.removeChild(textArea);
+        }
+    }
+
     function applyFilters() {
         const search = $('#filter-search').val().toLowerCase();
         const provider = $('#filter-provider').val();
@@ -460,6 +481,15 @@
                                         </div>
                                     </div>
                                     <div class="divider my-1 opacity-5"></div>
+                                    <div class="flex justify-between items-center text-xs">
+                                        <span class="text-base-content/60">Token:</span>
+                                        <div class="flex items-center gap-2">
+                                            <span class="text-base-content font-mono font-bold truncate max-w-[120px]" title="${dev.token}">${dev.token}</span>
+                                            <button onclick="copyToClipboard('${dev.token}')" class="btn btn-ghost btn-xs btn-square h-6 w-6 rounded-md hover:bg-primary/10 hover:text-primary" title="Copy Token">
+                                                <i class="ri-clipboard-line"></i>
+                                            </button>
+                                        </div>
+                                    </div>
                                     <div class="flex justify-between text-xs">
                                         <span class="text-base-content/60">Phone:</span>
                                         <span class="text-base-content font-mono font-bold">${dev.data?.wid || '-'}</span>

@@ -6,6 +6,7 @@
  */
 
 const Logger = require('@core/logger.core')
+const config = require('@app/config')
 
 module.exports = class ErrorHandler {
     /**
@@ -17,10 +18,21 @@ module.exports = class ErrorHandler {
         // on library-level async errors (like Puppeteer/wwebjs detached frames)
         process.on('unhandledRejection', (reason, promise) => {
             Logger.error('GLOBAL', 'Unhandled Rejection at:', promise, 'reason:', reason)
+
+            // In production, we don't want to kill the process
+            if (!config.app.production) {
+                // In development, maybe we want to see it clearly
+                // process.exit(1)
+            }
         })
 
         process.on('uncaughtException', (err, origin) => {
             Logger.error('GLOBAL', 'Uncaught Exception:', err, 'origin:', origin)
+
+            // In production, we don't want to kill the process
+            if (!config.app.production) {
+                // process.exit(1)
+            }
         })
 
         // Register 404 handler first
@@ -79,7 +91,7 @@ module.exports = class ErrorHandler {
                 return res.status(status).json({
                     success: false,
                     message,
-                    error: process.env.NODE_ENV === 'development' ? err.stack : undefined,
+                    error: !config.app.production ? err.stack : undefined,
                 })
             }
 
@@ -89,7 +101,7 @@ module.exports = class ErrorHandler {
                 title: `Error ${status}`,
                 status,
                 message,
-                error: process.env.NODE_ENV === 'development' ? err : {},
+                error: !config.app.production ? err : {},
             })
         })
     }
