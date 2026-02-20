@@ -21,8 +21,8 @@ class SubscriptionService {
             // Find active subscriptions that have passed their end date
             const expiredSubscriptions = await db.models.UserSubscription.findAll({
                 where: {
-                    status: 'active',
-                    ends_at: {
+                    status: 'ACTIVE',
+                    expired_at: {
                         [Op.lt]: now
                     }
                 }
@@ -33,7 +33,7 @@ class SubscriptionService {
                 Logger.info(`Found ${count} expired subscriptions. Processing...`)
 
                 for (const sub of expiredSubscriptions) {
-                    await sub.update({ status: 'expired' })
+                    await sub.update({ status: 'EXPIRED' })
 
                     // Log usage reset or other actions if needed
                     Logger.info(`Subscription ${sub.token} for user ${sub.user_token} has expired.`)
@@ -56,8 +56,8 @@ class SubscriptionService {
         return await db.models.UserSubscription.findOne({
             where: {
                 user_token: userToken,
-                status: 'active',
-                ends_at: {
+                status: 'ACTIVE',
+                expired_at: {
                     [Op.gt]: new Date()
                 }
             },
@@ -132,7 +132,7 @@ class SubscriptionService {
     async processQuotaResets() {
         try {
             const activeSubscriptions = await db.models.UserSubscription.findAll({
-                where: { status: 'active' },
+                where: { status: 'ACTIVE' },
                 include: [
                     { model: db.models.Package, as: 'package' },
                     { model: db.models.UserSubscriptionUsage, as: 'usage' }
