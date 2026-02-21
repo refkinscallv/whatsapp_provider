@@ -18,7 +18,18 @@ const rateLimitMiddleware = (options = {}) => {
         windowMs = config.rateLimit?.windowMs || 60000
     } = options
 
-    return async ({ req, res, next }) => {
+    return async (arg1, arg2, arg3) => {
+        let req, res, next
+        if (arg1 && arg1.req && arg1.res && arg1.next) {
+            req = arg1.req
+            res = arg1.res
+            next = arg1.next
+        } else {
+            req = arg1
+            res = arg2
+            next = arg3
+        }
+
         try {
             // Super Admin is exempt from rate limits
             if (req.user && req.user.role === 'SUPER_ADMIN') {

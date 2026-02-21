@@ -7,7 +7,18 @@ const Logger = require('@core/logger.core')
  * Internal Auth Middleware
  * Validates server-to-server calls using a master key
  */
-const internalAuthMiddleware = async ({ req, res, next }) => {
+const internalAuthMiddleware = async (arg1, arg2, arg3) => {
+    let req, res, next
+    if (arg1 && arg1.req && arg1.res && arg1.next) {
+        req = arg1.req
+        res = arg1.res
+        next = arg1.next
+    } else {
+        req = arg1
+        res = arg2
+        next = arg3
+    }
+
     try {
         const internalKey = req.headers['x-internal-key'] || req.query.internal_key || req.headers['x-api-key']
 

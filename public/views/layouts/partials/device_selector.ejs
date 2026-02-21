@@ -35,7 +35,6 @@
                 var res = await axios.get('/api/devices');
                 if (res.data && res.data.success && Array.isArray(res.data.devices)) {
                     var devs = res.data.devices.filter(function (d) { return d.status === 'ready'; });
-                    console.log(devs);
 
                     if (devs.length === 0 && !_showAll) {
                         el.innerHTML = '<option value="" disabled selected>No ready devices found</option>';

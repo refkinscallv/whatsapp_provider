@@ -90,15 +90,24 @@ class WhatsAppEvents {
 
         try {
             const Device = db.models.Device
-            await Device.update(
-                {
+            const device = await Device.findOne({ where: { token: clientId } })
+
+            if (device) {
+                const updatePayload = {
                     status: state,
                     ...additionalData,
-                },
-                {
-                    where: { token: clientId },
-                },
-            )
+                }
+
+                // If data is provided, MERGE it with existing data
+                if (additionalData.data) {
+                    updatePayload.data = {
+                        ...(device.data || {}),
+                        ...additionalData.data
+                    }
+                }
+
+                await device.update(updatePayload)
+            }
 
             // Emit state change to Socket.IO for real-time UI updates
             this.emit(clientId, 'whatsapp:state_change', {
@@ -229,11 +238,11 @@ class WhatsAppEvents {
     registerConnectionEvents(clientId, client) {
         client.on(
             'ready',
-            this.safeHandler(clientId, 'ready', async () => {
+            this.safeHandler(clientId, 'ready', async (data) => {
                 const deviceData = {
-                    wid: client.info?.wid?.user,
-                    pushname: client.info?.pushname,
-                    platform: client.info?.platform,
+                    wid: data?.wid?.user || data?.wid || client.info?.wid?.user,
+                    pushname: data?.pushname || client.info?.pushname,
+                    platform: data?.platform || client.info?.platform || this.whatsappInit.getProviderType(clientId),
                 }
 
                 // 1. Update DB First
@@ -244,15 +253,15 @@ class WhatsAppEvents {
                 })
 
                 Logger.info(`Client ${clientId} is ready`, {
-                    phone: client.info?.wid?.user,
-                    pushname: client.info?.pushname,
+                    phone: deviceData.wid,
+                    pushname: deviceData.pushname,
                 })
 
                 // 2. Emit with delay to ensure FE is ready
-                this.emit(clientId, 'whatsapp:ready', { info: client.info }, true, 1000)
+                this.emit(clientId, 'whatsapp:ready', { info: data || client.info }, true, 1000)
 
                 // 3. Webhook (Async)
-                await webhookService.notify(clientId, 'ready', { info: client.info })
+                await webhookService.notify(clientId, 'ready', { info: data || client.info })
             }),
         )
 

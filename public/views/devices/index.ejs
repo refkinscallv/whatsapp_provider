@@ -492,17 +492,17 @@
                                     </div>
                                     <div class="flex justify-between text-xs">
                                         <span class="text-base-content/60">Phone:</span>
-                                        <span class="text-base-content font-mono font-bold">${dev.data?.wid || '-'}</span>
+                                        <span class="text-base-content font-mono font-bold">${dev.data?.wid || dev.clientInfo?.info?.wid?.user || '-'}</span>
                                     </div>
                                     <div class="flex justify-between text-xs">
                                         <span class="text-base-content/60">Platform:</span>
-                                        <span class="text-base-content font-bold capitalize">${dev.data?.platform || '-'}</span>
+                                        <span class="text-base-content font-bold capitalize">${dev.data?.platform || dev.clientInfo?.info?.platform || (dev.provider || 'wwebjs')}</span>
                                     </div>
                                     <div class="flex justify-between text-xs">
                                         <span class="text-base-content/60">Battery:</span>
                                         <div class="flex items-center gap-1">
-                                            <span class="text-base-content font-bold">${dev.data?.battery !== undefined ? dev.data.battery + '%' : '-'}</span>
-                                            ${dev.data?.plugged ? '<i class="ri-flashlight-fill text-success text-[10px]"></i>' : ''}
+                                            <span class="text-base-content font-bold">${dev.data?.battery !== undefined ? dev.data.battery + '%' : (dev.clientInfo?.info?.battery !== undefined ? dev.clientInfo.info.battery + '%' : '-')}</span>
+                                            ${dev.data?.plugged || dev.clientInfo?.info?.plugged ? '<i class="ri-flashlight-fill text-success text-[10px]"></i>' : ''}
                                         </div>
                                     </div>
                                 </div>

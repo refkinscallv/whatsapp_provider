@@ -43,10 +43,6 @@ class WhatsAppService {
      */
     async createClient(clientId, options = {}) {
         const client = await this.init.createClient(clientId, options)
-
-        // Register event listeners
-        this.events.register(clientId, client)
-
         return client
     }
 

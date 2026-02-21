@@ -7,7 +7,18 @@ const Logger = require('@core/logger.core')
  * API Key Middleware
  * Validates external API access using wf_ keys
  */
-const apiKeyMiddleware = async ({ req, res, next }) => {
+const apiKeyMiddleware = async (arg1, arg2, arg3) => {
+    let req, res, next
+    if (arg1 && arg1.req && arg1.res && arg1.next) {
+        req = arg1.req
+        res = arg1.res
+        next = arg1.next
+    } else {
+        req = arg1
+        res = arg2
+        next = arg3
+    }
+
     try {
         const apiKey = req.headers['x-api-key'] || req.query.api_key
 

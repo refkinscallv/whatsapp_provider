@@ -49,6 +49,7 @@ class WWebJSProvider extends BaseProvider {
             userAgent: userAgent,
         })
 
+        this.info = null
         this.setupEventListeners()
     }
 
@@ -57,12 +58,23 @@ class WWebJSProvider extends BaseProvider {
         this.client.on('authenticated', (session) => this.emit('authenticated', session))
         this.client.on('auth_failure', (message) => this.emit('auth_failure', message))
         this.client.on('ready', () => {
+            const info = this.client?.info
+            if (info) {
+                this.info = {
+                    wid: {
+                        user: info.wid?.user,
+                        _serialized: info.wid?._serialized
+                    },
+                    pushname: info.pushname,
+                    platform: info.platform
+                }
+            } else {
+                this.info = {
+                    platform: 'wwebjs'
+                }
+            }
             this.updateState('ready')
-            this.emit('ready', {
-                wid: this.client.info.wid.user,
-                pushname: this.client.info.pushname,
-                platform: this.client.info.platform
-            })
+            this.emit('ready', this.info)
         })
         this.client.on('disconnected', (reason) => {
             this.updateState('disconnected')

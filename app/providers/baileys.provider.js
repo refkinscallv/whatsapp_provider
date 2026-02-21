@@ -95,14 +95,22 @@ class BaileysProvider extends BaseProvider {
             } else if (connection === 'open') {
                 Logger.info(`Baileys connection opened for ${this.clientId}`)
                 this.qr = null
-                const decodedId = jidDecode(this.client.user.id)
-                this.info = {
-                    wid: {
-                        user: decodedId.user,
-                        _serialized: this.client.user.id
-                    },
-                    pushname: this.client.user.name || '',
-                    platform: 'baileys'
+
+                const user = this.client?.user
+                if (user) {
+                    const decodedId = jidDecode(user.id)
+                    this.info = {
+                        wid: {
+                            user: decodedId.user,
+                            _serialized: user.id
+                        },
+                        pushname: user.name || '',
+                        platform: 'baileys'
+                    }
+                } else {
+                    this.info = {
+                        platform: 'baileys'
+                    }
                 }
 
                 this.updateState('ready')

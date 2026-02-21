@@ -83,6 +83,8 @@ class WhatsAppInit extends EventEmitter {
         this.reconnectAttempts = new Map()
         this.clientTimers = new Map()
         this.activeReconnections = new Map() // Track active reconnection promises
+        this.activeInitializations = new Map() // Track active initialization promises
+        this.activeDestructions = new Map() // Track active destruction promises
         this.watchdog = new WatchdogService(this) // Initialize Watchdog
 
         // Configuration
@@ -246,92 +248,109 @@ class WhatsAppInit extends EventEmitter {
             throw new Error('clientId is required')
         }
 
-        // Check existing client
-        if (this.hasClient(clientId)) {
-            Logger.warn(`Client ${clientId} already exists`)
-            const existingClient = this.getClient(clientId)
-
-            if (this.isClientReady(clientId)) {
-                Logger.info(`Returning existing ready client ${clientId}`)
-                return existingClient
-            }
-
-            Logger.info(`Destroying existing non-ready client ${clientId}`)
-            await this.destroyClient(clientId, false)
+        // 1. Prevent concurrent initialization attempts for the same client
+        if (this.activeInitializations.has(clientId)) {
+            Logger.info(`Initialization already in progress for ${clientId}, returning existing promise.`)
+            return this.activeInitializations.get(clientId)
         }
 
-        const providerType = options.provider || process.env.WHATSAPP_DEFAULT_PROVIDER || 'wwebjs'
+        const initPromise = (async () => {
+            // Check existing client
+            if (this.hasClient(clientId)) {
+                Logger.warn(`Client ${clientId} already exists`)
+                const existingClient = this.getClient(clientId)
 
-        try {
-            // Get randomized fingerprint
-            const userAgent = getModernUserAgent()
-            const viewport = getRandomViewport()
-            const timezone = getTimezone()
+                if (this.isClientReady(clientId)) {
+                    Logger.info(`Returning existing ready client ${clientId}`)
+                    return existingClient
+                }
 
-            Logger.debug(`Creating ${providerType} client ${clientId} with UA: ${userAgent.substring(0, 50)}...`)
+                Logger.info(`Destroying existing non-ready client ${clientId}`)
+                await this.destroyClient(clientId, false)
 
-            const providerOptions = {
-                sessionsDir: this.sessionsDir,
-                chromePath: this.chromePath,
-                userAgent: userAgent,
-                viewport: viewport,
-                timezone: timezone,
-                qrMaxRetries: this.qrMaxRetries,
-                ...options
+                // 2. Add small delay to allow puppeteer/browser to fully close and release file locks
+                await new Promise(resolve => setTimeout(resolve, 2000))
             }
 
-            const client = ProviderFactory.create(providerType, clientId, providerOptions)
+            const providerType = options.provider || process.env.WHATSAPP_DEFAULT_PROVIDER || 'wwebjs'
 
-            this.clients.set(clientId, client)
-            this.clientStates.set(clientId, 'initializing')
-            this.providerTypes.set(clientId, providerType)
+            try {
+                // Get randomized fingerprint
+                const userAgent = getModernUserAgent()
+                const viewport = getRandomViewport()
+                const timezone = getTimezone()
 
-            // Register events via WhatsAppEvents service (if available)
-            if (this.eventsInstance) {
-                this.eventsInstance.register(clientId, client)
+                Logger.debug(`Creating ${providerType} client ${clientId} with UA: ${userAgent.substring(0, 50)}...`)
+
+                const providerOptions = {
+                    sessionsDir: this.sessionsDir,
+                    chromePath: this.chromePath,
+                    userAgent: userAgent,
+                    viewport: viewport,
+                    timezone: timezone,
+                    qrMaxRetries: this.qrMaxRetries,
+                    ...options
+                }
+
+                const client = ProviderFactory.create(providerType, clientId, providerOptions)
+
+                this.clients.set(clientId, client)
+                this.clientStates.set(clientId, 'initializing')
+                this.providerTypes.set(clientId, providerType)
+
+                // Register events via WhatsAppEvents service (if available)
+                if (this.eventsInstance) {
+                    this.eventsInstance.register(clientId, client)
+                }
+
+                Logger.info(`Initializing ${providerType} client ${clientId}...`)
+
+                await client.initialize()
+                this.metrics.clientsCreated++
+
+                return client
+            } catch (err) {
+                Logger.error(`Failed to create ${providerType} client ${clientId}`, err)
+
+                // Force cleanup on failure to release locks
+                await this.destroyClient(clientId, false).catch(() => { })
+
+                this.clients.delete(clientId)
+                this.clientStates.delete(clientId)
+                this.providerTypes.delete(clientId)
+                this.metrics.errors++
+
+                const attempts = this.reconnectAttempts.get(clientId) || 0
+
+                if (attempts < this.MAX_RECONNECT_ATTEMPTS) {
+                    this.reconnectAttempts.set(clientId, attempts + 1)
+                    this.metrics.reconnections++
+
+                    Logger.warn(`Retrying client ${clientId} (${attempts + 1}/${this.MAX_RECONNECT_ATTEMPTS}) in ${this.REINIT_DELAY / 1000}s`)
+
+                    const timer = setTimeout(() => {
+                        this.clientTimers.delete(clientId)
+                        this.createClient(clientId, options).catch((e) => {
+                            Logger.error(`Retry failed for ${clientId}`, e)
+                        })
+                    }, this.REINIT_DELAY)
+
+                    this.clientTimers.set(clientId, timer)
+                } else {
+                    Logger.error(`Max reconnect attempts reached for ${clientId}`)
+                    this.reconnectAttempts.delete(clientId)
+                    this.emit('client_failed', { clientId, error: err })
+                }
+
+                throw err
             }
+        })().finally(() => {
+            // Ensure we clear the lock regardless of success or failure
+            this.activeInitializations.delete(clientId)
+        })
 
-            Logger.info(`Initializing ${providerType} client ${clientId}...`)
-
-            await client.initialize()
-            this.metrics.clientsCreated++
-
-            return client
-        } catch (err) {
-            Logger.error(`Failed to create ${providerType} client ${clientId}`, err)
-
-            // Force cleanup on failure to release locks
-            await this.destroyClient(clientId, false).catch(() => { })
-
-            this.clients.delete(clientId)
-            this.clientStates.delete(clientId)
-            this.providerTypes.delete(clientId)
-            this.metrics.errors++
-
-            const attempts = this.reconnectAttempts.get(clientId) || 0
-
-            if (attempts < this.MAX_RECONNECT_ATTEMPTS) {
-                this.reconnectAttempts.set(clientId, attempts + 1)
-                this.metrics.reconnections++
-
-                Logger.warn(`Retrying client ${clientId} (${attempts + 1}/${this.MAX_RECONNECT_ATTEMPTS}) in ${this.REINIT_DELAY / 1000}s`)
-
-                const timer = setTimeout(() => {
-                    this.clientTimers.delete(clientId)
-                    this.createClient(clientId, options).catch((e) => {
-                        Logger.error(`Retry failed for ${clientId}`, e)
-                    })
-                }, this.REINIT_DELAY)
-
-                this.clientTimers.set(clientId, timer)
-            } else {
-                Logger.error(`Max reconnect attempts reached for ${clientId}`)
-                this.reconnectAttempts.delete(clientId)
-                this.emit('client_failed', { clientId, error: err })
-            }
-
-            throw err
-        }
+        this.activeInitializations.set(clientId, initPromise)
+        return initPromise
     }
 
     /**
@@ -345,63 +364,81 @@ class WhatsAppInit extends EventEmitter {
             throw new Error('clientId is required')
         }
 
-        try {
-            const client = this.getClient(clientId)
+        // 1. Prevent concurrent destruction attempts for the same client
+        if (this.activeDestructions.has(clientId)) {
+            Logger.info(`Destruction already in progress for ${clientId}, returning existing promise.`)
+            return this.activeDestructions.get(clientId)
+        }
 
-            if (client) {
-                Logger.info(`Destroying client ${clientId}...`, { deleteSession })
+        const destroyPromise = (async () => {
+            try {
+                const client = this.getClient(clientId)
 
-                // Remove all events from this client instance to avoid double-firing if re-created
-                if (this.eventsInstance) {
-                    this.eventsInstance.removeAllListeners(client)
+                if (client) {
+                    Logger.info(`Destroying client ${clientId}...`, { deleteSession })
+
+                    // Remove all events from this client instance to avoid double-firing if re-created
+                    if (this.eventsInstance) {
+                        this.eventsInstance.removeAllListeners(client)
+                    }
+
+                    // Destroy client with timeout
+                    try {
+                        await Promise.race([client.destroy(), new Promise((_, reject) => setTimeout(() => reject(new Error('Destroy timeout')), 10000))])
+                    } catch (err) {
+                        // Protocol error (Target closed) is common here if the browser closed itself first
+                        if (err.message.includes('Target closed') || err.message.includes('Protocol error')) {
+                            Logger.debug(`Client ${clientId} browser already closed during destroy`)
+                        } else {
+                            Logger.warn(`Error during client destroy for ${clientId}`, err)
+                        }
+                    }
+
+                    // Cleanup maps
+                    this.clients.delete(clientId)
+                    this.clientStates.delete(clientId)
+                    this.reconnectAttempts.delete(clientId)
+
+                    // Clear any pending timers
+                    if (this.clientTimers.has(clientId)) {
+                        clearTimeout(this.clientTimers.get(clientId))
+                        this.clientTimers.delete(clientId)
+                    }
+
+                    // Update metrics
+                    this.metrics.clientsDestroyed++
+
+                    Logger.info(`Client ${clientId} destroyed`)
+                    this.emit('client_destroyed', { clientId })
+
+                    // Emit to Socket.IO
+                    if (this.io) {
+                        this.io.to(`client:${clientId}`).emit('whatsapp:client_destroyed', { clientId })
+                        this.io.emit('whatsapp:client_destroyed:broadcast', { clientId })
+                    }
                 }
 
-                // Destroy client with timeout
-                try {
-                    await Promise.race([client.destroy(), new Promise((_, reject) => setTimeout(() => reject(new Error('Destroy timeout')), 10000))])
-                } catch (err) {
-                    Logger.warn(`Error during client destroy for ${clientId}`, err)
+                // Delete session if requested
+                if (deleteSession) {
+                    await this.deleteSession(clientId)
                 }
 
-                // Cleanup maps
+                return true
+            } catch (err) {
+                Logger.error(`Failed to destroy client ${clientId}`, err)
+
+                // Force cleanup
                 this.clients.delete(clientId)
                 this.clientStates.delete(clientId)
-                this.reconnectAttempts.delete(clientId)
 
-                // Clear any pending timers
-                if (this.clientTimers.has(clientId)) {
-                    clearTimeout(this.clientTimers.get(clientId))
-                    this.clientTimers.delete(clientId)
-                }
-
-                // Update metrics
-                this.metrics.clientsDestroyed++
-
-                Logger.info(`Client ${clientId} destroyed`)
-                this.emit('client_destroyed', { clientId })
-
-                // Emit to Socket.IO
-                if (this.io) {
-                    this.io.to(`client:${clientId}`).emit('whatsapp:client_destroyed', { clientId })
-                    this.io.emit('whatsapp:client_destroyed:broadcast', { clientId })
-                }
+                return false
+            } finally {
+                this.activeDestructions.delete(clientId)
             }
+        })()
 
-            // Delete session if requested
-            if (deleteSession) {
-                await this.deleteSession(clientId)
-            }
-
-            return true
-        } catch (err) {
-            Logger.error(`Failed to destroy client ${clientId}`, err)
-
-            // Force cleanup
-            this.clients.delete(clientId)
-            this.clientStates.delete(clientId)
-
-            return false
-        }
+        this.activeDestructions.set(clientId, destroyPromise)
+        return destroyPromise
     }
 
     /**

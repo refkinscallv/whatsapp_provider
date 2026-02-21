@@ -24,7 +24,7 @@ const subscriptionMiddleware = (resource) => {
             const appModeService = require('@app/services/appMode.service')
             const isSaaS = await appModeService.isSubscriptionEnabled()
 
-            // Bypass if not in SaaS mode
+            // Bypass if not in SaaS mode (no subscription system)
             if (!isSaaS) {
                 return next()
             }
@@ -34,12 +34,22 @@ const subscriptionMiddleware = (resource) => {
                 return res.status(401).json({ success: false, message: 'Authentication required' })
             }
 
+            // Fetch full user data if role info is missing (common with API Key auth)
+            let fullUser = user
+            if (!fullUser.role && !fullUser.is_admin) {
+                const db = require('@core/database.core')
+                fullUser = await db.models.User.findOne({ where: { token: user.token } })
+                if (!fullUser) {
+                    return res.status(401).json({ success: false, message: 'User not found' })
+                }
+            }
+
             // Super Admin has no limits
-            if (user.role === 'SUPER_ADMIN') {
+            if (fullUser.role === 'SUPER_ADMIN' || fullUser.is_admin) {
                 return next()
             }
 
-            const userToken = user.token
+            const userToken = fullUser.token
 
             // 1. Find active subscription
             const subscription = await db.models.UserSubscription.findOne({
