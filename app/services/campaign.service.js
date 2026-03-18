@@ -84,7 +84,9 @@ class CampaignService {
 
         // If not scheduled, start processing immediately
         if (!scheduled_at) {
-            this.processCampaign(campaign, receiverList, message, type, media_url, media_mimetype)
+            this.processCampaign(campaign, receiverList, message, type, media_url, media_mimetype).catch(err => {
+                Logger.error(`Unhandled error during immediate campaign processing: ${err.message}`)
+            })
         }
 
         return {
@@ -103,32 +105,39 @@ class CampaignService {
      */
     async processCampaign(campaign, receivers, message, type, media_url, media_mimetype = null) {
         try {
-            Logger.info(`Processing campaign: ${campaign.name} (${campaign.token})`)
+            Logger.info(`Processing campaign: ${campaign.name} (${campaign.token}) with ${receivers.length} recipients`)
             const { min_delay, max_delay } = campaign.settings || {}
+            const Hash = require('@core/helpers/hash.helper')
 
-            // Lazy-load to avoid circular dependency
-            const messageQueueService = require('./messageQueue.service')
+            // Build all queue records at once (bulkCreate = 1 SQL INSERT instead of N)
+            const now = new Date()
+            const queueItems = receivers.map(receiver => ({
+                token: Hash.token(),
+                device_token: campaign.device_token,
+                user_token: campaign.user_token,
+                to: receiver,
+                message,
+                type,
+                media_url,
+                media_mimetype,
+                status: 'queued',
+                priority: 'low', // Campaigns are usually low priority
+                scheduled_at: now,
+                metadata: {
+                    campaign_token: campaign.token,
+                    min_delay,
+                    max_delay
+                }
+            }))
 
-            for (const receiver of receivers) {
-                // Add to message queue with campaign reference in metadata
-                await messageQueueService.addToQueue({
-                    device_token: campaign.device_token,
-                    user_token: campaign.user_token,
-                    to: receiver,
-                    message,
-                    type,
-                    media_url,
-                    media_mimetype,
-                    priority: 'low', // Campaigns are usually low priority
-                    metadata: {
-                        campaign_token: campaign.token,
-                        min_delay,
-                        max_delay
-                    }
-                })
-            }
+            // Single bulk INSERT
+            await db.models.MessageQueue.bulkCreate(queueItems, { validate: false })
 
-            // Update status to running
+            // Update usage count in one call (not per-message)
+            const subscriptionService = require('./subscription.service')
+            await subscriptionService.decrementUsage(campaign.user_token, 'messages', receivers.length)
+
+            // Update campaign status to running
             await campaign.update({ status: 'running', started_at: new Date() })
         } catch (err) {
             Logger.error(`Error processing campaign ${campaign.token}`, err)

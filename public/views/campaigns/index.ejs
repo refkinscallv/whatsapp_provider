@@ -737,6 +737,11 @@
 
     document.getElementById('campaignForm').addEventListener('submit', async (e) => {
         e.preventDefault();
+        
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Processing...';
 
         const targetType = $('input[name="targetType"]:checked').val();
         const formData = new FormData();
@@ -770,6 +775,9 @@
             }
         } catch (err) {
             showToast.error(err.response?.data?.message || 'Failed to start campaign', 'Error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         }
     });
 

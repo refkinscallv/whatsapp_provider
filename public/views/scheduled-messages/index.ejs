@@ -578,6 +578,11 @@
     document.getElementById('scheduleForm').addEventListener('submit', async (e) => {
         e.preventDefault();
 
+        const submitBtn = e.target.querySelector('button[type="submit"]');
+        const originalText = submitBtn.innerHTML;
+        submitBtn.disabled = true;
+        submitBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Scheduling...';
+
         const formData = new FormData();
         const targetType = document.querySelector('input[name="target_type"]:checked').value;
         formData.append('target_type', targetType);
@@ -599,6 +604,8 @@
 
         if (targetType === 'book' && !document.getElementById('schedBook').value) {
             showToast.error('Please select a contact book', 'Error');
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
             return;
         }
 
@@ -622,6 +629,9 @@
             }
         } catch (err) {
             showToast.error(err.response?.data?.message || 'Failed to schedule message', 'Error');
+        } finally {
+            submitBtn.disabled = false;
+            submitBtn.innerHTML = originalText;
         }
     });
 

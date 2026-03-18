@@ -19,8 +19,10 @@ class CronJobs {
     init() {
         Logger.info('Initializing cron jobs...')
 
-        // Message queue processor - runs every 30 seconds
-        const queueProcessorSchedule = process.env.CRON_QUEUE_PROCESSOR || '*/30 * * * * *'
+        // Message queue processor - runs every 2 minutes
+        // The cron job is now a lightweight sweep/dispatcher only.
+        // Actual processing with delays happens event-driven via processNextForDevice.
+        const queueProcessorSchedule = process.env.CRON_QUEUE_PROCESSOR || '*/2 * * * *'
         const queueProcessor = cron.schedule(queueProcessorSchedule, async () => {
             try {
                 await messageQueueService.processQueue()
@@ -119,6 +121,26 @@ class CronJobs {
             name: 'Log Cleanup',
             schedule: logCleanupSchedule,
             job: logCleanup,
+        })
+
+        Logger.info(`Started ${this.jobs.length} cron jobs`)
+
+        // Database Cleanup - runs daily at 03:00 to prevent table bloat
+        const dbCleanupSchedule = '0 3 * * *'
+        const dbCleanup = cron.schedule(dbCleanupSchedule, async () => {
+            try {
+                const retentionDays = parseInt(process.env.QUEUE_RETENTION_DAYS) || 7
+                Logger.info(`Running DB cleanup (retention: ${retentionDays} days)...`)
+                await messageQueueService.cleanupOldRecords(retentionDays)
+            } catch (err) {
+                Logger.error('Error in DB cleanup cron job', err)
+            }
+        })
+
+        this.jobs.push({
+            name: 'DB Cleanup',
+            schedule: dbCleanupSchedule,
+            job: dbCleanup,
         })
 
         Logger.info(`Started ${this.jobs.length} cron jobs`)

@@ -309,10 +309,14 @@ class WhatsAppEvents {
                     // Small delay before destruction to let wwebjs internal state settle
                     // effectively prevents "Attempted to use detached Frame" errors
                     setTimeout(async () => {
-                        await this.whatsappInit.destroyClient(clientId, true)
+                        try {
+                            await this.whatsappInit.destroyClient(clientId, true)
 
-                        // AUTO RE-INIT: Bring back QR code if it was a logout or fatal navigation
-                        await this.triggerReinitialization(clientId)
+                            // AUTO RE-INIT: Bring back QR code if it was a logout or fatal navigation
+                            await this.triggerReinitialization(clientId)
+                        } catch (err) {
+                            Logger.error(`Error during delayed client destruction/reinit for ${clientId}`, err)
+                        }
                     }, 2000)
                 }
             }),

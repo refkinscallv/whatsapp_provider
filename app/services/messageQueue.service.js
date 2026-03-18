@@ -26,6 +26,57 @@ class MessageQueueService {
          * Map<deviceToken, { count: number, lastMsgTime: number, coolingDownUntil: number }>
          */
         this.burstTracker = new Map()
+
+        /**
+         * In-memory cache for user settings to avoid N+1 DB queries.
+         * Map<userToken, { settings: object, expiresAt: number }>
+         */
+        this._userSettingsCache = new Map()
+        this._USER_SETTINGS_TTL = 5 * 60 * 1000 // 5 minutes
+
+        // Periodically clean up stale burstTracker and cache entries to prevent memory leaks
+        setInterval(() => this._cleanupMemory(), 10 * 60 * 1000) // every 10 minutes
+    }
+
+    /**
+     * Fetch user settings with in-memory TTL cache to avoid N+1 queries.
+     * @param {string} userToken
+     * @returns {Promise<object>}
+     */
+    async _getUserSettings(userToken) {
+        const now = Date.now()
+        const cached = this._userSettingsCache.get(userToken)
+        if (cached && cached.expiresAt > now) {
+            return cached.settings
+        }
+        const user = await db.models.User.findOne({
+            where: { token: userToken },
+            attributes: ['metadata']
+        })
+        const settings = user?.metadata?.settings || {}
+        this._userSettingsCache.set(userToken, { settings, expiresAt: now + this._USER_SETTINGS_TTL })
+        return settings
+    }
+
+    /**
+     * Cleanup stale burstTracker entries and expired user settings cache entries.
+     * Called every 10 minutes. Prevents memory leaks for inactive devices.
+     */
+    _cleanupMemory() {
+        const now = Date.now()
+        const INACTIVITY_THRESHOLD = 30 * 60 * 1000 // 30 minutes
+
+        for (const [token, tracker] of this.burstTracker.entries()) {
+            if (now - tracker.lastMsgTime > INACTIVITY_THRESHOLD) {
+                this.burstTracker.delete(token)
+            }
+        }
+        for (const [token, cached] of this._userSettingsCache.entries()) {
+            if (cached.expiresAt < now) {
+                this._userSettingsCache.delete(token)
+            }
+        }
+        Logger.debug('queue', `Memory cleanup done. burstTracker: ${this.burstTracker.size}, settingsCache: ${this._userSettingsCache.size}`)
     }
 
     /**
@@ -86,178 +137,49 @@ class MessageQueueService {
         const now = new Date()
 
         try {
-            // Get messages ready to be sent (queued or processing for too long)
-            const messages = await db.models.MessageQueue.findAll({
+            // Fetch orphaned/stuck 'processing' messages (older than 5 minutes) and reset them
+            await db.models.MessageQueue.update(
+                { status: 'queued' },
+                {
+                    where: {
+                        status: 'processing',
+                        updatedAt: { [Op.lte]: new Date(now - 5 * 60 * 1000) }
+                    }
+                }
+            )
+
+            // Get 'queued' messages that are ready to be dispatched
+            // We limit per device: find distinct devices with pending messages
+            const pendingMessages = await db.models.MessageQueue.findAll({
                 where: {
-                    [Op.or]: [
-                        { status: 'queued' },
-                        {
-                            status: 'processing',
-                            updatedAt: {
-                                [Op.lte]: new Date(now - 5 * 60 * 1000) // 5 minutes timeout
-                            }
-                        }
-                    ],
-                    scheduled_at: {
-                        [Op.lte]: now,
-                    },
+                    status: 'queued',
+                    scheduled_at: { [Op.lte]: now },
                 },
-                order: [
-                    ['priority', 'DESC'], // high priority first
-                    ['scheduled_at', 'ASC'], // oldest first
-                ],
-                limit: 50, // Process 50 at a time
+                attributes: ['device_token'],
+                group: ['device_token'],
+                raw: true,
             })
 
-            const results = {
-                processed: 0,
-                success: 0,
-                failed: 0,
-            }
+            if (pendingMessages.length === 0) return { dispatched: 0 }
 
-            if (messages.length === 0) return results
-
-            // Fetch user settings for all unique users in the batch
-            const userTokens = [...new Set(messages.map(m => m.user_token))]
-            const users = await db.models.User.findAll({
-                where: { token: userTokens },
-                attributes: ['token', 'metadata']
-            })
-            const userSettingsMap = users.reduce((acc, u) => {
-                acc[u.token] = u.metadata?.settings || {}
-                return acc
-            }, {})
-
-            for (const msg of messages) {
-                results.processed++
-
-                try {
-                    // Update status to processing
-                    await msg.update({ status: 'processing' })
-
-                    // Check if client is ready
-                    if (!whatsappService.isClientReady(msg.device_token)) {
-                        const info = whatsappService.getClientInfo(msg.device_token)
-                        const state = info?.state || 'unknown'
-
-                        // If device is initializing/authenticating, reschedule without incrementing attempts
-                        if (['initializing', 'AUTHENTICATING', 'authenticating'].includes(state)) {
-                            Logger.info('queue', `Device ${msg.device_token} is ${state}. Rescheduling message ${msg.token}...`)
-                            await msg.update({
-                                status: 'queued',
-                                scheduled_at: new Date(Date.now() + 30000) // Retry in 30 seconds
-                            })
-                            continue
-                        }
-
-                        throw new Error(`Device not ready (State: ${state})`)
-                    }
-
-                    // 1. Burst Protection Check
-                    if (this.checkBurstLimit(msg.device_token)) {
-                        Logger.info('queue', `Burst protection active for ${msg.device_token}. Skipping message ${msg.token} temporarily.`)
-                        // Reschedule for later (after cooldown)
-                        await msg.update({
-                            status: 'queued',
-                            scheduled_at: new Date(Date.now() + 60000) // Recheck in 1 min
-                        })
-                        continue
-                    }
-
-                    // Apply delay BEFORE sending based on user settings and priority
-                    // This allows the message to be in "processing" (active) status during the delay
-                    const userSettings = userSettingsMap[msg.user_token] || {}
-
-                    // 2. Campaign Throttle: Mandatory random delay (20s-60s) for campaigns
-                    let delay = 0
-                    if (msg.metadata && msg.metadata.campaign_token) {
-                        // Campaign Throttle: Override user settings for safety
-                        delay = Math.floor(Math.random() * 40000) + 20000 // 20s to 60s
-                        Logger.debug('queue', `Campaign throttle applied for ${msg.token}: ${delay}ms`)
-                    } else {
-                        // Standard priority-based delay
-                        delay = this.getDelayForPriority(msg.priority, userSettings, msg.metadata)
-                    }
-
-                    if (delay > 0) {
-                        Logger.debug('queue', `Waiting ${delay}ms delay for message ${msg.token} (Status: processing)`)
-                        await new Promise((resolve) => setTimeout(resolve, delay))
-                    }
-
-                    // Re-check burst limit after delay (in case another process consumed quota)
-                    if (this.checkBurstLimit(msg.device_token)) {
-                        Logger.info('queue', `Burst limit hit after delay for ${msg.device_token}. Rescheduling...`)
-                        await msg.update({
-                            status: 'queued',
-                            scheduled_at: new Date(Date.now() + 10000)
-                        })
-                        continue
-                    }
-
-                    // Send message based on type
-                    let response
-                    if (msg.type === 'text') {
-                        response = await whatsappService.sendMessage(msg.device_token, msg.to, msg.message, {
-                            user_token: msg.user_token,
-                            metadata: msg.metadata
-                        })
-                    } else {
-                        // Media message
-                        response = await whatsappService.sendMediaMessage(
-                            msg.device_token,
-                            msg.to,
-                            {
-                                url: msg.media_url,
-                                mimetype: msg.media_mimetype,
-                                user_token: msg.user_token,
-                                metadata: msg.metadata
-                            },
-                            msg.message,
-                        )
-                    }
-
-                    // Update status to completed
-                    await msg.update({
-                        status: 'completed',
-                        processed_at: new Date(),
+            // For each device, kick off processNextForDevice ASYNCHRONOUSLY (non-blocking)
+            // This is the key change: the cron job just dispatches, it does NOT await delays.
+            let dispatched = 0
+            for (const { device_token } of pendingMessages) {
+                // Only dispatch if device is not already locked
+                if (!this.processingLocks.get(device_token)) {
+                    this.processNextForDevice(device_token).catch(err => {
+                        Logger.error('queue', `Error dispatching processNextForDevice for ${device_token}: ${err.message}`)
                     })
-
-                    // Increment burst counter
-                    this.incrementBurst(msg.device_token)
-
-                    results.success++
-
-                    // Update campaign stats if applicable
-                    if (msg.metadata && msg.metadata.campaign_token) {
-                        try {
-                            const campaignService = require('./campaign.service') // Re-require for safety in loop
-                            await campaignService.updateStats(msg.metadata.campaign_token, true)
-                        } catch (campaignErr) {
-                            Logger.warn(`Failed to update campaign stats: ${campaignErr.message}`)
-                        }
-                    }
-                } catch (err) {
-                    results.failed++
-                    Logger.error('queue', `Failed to process queue message ${msg.token}: ${err.message}`)
-                    // Handle error logic is usually more complex, but for batch processing we continue
-                    // The retry/fail logic is omitted here for brevity as it's handled in processMessageItem if we refactor
+                    dispatched++
                 }
             }
 
-            if (results.processed > 0) {
-                Logger.info('queue', `Queue processing completed: ${JSON.stringify(results)}`)
-
-                // Emit updates to relevant users
-                const io = Socket.getInstance()
-                if (io) {
-                    const uniqueUserTokens = [...new Set(messages.map(m => m.user_token))]
-                    uniqueUserTokens.forEach(token => {
-                        io.to(`user:${token}`).emit('queue:update', { type: 'processed', results })
-                    })
-                }
+            if (dispatched > 0) {
+                Logger.info('queue', `Queue sweep dispatched ${dispatched} device(s) for processing.`)
             }
 
-            return results
+            return { dispatched }
         } catch (err) {
             Logger.error('queue', `Error in processQueue: ${err.message}`)
             throw err
@@ -345,12 +267,8 @@ class MessageQueueService {
                 return
             }
 
-            // Fetch user settings
-            const user = await db.models.User.findOne({
-                where: { token: msg.user_token },
-                attributes: ['metadata']
-            })
-            const userSettings = user?.metadata?.settings || {}
+            // Fetch user settings from cache (avoids N+1 queries)
+            const userSettings = await this._getUserSettings(msg.user_token)
 
             // 2. Campaign Throttle: Mandatory random delay (20s-60s) for campaigns
             let delay = 0
@@ -560,6 +478,29 @@ class MessageQueueService {
         return {
             success: true,
             message: 'Message cancelled successfully',
+        }
+    }
+
+    /**
+     * Delete old completed/failed records from the queue table.
+     * Should be called by a cron job periodically to prevent table bloat.
+     * @param {number} olderThanDays - Delete records older than this many days (default 7)
+     * @returns {Promise<number>} - Number of deleted records
+     */
+    async cleanupOldRecords(olderThanDays = 7) {
+        try {
+            const cutoff = new Date(Date.now() - olderThanDays * 24 * 60 * 60 * 1000)
+            const deleted = await db.models.MessageQueue.destroy({
+                where: {
+                    status: { [Op.in]: ['completed', 'failed'] },
+                    processed_at: { [Op.lte]: cutoff }
+                }
+            })
+            Logger.info('queue', `DB Cleanup: Deleted ${deleted} stale queue records older than ${olderThanDays} days.`)
+            return deleted
+        } catch (err) {
+            Logger.error('queue', `DB Cleanup failed: ${err.message}`)
+            return 0
         }
     }
 
