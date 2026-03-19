@@ -20,6 +20,15 @@ class SettingsService {
 
         if (!user) throw new Error('User not found')
 
+        // Ensure metadata is properly parsed into an object before returning to UI
+        if (typeof user.metadata === 'string') {
+            try {
+                user.metadata = JSON.parse(user.metadata)
+            } catch (e) {
+                user.metadata = {}
+            }
+        }
+
         return user
     }
 
@@ -55,14 +64,34 @@ class SettingsService {
      * @returns {Promise<object>}
      */
     async updateSettings(userToken, settings) {
-        // This could be stored in a JSON column in User or a separate table
-        // For now, we'll assume it's in a metadata column in User
         const user = await db.models.User.findOne({ where: { token: userToken } })
         if (!user) throw new Error('User not found')
 
-        await user.update({
-            metadata: { ...user.metadata, settings }
+        // Sequelize does NOT automatically detect nested JSON mutations.
+        // Also, sometimes MySQL/MariaDB returns JSON as a string instead of an object.
+        let currentMetadata = {}
+        if (typeof user.metadata === 'string') {
+            try { currentMetadata = JSON.parse(user.metadata) } catch (e) {}
+        } else if (user.metadata && typeof user.metadata === 'object') {
+            currentMetadata = user.metadata
+        }
+
+        user.set('metadata', {
+            ...currentMetadata,
+            settings: {
+                ...(currentMetadata.settings || {}),
+                ...settings
+            }
         })
+        user.changed('metadata', true) // Force Sequelize to include this column in the UPDATE query
+        await user.save()
+
+        // Invalidate in-memory user settings cache in messageQueue service
+        // so the new delay is picked up immediately (not after TTL expiry)
+        try {
+            const mqService = require('./messageQueue.service')
+            mqService._userSettingsCache.delete(userToken)
+        } catch (e) { /* ignore if not loaded */ }
 
         return {
             success: true,

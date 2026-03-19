@@ -202,28 +202,30 @@ class MessageQueueService {
             // 2. Set lock
             this.processingLocks.set(deviceToken, true)
 
-            // 3. Find next message
-            const now = new Date()
-            const msg = await db.models.MessageQueue.findOne({
-                where: {
-                    device_token: deviceToken,
-                    status: 'queued',
-                    scheduled_at: { [Op.lte]: now }
-                },
-                order: [
-                    ['priority', 'DESC'],
-                    ['scheduled_at', 'ASC']
-                ]
-            })
+            while (true) {
+                // 3. Find next message
+                const now = new Date()
+                const msg = await db.models.MessageQueue.findOne({
+                    where: {
+                        device_token: deviceToken,
+                        status: 'queued',
+                        scheduled_at: { [Op.lte]: now }
+                    },
+                    order: [
+                        ['priority', 'DESC'],
+                        ['scheduled_at', 'ASC']
+                    ]
+                })
 
-            if (!msg) {
-                return // Nothing to process
+                if (!msg) {
+                    break // Nothing to process
+                }
+
+                Logger.info('queue', `Synchronous: Processing next message for device ${deviceToken} (Msg: ${msg.token})...`)
+
+                // 4. Process individual message
+                await this.processMessageItem(msg)
             }
-
-            Logger.info('queue', `Event-driven: Processing next message for device ${deviceToken} (Msg: ${msg.token})...`)
-
-            // 4. Process individual message
-            await this.processMessageItem(msg)
 
         } catch (err) {
             Logger.error('queue', `Error in processNextForDevice for ${deviceToken}: ${err.message}`)

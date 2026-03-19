@@ -283,7 +283,7 @@
                 if (u.metadata && u.metadata.settings) {
                     const s = u.metadata.settings;
                     if (document.getElementById('queueDelayRange')) {
-                        const delay = s.queue_delay || 1;
+                        const delay = parseInt(s.queue_delay) || 1;
                         document.getElementById('queueDelayRange').value = delay;
                         document.getElementById('queueDelayValue').innerText = delay + 's';
                     }
@@ -566,32 +566,75 @@
         // Listeners for Forms
         document.getElementById('profileForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
-            await axios.put('/api/settings/profile', {
-                whatsapp: document.getElementById('profWhatsapp').value
-            });
-            showToast.success('Profile updated successfully', 'Updated');
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Saving...';
+            try {
+                const res = await axios.put('/api/settings/profile', {
+                    name: document.getElementById('profName').value,
+                    whatsapp: document.getElementById('profWhatsapp').value
+                });
+                if (res.data.success) {
+                    showToast.success('Profile updated successfully', 'Updated');
+                } else {
+                    showToast.error(res.data.message || 'Update failed', 'Error');
+                }
+            } catch (err) {
+                showToast.error(err.response?.data?.message || 'Failed to update profile', 'Error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         });
 
         document.getElementById('securityForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Changing...';
             const np = document.getElementById('newPassword').value;
             const op = document.getElementById('oldPassword').value;
-            await axios.post('/api/auth/change-password', { oldPassword: op, newPassword: np });
-            showToast.success('Your password has been changed.', 'Password Changed');
-            e.target.reset();
+            try {
+                await axios.post('/api/auth/change-password', { oldPassword: op, newPassword: np });
+                showToast.success('Your password has been changed.', 'Password Changed');
+                e.target.reset();
+            } catch (err) {
+                showToast.error(err.response?.data?.message || 'Failed to change password', 'Error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         });
 
         document.getElementById('messagingSettingsForm')?.addEventListener('submit', async (e) => {
             e.preventDefault();
+            const submitBtn = e.target.querySelector('button[type="submit"]');
+            const originalText = submitBtn.innerHTML;
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="loading loading-spinner loading-sm"></span> Saving...';
+
             const delay = document.getElementById('queueDelayRange').value;
             const manualControl = document.getElementById('queueManualControl')?.checked || false;
 
-            await axios.put('/api/settings', {
-                queue_delay: delay,
-                enable_manual_queue: manualControl
-            });
-            showToast.success('Settings saved successfully', 'Saved');
-            loadProfile(); // Refresh profile to get updated metadata
+            try {
+                const res = await axios.put('/api/settings', {
+                    queue_delay: parseInt(delay),
+                    enable_manual_queue: manualControl
+                });
+                if (res.data.success) {
+                    showToast.success('Messaging settings saved!', 'Saved');
+                    loadProfile(); // Refresh profile to get updated metadata
+                } else {
+                    showToast.error(res.data.message || 'Failed to save settings', 'Error');
+                }
+            } catch (err) {
+                showToast.error(err.response?.data?.message || 'Failed to save settings', 'Error');
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
         });
 
         // Forced default view

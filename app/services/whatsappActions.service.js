@@ -58,7 +58,7 @@ class WhatsAppActions {
                 to: chatId,
                 message: finalMessage,
                 type: 'text',
-                status: 'sent',
+                status: 'pending',
                 sent_at: new Date(),
                 metadata: options.metadata || null,
             })
@@ -133,7 +133,7 @@ class WhatsAppActions {
                 message: finalCaption,
                 type: mediaType,
                 media_url: media.url || null,
-                status: 'sent',
+                status: 'pending',
                 sent_at: new Date(),
                 metadata: media.metadata || null,
             })
